@@ -1,36 +1,89 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# StyleLuxe
+
+A website that automatically tracks trending beauty products and creates review pages for them. Think of it as a "what's hot right now" dashboard for beauty enthusiasts.
+
+## Features
+
+- **Trending Dashboard**: Homepage showing all trending products sorted by trend score
+- **Product Reviews**: Detailed review pages with sections like "Why It's Trending", "The Good", "The Bad", etc.
+- **Data-Driven**: Tracks products from Amazon Movers & Shakers and Reddit discussions
+- **AI-Generated Content**: Uses Claude AI to generate balanced, honest reviews
+
+## Tech Stack
+
+- **Next.js 16** (App Router) - Web framework
+- **TypeScript** - Type safety
+- **Tailwind CSS** - Styling
+- **Prisma** - Database ORM
+- **Neon Postgres** - Database (free tier)
+- **Claude AI (Anthropic)** - Content generation
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
+- Node.js 18+ 
+- A Neon Postgres database (sign up at [neon.tech](https://neon.tech))
+- An Anthropic API key (for content generation)
+
+### Installation
+
+1. Clone the repository and install dependencies:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Set up your environment variables:
+```bash
+cp .env.example .env
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Edit `.env` and add your:
+- `DATABASE_URL` from Neon
+- `ANTHROPIC_API_KEY` from Anthropic
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+3. Set up the database:
+```bash
+npx prisma generate
+npx prisma migrate dev --name init
+```
 
-## Learn More
+4. Run the development server:
+```bash
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+Open [http://localhost:3000](http://localhost:3000) to see the site.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Database Schema
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The database includes:
+- **Products**: Product information, trend scores, status
+- **TrendSignals**: Data points that made a product trending (Amazon sales spikes, Reddit mentions, etc.)
+- **Reviews**: Scraped reviews from Amazon and Reddit
+- **ProductContent**: AI-generated review content
 
-## Deploy on Vercel
+## Project Structure
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+app/
+  page.tsx              # Homepage with trending dashboard
+  products/[slug]/      # Individual product review pages
+  admin/                # Admin area (to be built)
+lib/
+  prisma.ts            # Prisma client instance
+  products.ts          # Product data functions
+prisma/
+  schema.prisma        # Database schema
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Next Steps
+
+1. **Data Collection**: Build scripts to scrape Amazon Movers & Shakers and Reddit
+2. **Admin Interface**: Create admin view to see flagged products and generate reviews
+3. **Content Generation**: Integrate Claude API to generate review content
+4. **Deployment**: Deploy to Vercel
+
+## License
+
+Private project

@@ -1,0 +1,634 @@
+/**
+ * Amazon Movers & Shakers Collection Script
+ * 
+ * Scrapes Amazon's Movers & Shakers page for beauty products
+ * that are trending (biggest sales jumps).
+ * 
+ * Note: Amazon's HTML structure may change. For production, consider:
+ * 1. Using Amazon Product Advertising API (official, requires Associates account)
+ * 2. Using a headless browser (Puppeteer/Playwright) for dynamic content
+ * 3. Using a service like ScraperAPI or Bright Data
+ */
+
+import * as cheerio from 'cheerio'
+import { prisma } from '../lib/prisma'
+
+interface AmazonProduct {
+  name: string
+  brand?: string
+  price?: number
+  imageUrl?: string
+  amazonUrl: string
+  salesJumpPercent?: number // Sales rank jump as percentage (e.g., 1200 = 1200%)
+  position?: number // Position on Movers & Shakers list (1, 2, 3, etc.)
+  category?: string
+}
+
+/**
+ * Scrape Amazon Movers & Shakers beauty section
+ * 
+ * Note: Amazon's HTML structure may change, so this may need updates
+ */
+async function fetchAmazonMoversAndShakers(): Promise<AmazonProduct[]> {
+  try {
+    const url = 'https://www.amazon.com/gp/movers-and-shakers/beauty'
+    
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+      },
+    })
+
+    if (!response.ok) {
+      console.error(`Failed to fetch Amazon: ${response.statusText}`)
+      return []
+    }
+
+    const html = await response.text()
+    const $ = cheerio.load(html)
+    const products: AmazonProduct[] = []
+
+    // Parse HTML using Cheerio
+    // Amazon's structure varies, but we look for common patterns
+    
+    // Find product containers - adjust selectors based on actual HTML structure
+    let position = 0
+    $('[data-asin]').each((_, element) => {
+      const $el = $(element)
+      const asin = $el.attr('data-asin')
+      
+      if (!asin || asin === '') return
+
+      // Try to extract position from the element or nearby elements
+      // Look for patterns like "#1", "#2", or numbered list items
+      let extractedPosition: number | undefined = undefined
+      const positionText = $el.text() + ' ' + ($el.parent().text() || '') + ' ' + ($el.siblings().first().text() || '')
+      
+      // Pattern 1: "#1", "#2", etc. in the text
+      const hashMatch = positionText.match(/#(\d+)/)
+      if (hashMatch) {
+        extractedPosition = parseInt(hashMatch[1])
+      }
+      
+      // Pattern 2: Look for numbered list items
+      if (!extractedPosition) {
+        const listItemMatch = $el.closest('li, div').text().match(/^(\d+)\./)
+        if (listItemMatch) {
+          extractedPosition = parseInt(listItemMatch[1])
+        }
+      }
+      
+      // If we couldn't extract position, use incremental counter
+      position = extractedPosition || position + 1
+
+      // Extract product name - try multiple selectors
+      let name = $el.find('h2 a span, h2 span.a-text-normal').first().text().trim() ||
+                 $el.find('.a-text-normal').first().text().trim() ||
+                 $el.find('h2 a').first().text().trim() ||
+                 $el.find('a.a-link-normal span').first().text().trim()
+      
+      // If name looks like a price range, it's wrong - try to get from URL
+      if (!name || name.match(/^\$[\d.,\s-]+$/)) {
+        const url = $el.find('h2 a, a.a-link-normal').first().attr('href') || ''
+        // Extract product name from URL path (e.g., /dp/B0C2Y2WWQM/ref=...)
+        // Or try to get from title attribute
+        name = $el.find('h2 a, a.a-link-normal').first().attr('title') || 
+               $el.find('img').first().attr('alt') ||
+               name
+      }
+      
+      // Clean up name - remove price ranges if they got mixed in
+      if (name && name.includes('$')) {
+        // Try to extract just the product name part before any price
+        const nameParts = name.split(/\$/)
+        if (nameParts[0].trim().length > 3) {
+          name = nameParts[0].trim()
+        }
+      }
+      
+      // Extract price - look for price elements, not in the name
+      const priceText = $el.find('.a-price .a-offscreen').first().text() ||
+                       $el.find('.a-price-whole').first().text() ||
+                       $el.find('.a-price').first().text()
+      const priceMatch = priceText?.match(/\$?([\d,]+\.?\d*)/)
+      const price = priceMatch ? parseFloat(priceMatch[1].replace(/,/g, '')) : undefined
+      
+      // Extract image
+      const imageUrl = $el.find('img').first().attr('src') || 
+                      $el.find('img').first().attr('data-src')
+      
+      // Extract product URL
+      const relativeUrl = $el.find('h2 a, a.a-link-normal').first().attr('href')
+      const amazonUrl = relativeUrl 
+        ? (relativeUrl.startsWith('http') ? relativeUrl : `https://www.amazon.com${relativeUrl}`)
+        : `https://www.amazon.com/dp/${asin}`
+
+      // If name is still a price, try to extract from URL
+      if (!name || name.match(/^[\$0-9.,\s-]+$/)) {
+        // Extract from URL path (e.g., /Product-Name-Here/dp/B0C2Y2WWQM)
+        try {
+          const urlObj = new URL(amazonUrl)
+          const pathParts = urlObj.pathname.split('/').filter(p => p)
+          const dpIndex = pathParts.findIndex(p => p === 'dp' || p.startsWith('dp'))
+          
+          if (dpIndex > 0) {
+            const urlName = pathParts[dpIndex - 1]
+            if (urlName && urlName.length > 3 && !urlName.match(/^[A-Z0-9]{10}$/)) {
+              name = urlName
+                .split('-')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                .join(' ')
+            }
+          }
+        } catch (e) {
+          // URL parsing failed, keep original name
+        }
+      }
+
+      // Extract brand (often in the product name or separate field)
+      const brandMatch = name.match(/^([A-Z][a-zA-Z\s&]+?)\s+/)
+      const brand = brandMatch ? brandMatch[1].trim() : undefined
+
+      // Extract sales jump percentage
+      // Amazon shows this in various formats:
+      // - "Up 1,200%" or "↑ 1,200%"
+      // - "increased100%" or "increased 100%" (common on Movers & Shakers)
+      // - "Sales rank: 1 (was 2)" - can calculate from rank change
+      // - "#1 in Movers & Shakers" (implicit high rank)
+      // - Look in multiple places: text content, data attributes, nearby spans
+      let salesJumpPercent: number | undefined = undefined
+      
+      // Try multiple extraction methods
+      const salesJumpText = $el.text() + ' ' + ($el.find('.a-text-normal, span').text() || '')
+      
+      // Pattern 1: "increased100%" or "increased 100%" (most common on Movers & Shakers)
+      let percentMatch = salesJumpText.match(/increased\s*([\d,]+)\s*%/i)
+      if (percentMatch) {
+        salesJumpPercent = parseFloat(percentMatch[1].replace(/,/g, ''))
+      }
+      
+      // Pattern 2: "Up 1,200%" or "↑ 1,200%"
+      if (!salesJumpPercent) {
+        percentMatch = salesJumpText.match(/(?:up|↑|moved|rank|#)\s*(?:#\s*)?([\d,]+)\s*%/i)
+        if (percentMatch) {
+          salesJumpPercent = parseFloat(percentMatch[1].replace(/,/g, ''))
+        }
+      }
+      
+      // Pattern 3: Calculate from sales rank change "Sales rank: 1 (was 2)"
+      // Formula: ((was - current) / was) * 100 = percentage increase
+      if (!salesJumpPercent) {
+        const rankMatch = salesJumpText.match(/sales\s*rank[:\s]+(\d+)\s*\(was\s*(\d+)\)/i)
+        if (rankMatch) {
+          const currentRank = parseInt(rankMatch[1])
+          const previousRank = parseInt(rankMatch[2])
+          if (previousRank > currentRank && previousRank > 0) {
+            // Better rank = lower number, so calculate improvement
+            salesJumpPercent = Math.round(((previousRank - currentRank) / previousRank) * 100)
+          }
+        }
+      }
+      
+      // Pattern 4: Look for percentage in parent/sibling elements
+      if (!salesJumpPercent) {
+        const parentText = $el.parent().text() + ' ' + $el.siblings().text()
+        // Try "increased" format first
+        percentMatch = parentText.match(/increased\s*([\d,]+)\s*%/i)
+        if (percentMatch) {
+          salesJumpPercent = parseFloat(percentMatch[1].replace(/,/g, ''))
+        } else {
+          // Fallback to other patterns
+          percentMatch = parentText.match(/(?:up|↑|moved|rank)\s*([\d,]+)\s*%/i)
+          if (percentMatch) {
+            salesJumpPercent = parseFloat(percentMatch[1].replace(/,/g, ''))
+          }
+        }
+      }
+      
+      // Pattern 3: If on Movers & Shakers page, being listed is significant
+      // Give a base score even without specific percentage
+      // We'll handle this in the scoring function
+
+      // Skip if name is just a price or too short
+      if (name && name.length > 3 && !name.match(/^[\$0-9.,\s-]+$/)) {
+        products.push({
+          name: name.substring(0, 200), // Limit length
+          brand,
+          price,
+          imageUrl,
+          amazonUrl,
+          salesJumpPercent,
+          position, // Track position on Movers & Shakers list
+          category: 'beauty',
+        })
+      }
+    })
+
+    // If the above doesn't work, fall back to finding all /dp/ links
+    if (products.length === 0) {
+      $('a[href*="/dp/"]').each((_, element) => {
+        const $el = $(element)
+        const href = $el.attr('href')
+        if (!href) return
+
+        const fullUrl = href.startsWith('http') 
+          ? href 
+          : `https://www.amazon.com${href}`
+        
+        const asinMatch = fullUrl.match(/\/dp\/([A-Z0-9]{10})/)
+        if (asinMatch) {
+          const name = $el.text().trim() || $el.find('span').first().text().trim()
+          if (name && name.length > 3) {
+            products.push({
+              name,
+              amazonUrl: fullUrl,
+              category: 'beauty',
+            })
+          }
+        }
+      })
+    }
+
+    // Remove duplicates based on ASIN
+    const uniqueProducts = new Map<string, AmazonProduct>()
+    for (const product of products) {
+      const asinMatch = product.amazonUrl.match(/\/dp\/([A-Z0-9]{10})/)
+      if (asinMatch) {
+        const asin = asinMatch[1]
+        if (!uniqueProducts.has(asin)) {
+          uniqueProducts.set(asin, product)
+        }
+      }
+    }
+
+    console.log(`Found ${uniqueProducts.size} unique products on Amazon Movers & Shakers`)
+    // Limit to 30 products - enough to get good variety but not overwhelming
+    return Array.from(uniqueProducts.values()).slice(0, 30)
+  } catch (error) {
+    console.error('Error fetching Amazon Movers & Shakers:', error)
+    return []
+  }
+}
+
+/**
+ * Calculate trend score for Amazon products
+ * Movers & Shakers = products with biggest sales rank jumps (shown as %)
+ * 
+ * NEW Scoring: Percentage ÷ 20 = points (capped at 70)
+ * - 1,400%+ increase = 70 points
+ * - 800% increase = 40 points
+ * - 400% increase = 20 points
+ * - 200% increase = 10 points
+ */
+function calculateAmazonTrendScore(salesJumpPercent?: number): number {
+  if (!salesJumpPercent || salesJumpPercent <= 0) {
+    // If no specific sales jump %, being on Movers & Shakers is still significant
+    // Give a base score of 10 points
+    return 10
+  }
+  
+  // Percentage ÷ 20 = points (capped at 70)
+  // Minimum 10 points for being on Movers & Shakers, even with low percentages
+  const calculatedScore = Math.min(70, Math.floor(salesJumpPercent / 20))
+  return Math.max(10, calculatedScore)
+}
+
+/**
+ * Process Amazon data and store in database
+ */
+async function processAmazonData() {
+  console.log('Starting Amazon Movers & Shakers collection...\n')
+
+  const products = await fetchAmazonMoversAndShakers()
+  console.log(`Found ${products.length} products\n`)
+
+  // Log first few products for debugging
+  if (products.length > 0) {
+    console.log('Sample products found:')
+    products.slice(0, 5).forEach((p, i) => {
+      console.log(`  ${i + 1}. ${p.name?.substring(0, 60)}... (Position: ${p.position || 'N/A'}, Sales Jump: ${p.salesJumpPercent || 'N/A'}%)`)
+    })
+    console.log()
+  }
+
+  let stored = 0
+  let updated = 0
+  let skipped = 0
+
+  for (const product of products) {
+    if (!product.name || product.name.includes('Amazon Product')) {
+      skipped++
+      if (skipped <= 3) {
+        console.log(`⚠️  Skipping product with invalid name: "${product.name?.substring(0, 50)}..."`)
+      }
+      continue // Skip if we don't have a real product name
+    }
+
+    const trendScore = calculateAmazonTrendScore(product.salesJumpPercent)
+
+    try {
+      // Check if product exists by Amazon URL
+      const existing = await prisma.product.findFirst({
+        where: {
+          amazonUrl: product.amazonUrl,
+        },
+      })
+
+      if (existing) {
+        // Recalculate total score (Amazon + Reddit)
+        const allSignals = await prisma.trendSignal.findMany({
+          where: { productId: existing.id },
+        })
+        
+        // Calculate Amazon score (70 points max)
+        let amazonScore = 0
+        for (const signal of allSignals) {
+          if (signal.source === 'amazon_movers') {
+            const metadata = signal.metadata as any
+            const salesJump = signal.value || metadata?.salesJumpPercent || 0
+            if (salesJump > 0) {
+              const calculatedScore = Math.min(70, Math.floor(salesJump / 20))
+              // Give at least 10 points for being on Movers & Shakers, even with low percentages
+              amazonScore = Math.max(10, calculatedScore)
+              break // Use highest Amazon score
+            } else {
+              amazonScore = 10 // Base score
+            }
+          }
+        }
+        // Use the new Amazon score if higher (ensure minimum 10)
+        amazonScore = Math.max(10, Math.max(amazonScore, trendScore))
+        
+        // Calculate Reddit bonus score (30 points max)
+        const redditSignals = allSignals.filter(s => s.source === 'reddit_skincare')
+        let redditScore = 0
+        const sortedReddit = redditSignals
+          .sort((a, b) => (b.value || 0) - (a.value || 0))
+        
+        let highEngagementCount = 0
+        for (const signal of sortedReddit) {
+          const upvotes = signal.value || 0
+          if (upvotes > 500 && highEngagementCount < 2) {
+            redditScore += 20
+            highEngagementCount++
+          } else if (upvotes >= 300 && highEngagementCount < 2) {
+            redditScore += 15
+            highEngagementCount++
+          }
+        }
+        if (redditSignals.length >= 3) {
+          redditScore += 10
+        } else if (redditSignals.length >= 2) {
+          redditScore += 5
+        }
+        redditScore = Math.min(30, redditScore) // Cap at 30
+        
+        // Total score = Amazon (0-70) + Reddit bonus (0-30) = max 100
+        const totalScore = amazonScore + redditScore
+
+        // Import setFirstDetected function
+        const { setFirstDetected } = await import('../lib/trending-products')
+
+        // Update existing product
+        await prisma.product.update({
+          where: { id: existing.id },
+          data: {
+            trendScore: Math.max(existing.trendScore, totalScore),
+            price: product.price || existing.price,
+            imageUrl: product.imageUrl || existing.imageUrl,
+          },
+        })
+
+        // Update age decay fields (set firstDetected if new, update baseScore)
+        await setFirstDetected(existing.id, totalScore)
+
+        // Check if we already have a recent Amazon signal for this product (within last 24 hours)
+        const recentSignal = await prisma.trendSignal.findFirst({
+          where: {
+            productId: existing.id,
+            source: 'amazon_movers',
+            detectedAt: {
+              gte: new Date(Date.now() - 24 * 60 * 60 * 1000), // Last 24 hours
+            },
+          },
+        })
+
+        // Only create a new signal if we don't have a recent one, or if the new one has a higher sales jump
+        if (!recentSignal || (product.salesJumpPercent || 0) > (recentSignal.value || 0)) {
+          // If we have an old signal with lower value, delete it
+          if (recentSignal && (product.salesJumpPercent || 0) > (recentSignal.value || 0)) {
+            await prisma.trendSignal.delete({
+              where: { id: recentSignal.id },
+            })
+          }
+          
+          // Create new signal
+          await prisma.trendSignal.create({
+            data: {
+              productId: existing.id,
+              source: 'amazon_movers',
+              signalType: 'sales_spike',
+              value: product.salesJumpPercent || null, // Store sales jump % as value
+              metadata: {
+                category: product.category,
+                salesJumpPercent: product.salesJumpPercent,
+                position: product.position, // Store position on list
+                previousPosition: recentSignal?.metadata?.position || null, // Track position change
+                detectedAt: new Date().toISOString(),
+              },
+            },
+          })
+        } else {
+          // Update existing signal's detectedAt and position to keep it fresh
+          await prisma.trendSignal.update({
+            where: { id: recentSignal.id },
+            data: {
+              detectedAt: new Date(),
+              metadata: {
+                ...(recentSignal.metadata as any || {}),
+                position: product.position, // Update position
+                previousPosition: (recentSignal.metadata as any)?.position || null,
+              },
+            },
+          })
+        }
+
+        updated++
+      } else {
+        // Before creating, check if we have a Reddit product with similar name
+        // This enriches Amazon products with Reddit data even if we didn't search Reddit
+        const redditMatch = await findMatchingRedditProduct(product.name, product.brand)
+        
+        if (redditMatch) {
+          // Recalculate total score (Amazon + Reddit)
+          const allSignals = await prisma.trendSignal.findMany({
+            where: { productId: redditMatch.id },
+          })
+          
+          // Calculate Amazon score (50 points max)
+          const amazonScore = Math.min(50, Math.floor((product.salesJumpPercent || 0) / 30))
+          
+          // Calculate Reddit score (50 points max)
+          const redditSignals = allSignals
+            .filter(s => s.source === 'reddit_skincare' && (s.value || 0) > 300)
+            .sort((a, b) => (b.value || 0) - (a.value || 0))
+            .slice(0, 2) // Max 2 posts
+          const redditScore = Math.min(50, redditSignals.length * 25)
+          
+          // Total score = Amazon + Reddit (max 100)
+          const totalScore = amazonScore + redditScore
+          
+          // Import setFirstDetected function
+          const { setFirstDetected } = await import('../lib/trending-products')
+          
+          // Update existing Reddit product with Amazon data
+          await prisma.product.update({
+            where: { id: redditMatch.id },
+            data: {
+              amazonUrl: product.amazonUrl,
+              price: product.price || redditMatch.price,
+              imageUrl: product.imageUrl || redditMatch.imageUrl,
+              brand: product.brand || redditMatch.brand,
+              trendScore: Math.max(redditMatch.trendScore, totalScore),
+            },
+          })
+
+          // Update age decay fields
+          await setFirstDetected(redditMatch.id, totalScore)
+
+          // Add Amazon trend signal to Reddit product
+          await prisma.trendSignal.create({
+            data: {
+              productId: redditMatch.id,
+              source: 'amazon_movers',
+              signalType: 'sales_spike',
+              value: product.salesJumpPercent || null,
+              metadata: {
+                category: product.category,
+                salesJumpPercent: product.salesJumpPercent,
+                position: product.position,
+                detectedAt: new Date().toISOString(),
+              },
+            },
+          })
+
+          updated++
+        } else {
+          // Create new product
+          // Import setFirstDetected function
+          const { setFirstDetected } = await import('../lib/trending-products')
+          
+          const newProduct = await prisma.product.create({
+            data: {
+              name: product.name,
+              brand: product.brand,
+              price: product.price,
+              imageUrl: product.imageUrl,
+              amazonUrl: product.amazonUrl,
+              category: product.category || 'beauty',
+              trendScore: trendScore, // Store calculated score (will be combined with Reddit during enrichment)
+              status: trendScore >= 60 ? 'FLAGGED' : 'DRAFT', // Flag if score >= 60, otherwise draft
+            },
+          })
+
+          // Set first_detected and initialize age decay fields
+          await setFirstDetected(newProduct.id, trendScore)
+
+          // Add trend signal
+          await prisma.trendSignal.create({
+            data: {
+              productId: newProduct.id,
+              source: 'amazon_movers',
+              signalType: 'sales_spike',
+              value: product.salesJumpPercent || null, // Store sales jump % as value
+              metadata: {
+                category: product.category,
+                salesJumpPercent: product.salesJumpPercent,
+                position: product.position,
+                detectedAt: new Date().toISOString(),
+              },
+            },
+          })
+
+          stored++
+        }
+      }
+    } catch (error) {
+      console.error(`Error processing ${product.name}:`, error)
+    }
+  }
+
+  console.log(`\n✅ Amazon collection complete!`)
+  console.log(`   - Stored: ${stored} new products`)
+  console.log(`   - Updated: ${updated} existing products`)
+  console.log(`   - Skipped: ${skipped} products (invalid names)`)
+  console.log(`   - Products with score > 60 are flagged for review generation`)
+}
+
+/**
+ * Find a Reddit product that matches an Amazon product by name
+ * This allows us to merge Amazon data into existing Reddit products
+ */
+async function findMatchingRedditProduct(amazonProductName: string, amazonBrand?: string) {
+  try {
+    const normalize = (name: string) => 
+      name.toLowerCase().trim().replace(/\s+/g, ' ').replace(/[^\w\s-]/g, '')
+    
+    const normalizedName = normalize(amazonProductName)
+    
+    // Look for Reddit products (those with Reddit signals but no Amazon URL)
+    const redditProducts = await prisma.product.findMany({
+      where: {
+        amazonUrl: null, // No Amazon URL yet
+        trendSignals: {
+          some: {
+            source: 'reddit_skincare',
+          },
+        },
+      },
+      include: {
+        trendSignals: true,
+      },
+    })
+
+    // Find best match by name similarity
+    let bestMatch: typeof redditProducts[0] | null = null
+    let bestScore = 0
+
+    for (const redditProduct of redditProducts) {
+      const redditNormalized = normalize(redditProduct.name)
+      
+      // Calculate similarity
+      const words1 = new Set(normalizedName.split(/\s+/))
+      const words2 = new Set(redditNormalized.split(/\s+/))
+      const intersection = new Set([...words1].filter(x => words2.has(x)))
+      const union = new Set([...words1, ...words2])
+      const similarity = intersection.size / union.size
+      
+      // Bonus for brand match
+      let finalSimilarity = similarity
+      if (amazonBrand && redditProduct.brand) {
+        const brandMatch = normalize(amazonBrand) === normalize(redditProduct.brand)
+        if (brandMatch) {
+          finalSimilarity = Math.min(1.0, similarity + 0.2) // Boost similarity if brands match
+        }
+      }
+      
+      if (finalSimilarity > bestScore && finalSimilarity > 0.5) { // 50% similarity threshold
+        bestScore = finalSimilarity
+        bestMatch = redditProduct
+      }
+      
+    }
+
+    return bestMatch
+  } catch (error) {
+    console.error('Error finding matching Reddit product:', error)
+    return null
+  }
+}
+
+export { processAmazonData }
+

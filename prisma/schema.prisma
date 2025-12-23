@@ -1,0 +1,166 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id          String        @id @default(cuid())
+  name        String
+  brand       String?
+  price       Float?
+  currency    String        @default("USD")
+  imageUrl    String?
+  amazonUrl   String?
+  category    String?
+  trendScore  Float         @default(0) // 0-100 (legacy, use baseScore/currentScore)
+  status      ProductStatus @default(FLAGGED) // FLAGGED, DRAFT, PUBLISHED
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  publishedAt DateTime?
+
+  // Age-based trending fields
+  firstDetected DateTime? // When product first appeared in trending data
+  lastUpdated   DateTime? // Last time trend data was refreshed
+  baseScore     Float?     // Raw score from Amazon/Reddit data (0-100)
+  currentScore  Float?     // Score after age decay applied (0-100)
+  peakScore     Float?     // Highest score product ever reached (0-100)
+  daysTrending  Int?       // Calculated: days since first_detected
+
+  // Relations
+  trendSignals TrendSignal[]
+  reviews      Review[]
+  content      ProductContent?
+  metadata     ProductMetadata?
+  questions    ProductQuestion[]
+
+  @@index([trendScore])
+  @@index([status])
+  @@index([publishedAt])
+  @@index([currentScore])
+  @@index([peakScore])
+  @@index([firstDetected])
+  @@index([daysTrending])
+}
+
+enum ProductStatus {
+  FLAGGED // Ready for review (trend score > 60)
+  DRAFT // Review generated, awaiting approval
+  PUBLISHED // Live on the site
+}
+
+model TrendSignal {
+  id         String   @id @default(cuid())
+  productId  String
+  source     String // "amazon_movers", "reddit_skincare", etc.
+  signalType String // "sales_spike", "reddit_mentions", etc.
+  value      Float? // Sales percentage, mention count, etc.
+  metadata   Json? // Additional data (e.g., Reddit post IDs, Amazon rank)
+  detectedAt DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([detectedAt])
+}
+
+model Review {
+  id        String       @id @default(cuid())
+  productId String
+  source    ReviewSource
+  rating    Int? // 1-5 stars
+  title     String?
+  content   String
+  author    String?
+  date      DateTime?
+  helpful   Int? // Number of helpful votes
+  verified  Boolean      @default(false)
+  scrapedAt DateTime     @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([source])
+}
+
+enum ReviewSource {
+  AMAZON
+  REDDIT
+}
+
+model ProductContent {
+  id        String @id @default(cuid())
+  productId String @unique
+  slug      String @unique // URL slug like "medicube-collagen-mask"
+
+  // Generated content sections
+  hook             String? // 2-sentence hook for homepage
+  whyTrending      String? // Why it's trending right now
+  whatItDoes       String? // What it actually does
+  theGood          String? // The Good section
+  theBad           String? // The Bad section
+  whoShouldTry     String? // Who should try it
+  whoShouldSkip    String? // Who should skip it
+  alternatives     String? // Alternatives section
+  whatRealUsersSay String? // What Real Users Are Saying section
+  faq              Json? // FAQ array of {question, answer}
+  editorNotes      String? // Editor notes/context to guide content generation
+  redditHotness    Int? // Manual Reddit trending rating: 1=low, 2=growing, 3=strong, 4=trending, 5=breakout
+  googleTrendsData Json? // Google Trends data (trend level, interest over time, etc.)
+
+  // Metadata
+  generatedAt   DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  editedByHuman Boolean  @default(false)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([slug])
+}
+
+model ProductMetadata {
+  id        String @id @default(cuid())
+  productId String @unique
+
+  // Amazon product page data
+  starRating       Float? // 1-5 stars
+  totalReviewCount Int? // Total number of reviews
+  availability     String? // "In Stock", "Only 3 left", etc.
+  description      String? // Product description
+  keyFeatures      Json? // Array of key features
+
+  // Review themes (extracted from reviews)
+  positiveThemes  Json? // Array of positive themes
+  negativeThemes  Json? // Array of negative themes
+  specificDetails Json? // {skinTypes, useCases, timeframes}
+  memorableQuotes Json? // Array of memorable quotes
+
+  // Scraping metadata
+  lastScrapedAt DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}
+
+model ProductQuestion {
+  id           String   @id @default(cuid())
+  productId    String
+  question     String
+  answer       String?
+  answerAuthor String?
+  helpful      Int? // Number of helpful votes
+  source       String   @default("amazon") // "amazon" or "reddit"
+  createdAt    DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}

@@ -6,21 +6,43 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:generate": "prisma generate && node scripts/postinstall-prisma.js",
+    "postinstall": "node scripts/postinstall-prisma.js",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio",
+    "db:push": "prisma db push",
+    "collect:data": "tsx scripts/collect-data.ts",
+    "collect:reddit": "tsx scripts/collect-reddit.ts",
+    "collect:amazon": "tsx scripts/collect-amazon.ts",
+    "collect:trends": "tsx scripts/collect-google-trends.ts",
+    "daily-update": "tsx scripts/daily-update.ts",
+    "backfill": "tsx scripts/backfill-age-decay.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.71.2",
+    "@prisma/client": "^6.19.1",
+    "@uiw/react-md-editor": "^4.0.11",
     "next": "16.1.0",
+    "next-cloudinary": "^6.17.5",
+    "node-fetch": "^2.7.0",
+    "prisma": "^6.19.1",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "react-markdown": "^10.1.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/cheerio": "^0.22.35",
     "@types/node": "^20",
+    "@types/node-fetch": "^2.6.13",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "cheerio": "^1.1.2",
     "eslint": "^9",
     "eslint-config-next": "16.1.0",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }

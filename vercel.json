@@ -1,0 +1,13 @@
+{
+  "crons": [
+    {
+      "path": "/api/daily-update",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/collect-data",
+      "schedule": "0 9 * * *"
+    }
+  ]
+}
+
