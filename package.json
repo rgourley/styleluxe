@@ -17,7 +17,9 @@
     "collect:amazon": "tsx scripts/collect-amazon.ts",
     "collect:trends": "tsx scripts/collect-google-trends.ts",
     "daily-update": "tsx scripts/daily-update.ts",
-    "backfill": "tsx scripts/backfill-age-decay.ts"
+    "backfill": "tsx scripts/backfill-age-decay.ts",
+    "check:hydration": "tsx scripts/check-hydration.ts",
+    "pre-commit": "npm run check:hydration"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",
