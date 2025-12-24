@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
 
 // Force dynamic rendering to prevent build-time data collection
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
+    // Lazy load prisma to prevent build-time execution
+    const { prisma } = await import('@/lib/prisma')
+    
     // Test database connection
     await prisma.$connect()
     

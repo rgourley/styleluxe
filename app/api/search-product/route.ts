@@ -1,7 +1,4 @@
 import { NextResponse } from 'next/server'
-import { searchAmazonProduct } from '@/lib/amazon-search'
-import { scrapeAmazonProductPage } from '@/lib/amazon-product-scraper'
-import { prisma } from '@/lib/prisma'
 
 // Force dynamic rendering to prevent build-time data collection
 export const dynamic = 'force-dynamic'
@@ -110,6 +107,11 @@ async function searchReddit(term: string): Promise<RedditPost[]> {
  */
 export async function POST(request: Request) {
   try {
+    // Lazy load dependencies to prevent build-time execution
+    const { searchAmazonProduct } = await import('@/lib/amazon-search')
+    const { scrapeAmazonProductPage } = await import('@/lib/amazon-product-scraper')
+    const { prisma } = await import('@/lib/prisma')
+    
     const { term } = await request.json()
 
     if (!term || typeof term !== 'string' || term.trim().length === 0) {

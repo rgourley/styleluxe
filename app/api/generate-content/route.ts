@@ -1,6 +1,4 @@
 import { NextResponse } from 'next/server'
-import { generateAndSaveContent } from '@/lib/generate-content'
-import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 
 // Force dynamic rendering to prevent build-time data collection
@@ -10,6 +8,10 @@ export const maxDuration = 60 // 60 seconds for Vercel Pro, 10s default on free 
 
 export async function POST(request: Request) {
   try {
+    // Lazy load dependencies to prevent build-time execution
+    const { generateAndSaveContent } = await import('@/lib/generate-content')
+    const { prisma } = await import('@/lib/prisma')
+    
     const { productId, generateAll } = await request.json()
 
     if (generateAll) {

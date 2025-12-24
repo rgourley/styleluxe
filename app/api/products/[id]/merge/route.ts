@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
 
 // Force dynamic rendering to prevent build-time data collection
 export const dynamic = 'force-dynamic'
@@ -14,6 +13,9 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Lazy load prisma to prevent build-time execution
+    const { prisma } = await import('@/lib/prisma')
+    
     const { id: duplicateId } = await params
     const body = await request.json()
     const { targetProductId } = body

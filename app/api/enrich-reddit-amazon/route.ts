@@ -1,12 +1,14 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { searchAmazonProduct } from '@/lib/amazon-search'
 
 // Force dynamic rendering to prevent build-time data collection
 export const dynamic = 'force-dynamic'
 
 export async function POST() {
   try {
+    // Lazy load dependencies to prevent build-time execution
+    const { prisma } = await import('@/lib/prisma')
+    const { searchAmazonProduct } = await import('@/lib/amazon-search')
+    
     // Find all Reddit-only products
     const redditProducts = await prisma.product.findMany({
       where: {

@@ -1,8 +1,4 @@
 import { NextResponse } from 'next/server'
-import { processAmazonData } from '../../../../scripts/collect-amazon'
-import { weeklyRedditScan } from '../../../../scripts/weekly-reddit-scan'
-import { matchAmazonToReddit } from '../../../../scripts/match-amazon-to-reddit'
-import { recalculateAllScores } from '@/lib/trending-products'
 
 // Force dynamic rendering to prevent build-time data collection
 export const dynamic = 'force-dynamic'
@@ -37,6 +33,12 @@ export async function GET(request: Request) {
   }
 
   try {
+    // Lazy load all dependencies to prevent build-time execution
+    const { processAmazonData } = await import('../../../../scripts/collect-amazon')
+    const { weeklyRedditScan } = await import('../../../../scripts/weekly-reddit-scan')
+    const { matchAmazonToReddit } = await import('../../../../scripts/match-amazon-to-reddit')
+    const { recalculateAllScores } = await import('@/lib/trending-products')
+    
     console.log(`[CRON] Starting automatic data collection at ${new Date().toISOString()}`)
     
     // Step 1: Collect Amazon Movers & Shakers

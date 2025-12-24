@@ -50,7 +50,8 @@ function checkFile(filePath: string) {
     }
     
     // Check for script imports that might execute during build
-    const scriptImports = content.match(/import.*from ['"]@\/scripts\//g)
+    // Check both @/scripts/ and relative paths like ../../../../scripts/
+    const scriptImports = content.match(/import.*from ['"](@\/scripts\/|\.\.\/.*scripts\/)/g)
     if (scriptImports) {
       scriptImports.forEach((match, index) => {
         const lineNum = content.split('\n').findIndex(l => l.includes(match)) + 1

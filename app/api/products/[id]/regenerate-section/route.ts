@@ -1,7 +1,4 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
-import { generateProductContent } from '@/lib/generate-content'
-import { searchRedditForQuotes } from '@/lib/search-reddit-quotes'
 
 // Force dynamic rendering to prevent build-time data collection
 export const dynamic = 'force-dynamic'
@@ -14,6 +11,11 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Lazy load dependencies to prevent build-time execution
+    const { prisma } = await import('@/lib/prisma')
+    const { generateProductContent } = await import('@/lib/generate-content')
+    const { searchRedditForQuotes } = await import('@/lib/search-reddit-quotes')
+    
     const { id } = await params
     const { section } = await request.json()
 

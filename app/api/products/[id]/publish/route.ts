@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 
 // Force dynamic rendering to prevent build-time data collection
@@ -10,6 +9,9 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Lazy load prisma to prevent build-time execution
+    const { prisma } = await import('@/lib/prisma')
+    
     const { id } = await params
 
     // Verify product and content exist

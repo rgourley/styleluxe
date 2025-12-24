@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
 
 // Force dynamic rendering to prevent build-time data collection
 export const dynamic = 'force-dynamic'
@@ -59,6 +58,9 @@ function calculateScoreFromSignals(signals: any[]): number {
 
 export async function POST() {
   try {
+    // Lazy load prisma to prevent build-time execution
+    const { prisma } = await import('@/lib/prisma')
+    
     const products = await prisma.product.findMany({
       include: {
         trendSignals: true,

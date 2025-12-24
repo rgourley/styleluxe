@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
 
 // Force dynamic rendering to prevent build-time data collection
 export const dynamic = 'force-dynamic'
@@ -8,6 +7,9 @@ export const revalidate = 30
 
 export async function GET(request: Request) {
   try {
+    // Lazy load prisma to prevent build-time execution
+    const { prisma } = await import('@/lib/prisma')
+    
     const { searchParams } = new URL(request.url)
     const status = searchParams.get('status') // FLAGGED, DRAFT, PUBLISHED
     const source = searchParams.get('source') // COMBINED, AMAZON_ONLY, REDDIT_ONLY
