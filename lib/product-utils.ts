@@ -20,13 +20,10 @@ export function getTrendLabel(score: number): string {
 export function formatTrendDuration(signals: any[]): string {
   if (!signals || signals.length === 0) return ''
   
-  const oldest = signals[signals.length - 1]?.detectedAt
-  if (!oldest) return ''
-  
-  const days = Math.floor((Date.now() - new Date(oldest).getTime()) / (1000 * 60 * 60 * 24))
-  if (days === 0) return 'Trending today'
-  if (days === 1) return 'Trending for 1 day'
-  return `Trending for ${days} days`
+  // This function should rarely be called since daysTrending is usually pre-calculated
+  // Return a generic message to avoid hydration mismatches from Date.now() differences
+  // The actual daysTrending should come from the database via getTimelineText()
+  return 'Trending'
 }
 
 export function getSalesSpikePercent(signals: any[]): string | null {

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { generateAndSaveContent } from '@/lib/generate-content'
 import { prisma } from '@/lib/prisma'
+import { revalidatePath, revalidateTag } from 'next/cache'
 
 // Extend timeout for content generation (can take 30-60 seconds)
 export const maxDuration = 60 // 60 seconds for Vercel Pro, 10s default on free tier
@@ -78,9 +79,22 @@ export async function POST(request: Request) {
 
     console.log(`Content generation completed for product: ${productId}`)
 
+    // Get the product to find the slug for cache invalidation
+    const updatedProduct = await prisma.product.findUnique({
+      where: { id: productId },
+      include: { content: { select: { slug: true } } },
+    })
+
+    // Invalidate cache for this product page
+    if (updatedProduct?.content?.slug) {
+      revalidatePath(`/products/${updatedProduct.content.slug}`)
+      revalidateTag(`product-${updatedProduct.content.slug}`)
+    }
+
     return NextResponse.json({
       success: true,
       message: 'Content generated successfully',
+      slug: updatedProduct?.content?.slug,
     })
   } catch (error) {
     console.error('Content generation error:', error)

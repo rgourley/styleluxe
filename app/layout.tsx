@@ -26,15 +26,33 @@ export const metadata: Metadata = {
     "hot beauty products",
     "trending beauty items",
   ].join(", "),
+  icons: {
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: 'any' },
+    ],
+    apple: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+    ],
+  },
   openGraph: {
     title: "Trending Beauty Products - What's Going Viral",
     description: "Discover the hottest trending beauty products on TikTok, Instagram, Reddit, and Amazon. Real data, honest reviews.",
     type: "website",
+    images: [
+      {
+        url: "/images/unsplash-image-4nulm-JUYFo.webp",
+        width: 1200,
+        height: 630,
+        alt: "Trending Beauty Products",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Trending Beauty Products",
     description: "Discover what's going viral on TikTok, Instagram, Reddit, and Amazon",
+    images: ["/images/unsplash-image-4nulm-JUYFo.webp"],
   },
 };
 

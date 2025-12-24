@@ -386,23 +386,33 @@ ${amazonReviewContext}${hasRedditData ? redditQuotesText : '\n**Note:** No Reddi
 - Ask rhetorical questions: "Worth ${priceText}? Depends on your expectations."
 - Use real numbers when possible
 - Short paragraphs (2-4 sentences max)
-- **VARY YOUR OPENING HOOKS** - Don't always start with "my Instagram DMs are full" or "just jumped X% in sales". Mix it up:
-  * "Okay so this [product] is having a moment right now..."
-  * "I've been getting questions about [product] all week..."
-  * "This [product] is getting more popular on Amazon and Reddit skincare threads - here's what's happening..."
-  * "The [product] is trending hard - here's what's actually happening..."
-  * "Everyone's talking about [product] - let me break down what's real vs. marketing..."
-  * Use the sales jump data naturally, but don't make it the opening sentence every time
+- **CRITICAL: VARY YOUR WRITING STYLE - Each review should feel unique. Avoid repetitive phrases like:**
+  * ❌ "I've been getting questions about [product] all week" (overused)
+  * ❌ "hitting that sweet spot" (overused)
+  * ❌ "makes sense" (overused)
+  * ❌ "all week" (overused pattern)
+- **VARY YOUR OPENING HOOKS - Use different styles for each product:**
+  * Start with a specific observation: "The reviews for ${product.name} are interesting - people either love it or hate it, and there's a pattern."
+  * Start with context: "Aluminum-free deodorants are having a moment, and ${product.name} is one of the ones people keep asking about."
+  * Start with a question: "Is ${product.name} worth the hype? The data says yes, but the reviews tell a more nuanced story."
+  * Start with a trend: "Natural deodorants are trending, and ${product.name} is getting attention for a specific reason."
+  * Start with a comparison: "Compared to other products in this category, ${product.name} stands out because..."
+  * Start with user behavior: "People are buying ${product.name} in droves right now, and after reading through hundreds of reviews, here's what's actually happening."
+  * Start with a specific detail: "The ${product.name} has a 4.3-star rating from 13,000+ reviews, but the 1-star reviews reveal something important."
+  * Start with timing: "Right now, ${product.name} is trending because [specific reason based on data]."
+- **Vary sentence structure** - Don't always use the same sentence patterns. Mix short and long sentences.
+- **Vary paragraph structure** - Some paragraphs can be 1 sentence, others 3-4. Don't make them all the same length.
 - No exclamation marks unless genuinely surprising
 - NO marketing language: ❌ "game-changing", "revolutionary", "miracle", "transforms"
 - NO generic intros: ❌ "In the world of skincare..."
 - NO filler words: ❌ "very unique", "really amazing"
+- NO repetitive phrases: ❌ "all week", "makes sense", "sweet spot", "getting questions"
 
 **Generate these sections in JSON format:**
 
 {
   "hook": "2-sentence hook for homepage card. Include concrete data if available. ${hasMoversShakersData ? `Example: 'The ${product.name} jumped significantly in Amazon sales and currently has ${starRating || 'X'} stars from ${totalReviewCount ? totalReviewCount.toLocaleString() : 'X'} verified buyers. Here's what's actually happening.'` : `Example: 'The ${product.name} is getting more popular on Amazon and Reddit skincare threads, with ${starRating || 'X'} stars from ${totalReviewCount ? totalReviewCount.toLocaleString() : 'X'} verified buyers. Here's what's actually happening.'`} **IMPORTANT: Only mention 'Movers & Shakers' or specific sales jump percentages if that data is actually provided in the context. If there's no specific sales jump data, be vague and say 'getting more popular on Amazon' or 'trending on Amazon and Reddit' instead.**",
-  "whyTrending": "Why it's trending right now (2-3 paragraphs, explain the viral moment with actual data). ${hasRedditData ? 'Include Reddit discussions, upvote counts, post titles if available.' : 'Focus on Amazon review trends and popularity signals.'} **CRITICAL: ${hasMoversShakersData ? 'You can mention specific sales jump percentages or Movers & Shakers if that data is in the context.' : 'DO NOT mention "Movers & Shakers" or specific sales jump percentages unless that exact data is provided. Instead, use vague language like "getting more popular on Amazon", "trending on Amazon and Reddit skincare threads", or "gaining traction".'} Vary your opening - don't always start with sales data. Mix it up with different opening styles like 'Okay so this is having a moment...', 'I've been getting questions about this...', 'This is getting more popular on Amazon and Reddit...', etc.**",
+  "whyTrending": "Why it's trending right now (2-3 paragraphs, explain the viral moment with actual data). ${hasRedditData ? 'Include Reddit discussions, upvote counts, post titles if available.' : 'Focus on Amazon review trends and popularity signals.'} **CRITICAL: ${hasMoversShakersData ? 'You can mention specific sales jump percentages or Movers & Shakers if that data is in the context.' : 'DO NOT mention "Movers & Shakers" or specific sales jump percentages unless that exact data is provided. Instead, use vague language like "getting more popular on Amazon", "trending on Amazon and Reddit skincare threads", or "gaining traction".'} **VARY YOUR OPENING - Use a different style for each product. Avoid repetitive phrases like 'I've been getting questions about this all week' or 'hitting that sweet spot'. Instead, try: starting with a specific data point, asking a question, making an observation, or describing the trend context. Each review should feel fresh and unique.**",
   "whatItDoes": "What it actually does in plain language (2 paragraphs, translate marketing speak)",
   "theGood": "The Good section - specific positives from real use. MUST use markdown list format with each item on its own line starting with '- ' (dash space). ${hasRedditData ? 'Mix Reddit comments with Amazon review themes.' : 'Based on Amazon reviews, people consistently mention...'} Use specific details like '87% of reviewers with sensitive skin mentioned no irritation' or 'works on foundation and light mascara'. Reference as 'Amazon reviewers' or 'verified buyers'.",
   "theBad": "The Bad section - honest critiques. MUST use markdown list format with each item on its own line starting with '- ' (dash space). ${hasRedditData ? 'Acknowledge flaws - use negative Reddit quotes naturally.' : 'Common complaints from verified buyers include...'} Be specific: 'struggles with waterproof mascara' not just 'doesn't remove makeup'.",
@@ -422,14 +432,16 @@ ${amazonReviewContext}${hasRedditData ? redditQuotesText : '\n**Note:** No Reddi
   ]`}
 }
 
-**Example opening styles (for whyTrending) - VARY THESE, don't use the same one every time:**
-- ${hasMoversShakersData ? `"Okay so this ${product.name} is having a moment right now. It just jumped ${productContext.includes('%') ? productContext.match(/\d+%/)?.[0] || 'significantly' : 'significantly'} in Amazon sales, and people are asking if it's worth the hype."` : `"Okay so this ${product.name} is having a moment right now. It's getting more popular on Amazon and Reddit skincare threads, and people are asking if it's worth the hype."`}
-- ${hasMoversShakersData ? `"I've been getting questions about ${product.name} all week. It hit Amazon's Movers & Shakers list, which means people are buying it faster than usual."` : `"I've been getting questions about ${product.name} all week. It's trending on Amazon and Reddit skincare communities, which means people are talking about it."`}
-- ${hasMoversShakersData ? `"The ${product.name} is trending hard - here's what's actually happening. Sales jumped ${productContext.includes('%') ? productContext.match(/\d+%/)?.[0] || 'significantly' : 'significantly'}, and the reviews are telling an interesting story."` : `"The ${product.name} is trending hard - here's what's actually happening. It's gaining traction on Amazon and Reddit skincare threads, and the reviews are telling an interesting story."`}
-- "Everyone's talking about ${product.name} right now. Let me break down what's real vs. marketing, because this one's getting a lot of attention."
-- ${hasMoversShakersData ? `"So ${product.name} just jumped ${productContext.includes('%') ? productContext.match(/\d+%/)?.[0] || 'significantly' : 'significantly'} in Amazon sales. Here's why that's happening and whether it's actually worth it."` : `"So ${product.name} is getting more popular on Amazon and Reddit skincare threads. Here's why that's happening and whether it's actually worth it."`}
+**Example opening styles (for whyTrending) - USE THESE AS INSPIRATION, but create your own unique version each time:**
+- Start with data: "${product.name} has ${totalReviewCount ? totalReviewCount.toLocaleString() : 'thousands of'} reviews on Amazon, and ${starRating ? `${starRating} stars` : 'the rating'} tells part of the story. But the real trend is happening because..."
+- Start with a question: "Why is ${product.name} trending right now? The answer isn't just marketing - it's actually addressing a specific problem people have."
+- Start with context: "Natural deodorants are having a moment, and ${product.name} is one of the products people keep coming back to. Here's why."
+- Start with comparison: "Compared to other products in this category, ${product.name} is getting attention for a specific reason: [use actual data from reviews/trends]."
+- Start with user behavior: "People are buying ${product.name} right now, and after analyzing the reviews, there's a clear pattern emerging."
+- Start with a specific detail: "The ${product.name} has ${starRating ? `${starRating} stars` : 'strong ratings'} from ${totalReviewCount ? totalReviewCount.toLocaleString() : 'thousands of'} reviews, but what's interesting is what the verified buyers are saying."
+- Start with timing: "Right now, ${product.name} is trending because [specific reason based on the data provided - Reddit discussions, Amazon sales patterns, review themes, etc.]."
 
-**IMPORTANT: Rotate through different opening styles. Don't default to 'Instagram DMs' every time.**
+**CRITICAL: Create a unique opening for each product. Don't reuse the same phrases. Avoid: "all week", "makes sense", "sweet spot", "getting questions". Write each review as if it's the first time you're writing about this product.**
 
 Return ONLY valid JSON, no markdown formatting, no code blocks.`
 
@@ -747,6 +759,9 @@ export async function generateAndSaveContent(productId: string): Promise<void> {
       status: 'DRAFT',
     },
   })
+
+  // Note: Cache invalidation happens in the API route that calls this function
+  // This allows the route handler to use revalidatePath/revalidateTag
 
   const totalTime = Date.now() - startTime
   console.log(`✅ Content generated and saved in ${(totalTime / 1000).toFixed(1)}s!`)

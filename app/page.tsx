@@ -7,19 +7,8 @@ import {
 import Link from 'next/link'
 import ProductCard from '@/components/ProductCard'
 
-// Dynamic header variations
-const headerVariations = [
-  "Trending Beauty Products Right Now",
-  "What's Going Viral This Week",
-  "This Week's Hottest Beauty Finds",
-  "Beauty Products Everyone's Talking About",
-]
-
-function getHeaderVariation() {
-  // Pick based on day of week for consistency
-  const dayOfWeek = new Date().getDay()
-  return headerVariations[dayOfWeek % headerVariations.length]
-}
+// Fixed header for consistency (no date dependency to avoid hydration issues)
+const headerText = "Trending Beauty Products Right Now"
 
 // Revalidate homepage every 60 seconds to keep it fresh
 export const revalidate = 60
@@ -28,6 +17,25 @@ export const revalidate = 60
 export const metadata = {
   title: "Trending Beauty Products Right Now - What's Going Viral",
   description: "Discover the hottest trending beauty products on TikTok, Instagram, Reddit, and Amazon. Real data, honest reviews, no hype.",
+  openGraph: {
+    title: "Trending Beauty Products Right Now - What's Going Viral",
+    description: "Discover the hottest trending beauty products on TikTok, Instagram, Reddit, and Amazon. Real data, honest reviews, no hype.",
+    type: "website",
+    images: [
+      {
+        url: "/images/unsplash-image-4nulm-JUYFo.webp",
+        width: 1200,
+        height: 630,
+        alt: "Trending Beauty Products",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Trending Beauty Products Right Now",
+    description: "Discover the hottest trending beauty products on TikTok, Instagram, Reddit, and Amazon.",
+    images: ["/images/unsplash-image-4nulm-JUYFo.webp"],
+  },
 }
 
 export default async function Home({
@@ -58,12 +66,7 @@ export default async function Home({
     showSections = false
   }
   
-  const headerText = getHeaderVariation()
-  const currentDate = new Date().toLocaleDateString('en-US', { 
-    month: 'long', 
-    day: 'numeric', 
-    year: 'numeric' 
-  })
+  // Removed currentDate to avoid hydration mismatch (timezone differences)
 
   // Get site URL for structured data
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 
@@ -196,7 +199,7 @@ export default async function Home({
             Real data from multiple platforms. Honest reviews. No hype.
           </p>
           <p className="text-sm text-[#8b8b8b] mb-8 tracking-wide uppercase letter-spacing-wider">
-            Updated {currentDate}
+            Updated daily
           </p>
         </div>
 
@@ -288,27 +291,42 @@ export default async function Home({
             )}
 
             {/* How We Track Trends - SEO Content Section (Lower on page) */}
-            <section className="mb-20 max-w-[920px] mx-auto">
-              <div className="bg-white rounded-2xl p-10 md:p-12 mb-12 shadow-sm border border-[#e5e5e5]">
-                <h2 className="text-3xl md:text-4xl font-bold text-[#1a1a1a] mb-6 tracking-tight">How We Track Trending Beauty Products</h2>
-                <div className="prose prose-lg max-w-none text-[#4a4a4a] space-y-5 leading-relaxed">
-                  <p>
-                    We monitor multiple platforms to identify which beauty products are trending right now. Our system tracks:
-                  </p>
-                  <ul className="list-disc list-inside space-y-2 ml-4">
-                    <li><strong>TikTok</strong> - Products going viral in beauty and skincare videos</li>
-                    <li><strong>Instagram</strong> - Beauty influencers and hashtag trends</li>
-                    <li><strong>Reddit</strong> - Real discussions in r/SkincareAddiction, r/MakeupAddiction, and other beauty communities</li>
-                    <li><strong>Amazon</strong> - Sales spikes, Movers & Shakers lists, and review trends</li>
-                  </ul>
-                  <p>
-                    When a product shows significant activity across these platforms, we create detailed reviews that cut through the marketing hype. 
-                    Our reviews combine real user experiences, verified purchase data, and honest assessments of whether trending products are actually worth it.
-                  </p>
-                  <p>
-                    Looking for the hottest beauty products right now? You've come to the right place. We update our trending products list daily 
-                    so you can discover viral beauty products before they sell out.
-                  </p>
+            <section className="mb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="bg-white rounded-2xl shadow-sm border border-[#e5e5e5] overflow-hidden">
+                <div className="grid md:grid-cols-2 gap-0">
+                  {/* Image on Left */}
+                  <div className="relative w-full min-h-[400px] md:min-h-[600px] bg-[#f5f5f5] overflow-hidden">
+                    <img 
+                      src="/images/unsplash-image-4nulm-JUYFo.webp" 
+                      alt="Beauty trends tracking - woman with blonde hair" 
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                  </div>
+                  
+                  {/* Content on Right */}
+                  <div className="p-10 md:p-12">
+                    <h2 className="text-3xl md:text-4xl font-bold text-[#1a1a1a] mb-6 tracking-tight">How We Track Trending Beauty Products</h2>
+                    <div className="prose prose-lg max-w-none text-[#4a4a4a] space-y-5 leading-relaxed">
+                      <p>
+                        We monitor multiple platforms to identify which beauty products are trending right now. Our system tracks:
+                      </p>
+                      <ul className="list-disc list-inside space-y-2 ml-4">
+                        <li><strong>TikTok</strong> - Products going viral in beauty and skincare videos</li>
+                        <li><strong>Instagram</strong> - Beauty influencers and hashtag trends</li>
+                        <li><strong>Reddit</strong> - Real discussions in r/SkincareAddiction, r/MakeupAddiction, and other beauty communities</li>
+                        <li><strong>Amazon</strong> - Sales spikes, Movers & Shakers lists, and review trends</li>
+                      </ul>
+                      <p>
+                        When a product shows significant activity across these platforms, we create detailed reviews that cut through the marketing hype. 
+                        Our reviews combine real user experiences, verified purchase data, and honest assessments of whether trending products are actually worth it.
+                      </p>
+                      <p>
+                        Looking for the hottest beauty products right now? You've come to the right place. We update our trending products list daily 
+                        so you can discover viral beauty products before they sell out.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </section>

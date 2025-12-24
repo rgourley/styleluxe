@@ -117,13 +117,15 @@ export async function getProductBySlug(slug: string): Promise<ProductWithRelatio
       }
 
       try {
-        // Only allow PUBLISHED products on the public site
+        // Allow PUBLISHED and DRAFT products (DRAFT for preview before publishing)
         const product = await prisma.product.findFirst({
           where: {
             content: {
               slug: slug,
             },
-            status: 'PUBLISHED', // Only show published products on public site
+            status: {
+              in: ['PUBLISHED', 'DRAFT'], // Allow DRAFT for preview
+            },
           },
           include: {
             trendSignals: {
@@ -169,7 +171,7 @@ export async function getProductBySlug(slug: string): Promise<ProductWithRelatio
     },
     [`product-${slug}`],
     {
-      revalidate: 300, // Cache for 5 minutes
+      revalidate: 60, // Cache for 60 seconds (cache invalidation on publish/generate will override this)
       tags: ['products', `product-${slug}`],
     }
   )()

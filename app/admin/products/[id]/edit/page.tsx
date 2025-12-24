@@ -378,59 +378,62 @@ export default function EditProductPage() {
   }
 
   const handleGenerateContent = async () => {
-    // Save product name first if it was edited
-    if (product && editedProductName.trim() !== product.name) {
-      setMessage('Saving product name...')
-      await handleSaveProductName()
-      // Wait a moment for the save to complete
-      await new Promise(resolve => setTimeout(resolve, 500))
-    }
-
-    // Save editor notes if they were changed (before generating, so Claude can use them)
-    if (editorNotes.trim() && (!content || content.editorNotes !== editorNotes.trim())) {
-      setMessage('Saving editor notes...')
-      try {
-        await handleSaveEditorNotes()
-        await new Promise(resolve => setTimeout(resolve, 300))
-      } catch (error) {
-        console.error('Error saving editor notes:', error)
-        // Continue anyway
-      }
-    }
-
-    // Save Reddit trending level if it was changed
-    if (redditHotness !== null && (!content || content.redditHotness !== redditHotness)) {
-      setMessage('Saving Reddit trending level...')
-      try {
-        await handleSaveRedditHotness(redditHotness)
-        await new Promise(resolve => setTimeout(resolve, 300))
-      } catch (error) {
-        console.error('Error saving Reddit hotness:', error)
-        // Continue anyway
-      }
-    }
-
-    // Save Google Trends URL if it was changed
-    if (googleTrendsUrl.trim() && (!content || (content.googleTrendsData as any)?.url !== googleTrendsUrl.trim())) {
-      setMessage('Saving Google Trends URL...')
-      try {
-        await handleSaveGoogleTrends()
-        await new Promise(resolve => setTimeout(resolve, 300))
-      } catch (error) {
-        console.error('Error saving Google Trends:', error)
-        // Continue anyway
-      }
-    }
-
+    // Disable button immediately to prevent double clicks
+    if (generating) return
     setGenerating(true)
-    setMessage('Searching Reddit for quotes...')
     
-    // Small delay to show the message
-    await new Promise(resolve => setTimeout(resolve, 500))
-    
-    setMessage('Generating content with Claude AI (this may take 30-60 seconds)...')
-
     try {
+      // Save product name first if it was edited
+      if (product && editedProductName.trim() !== product.name) {
+        setMessage('Saving product name...')
+        await handleSaveProductName()
+        // Wait a moment for the save to complete
+        await new Promise(resolve => setTimeout(resolve, 500))
+      }
+
+      // Save editor notes if they were changed (before generating, so Claude can use them)
+      if (editorNotes.trim() && (!content || content.editorNotes !== editorNotes.trim())) {
+        setMessage('Saving editor notes...')
+        try {
+          await handleSaveEditorNotes()
+          await new Promise(resolve => setTimeout(resolve, 300))
+        } catch (error) {
+          console.error('Error saving editor notes:', error)
+          // Continue anyway
+        }
+      }
+
+      // Save Reddit trending level if it was changed
+      if (redditHotness !== null && (!content || content.redditHotness !== redditHotness)) {
+        setMessage('Saving Reddit trending level...')
+        try {
+          await handleSaveRedditHotness(redditHotness)
+          await new Promise(resolve => setTimeout(resolve, 300))
+        } catch (error) {
+          console.error('Error saving Reddit hotness:', error)
+          // Continue anyway
+        }
+      }
+
+      // Save Google Trends URL if it was changed
+      if (googleTrendsUrl.trim() && (!content || (content.googleTrendsData as any)?.url !== googleTrendsUrl.trim())) {
+        setMessage('Saving Google Trends URL...')
+        try {
+          await handleSaveGoogleTrends()
+          await new Promise(resolve => setTimeout(resolve, 300))
+        } catch (error) {
+          console.error('Error saving Google Trends:', error)
+          // Continue anyway
+        }
+      }
+
+      setMessage('Searching Reddit for quotes...')
+      
+      // Small delay to show the message
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      setMessage('Generating content with Claude AI (this may take 30-60 seconds)...')
+
       const response = await fetch('/api/generate-content', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -441,9 +444,10 @@ export default function EditProductPage() {
 
       if (data.success) {
         setMessage('✅ Content generated! Refreshing...')
-        setTimeout(() => {
-          fetchProduct()
-        }, 1000)
+        // Wait a bit longer for database to be fully updated
+        await new Promise(resolve => setTimeout(resolve, 1500))
+        await fetchProduct()
+        setMessage('✅ Content generated! You can now view the page or publish it.')
       } else {
         setMessage(`❌ Failed: ${data.message}`)
       }

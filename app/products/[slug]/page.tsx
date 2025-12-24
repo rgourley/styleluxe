@@ -239,8 +239,8 @@ export async function generateStaticParams() {
   }
 }
 
-// Revalidate product pages every 5 minutes
-export const revalidate = 300
+// Revalidate product pages every 60 seconds (cache invalidation on publish/generate will override this)
+export const revalidate = 60
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
@@ -414,6 +414,18 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       </header>
 
       <article className="max-w-[920px] mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
+        {/* Preview Banner for DRAFT products */}
+        {product.status === 'DRAFT' && (
+          <div className="mb-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-r-lg">
+            <p className="text-sm text-yellow-800">
+              <strong>Preview Mode:</strong> This product is in DRAFT status and not yet published. 
+              <Link href={`/admin/products/${product.id}/edit`} className="ml-2 underline font-medium">
+                Edit & Publish →
+              </Link>
+            </p>
+          </div>
+        )}
+        
         {/* Breadcrumb Navigation */}
         <nav className="mb-8" aria-label="Breadcrumb">
           <ol className="flex items-center space-x-2 text-sm text-[#6b6b6b]">
@@ -497,14 +509,14 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                   </div>
                 )}
               </div>
-
-              {/* One-Sentence Verdict */}
-              <div className="border-l-4 border-[#8b5cf6] pl-6 py-4 bg-white rounded-r-lg shadow-sm">
-                <p className="text-[#4a4a4a] font-medium italic leading-relaxed">
-                  "{verdict}"
-                </p>
-              </div>
             </div>
+          </div>
+
+          {/* One-Sentence Verdict - Full Width */}
+          <div className="border-l-4 border-[#8b5cf6] pl-6 py-4 bg-white rounded-r-lg shadow-sm">
+            <p className="text-[#4a4a4a] font-medium italic leading-relaxed">
+              "{verdict}"
+            </p>
           </div>
         </section>
 
