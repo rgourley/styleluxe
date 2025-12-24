@@ -105,24 +105,26 @@ async function backfillAgeDecay() {
 
 // Only run if executed directly via tsx (not when imported as a module)
 // This prevents execution during Next.js build/import phase
-if (typeof process !== 'undefined' && 
-    process.argv && 
-    process.argv[1] && 
-    (process.argv[1].endsWith('backfill-age-decay.ts') || 
-     process.argv[1].includes('backfill-age-decay'))) {
-  // Only execute if explicitly run, not during import
-  const isDirectExecution = process.argv[0]?.includes('tsx') || process.argv[0]?.includes('node')
-  if (isDirectExecution) {
-    backfillAgeDecay()
-      .then((result) => {
-        console.log(`\n✅ All done!`)
-        process.exit(0)
-      })
-      .catch((error) => {
-        console.error('❌ Fatal error:', error)
-        process.exit(1)
-      })
-  }
+// Check multiple conditions to ensure we're actually running the script directly
+const isBuildContext = process.env.NEXT_PHASE || (process.env.NODE_ENV === 'production' && !process.argv[1]?.includes('tsx'))
+const isDirectScriptExecution = 
+  !isBuildContext &&
+  typeof process !== 'undefined' && 
+  process.argv && 
+  process.argv[1] && 
+  (process.argv[1].endsWith('backfill-age-decay.ts') || 
+   (process.argv[1].includes('backfill-age-decay') && process.argv[0]?.includes('tsx')))
+
+if (isDirectScriptExecution) {
+  backfillAgeDecay()
+    .then((result) => {
+      console.log(`\n✅ All done!`)
+      process.exit(0)
+    })
+    .catch((error) => {
+      console.error('❌ Fatal error:', error)
+      process.exit(1)
+    })
 }
 
 export { backfillAgeDecay }
