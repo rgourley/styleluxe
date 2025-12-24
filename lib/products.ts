@@ -13,6 +13,10 @@ type ProductWithRelations = {
   amazonUrl: string | null
   category: string | null
   trendScore: number
+  baseScore: number | null
+  currentScore: number | null
+  peakScore: number | null
+  daysTrending: number | null
   status: string
   publishedAt: Date | null
   createdAt: Date
