@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server'
-import { scrapeProductData } from '../../../scripts/scrape-amazon-product-data'
 
 // Force dynamic rendering to prevent build-time data collection
 export const dynamic = 'force-dynamic'
 
 export async function POST() {
   try {
+    // Lazy load script to prevent build-time execution
+    const { scrapeProductData } = await import('../../../scripts/scrape-amazon-product-data')
+    
     console.log('Starting Amazon product data scraping...')
     
     // Run the scraping script
