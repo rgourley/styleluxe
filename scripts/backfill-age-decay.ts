@@ -7,10 +7,13 @@
  *   tsx scripts/backfill-age-decay.ts
  */
 
-import { prisma } from '../lib/prisma'
-import { calculateCurrentScore, calculateDaysTrending, updatePeakScore } from '../lib/age-decay'
-
+// Lazy load imports to prevent execution during build
 async function backfillAgeDecay() {
+  // Import only when function is called, not during module load
+  const prismaModule = await import('../lib/prisma')
+  const ageDecayModule = await import('../lib/age-decay')
+  const prisma = prismaModule.prisma
+  const { calculateCurrentScore, calculateDaysTrending, updatePeakScore } = ageDecayModule
   console.log('🔄 Starting age decay backfill...')
   console.log(`Time: ${new Date().toISOString()}\n`)
 

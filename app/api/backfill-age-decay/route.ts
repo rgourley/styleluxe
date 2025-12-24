@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { backfillAgeDecay } from '@/scripts/backfill-age-decay'
 
 /**
  * API endpoint to backfill age decay data for existing products
@@ -7,6 +6,8 @@ import { backfillAgeDecay } from '@/scripts/backfill-age-decay'
 export async function POST(request: Request) {
   try {
     console.log('🔄 Starting age decay backfill via API...')
+    // Use dynamic import to prevent execution during build
+    const { backfillAgeDecay } = await import('@/scripts/backfill-age-decay')
     const result = await backfillAgeDecay()
     
     return NextResponse.json({
