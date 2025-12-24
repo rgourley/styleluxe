@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { recalculateAllScores } from '@/lib/trending-products'
 
 // Force dynamic rendering to prevent build-time data collection
 export const dynamic = 'force-dynamic'
@@ -10,6 +9,9 @@ export const dynamic = 'force-dynamic'
  */
 export async function POST(request: Request) {
   try {
+    // Lazy load to prevent build-time execution
+    const { recalculateAllScores } = await import('@/lib/trending-products')
+    
     // Optional: Add authentication/authorization check here
     // For Vercel Cron, this is automatically authenticated
     // For manual calls, you can add a secret check:
