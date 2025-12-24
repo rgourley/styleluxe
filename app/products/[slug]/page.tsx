@@ -656,7 +656,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               {/* Price & Buy */}
               <div className="mb-8">
                 {product.price && (
-                  <p className="text-4xl font-bold text-[#1a1a1a] mb-6 tracking-tight">
+                  <p className="text-4xl font-bold text-[#1a1a1a] mb-6 tracking-tight" style={{ fontFamily: 'var(--font-atkinson)' }}>
                     ${product.price.toFixed(2)}
                     {product.currency && product.currency !== 'USD' && ` ${product.currency}`}
                   </p>

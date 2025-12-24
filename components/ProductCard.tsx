@@ -112,7 +112,7 @@ export default function ProductCard({ product, priority = false }: { product: an
 
         {/* Price */}
         {product.price && (
-          <p className="text-2xl font-bold text-[#1a1a1a] mb-4 tracking-tight">
+          <p className="text-2xl font-bold text-[#1a1a1a] mb-4 tracking-tight" style={{ fontFamily: 'var(--font-atkinson)' }}>
             ${product.price.toFixed(2)}
           </p>
         )}
