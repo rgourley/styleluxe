@@ -183,3 +183,7 @@ curl -X POST https://your-domain.com/api/daily-update \
 
 Then add `CRON_SECRET` to your environment variables.
 
+
+
+
+

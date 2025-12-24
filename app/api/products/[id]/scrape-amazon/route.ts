@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { scrapeAmazonProductPage } from '@/lib/amazon-product-scraper'
 
+// Force dynamic rendering to prevent build-time data collection
+export const dynamic = 'force-dynamic'
+
 /**
  * Scrape Amazon data for a single product
  * Updates reviews, metadata, price, and image

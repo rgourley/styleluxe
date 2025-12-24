@@ -3,6 +3,8 @@ import { generateAndSaveContent } from '@/lib/generate-content'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 
+// Force dynamic rendering to prevent build-time data collection
+export const dynamic = 'force-dynamic'
 // Extend timeout for content generation (can take 30-60 seconds)
 export const maxDuration = 60 // 60 seconds for Vercel Pro, 10s default on free tier
 

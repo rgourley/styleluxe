@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { recalculateAllScores } from '@/lib/trending-products'
 
+// Force dynamic rendering to prevent build-time data collection
+export const dynamic = 'force-dynamic'
+
 /**
  * Daily update endpoint to recalculate age decay scores
  * Should be called daily at 6:00 AM via cron job or scheduled task

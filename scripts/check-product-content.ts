@@ -62,3 +62,7 @@ async function checkProductContent(productName: string) {
 const productName = process.argv[2] || 'Atoderm Shower Oil'
 checkProductContent(productName)
 
+
+
+
+

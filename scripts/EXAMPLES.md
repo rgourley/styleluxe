@@ -94,3 +94,7 @@ const response = await fetch(
 - Consider caching to avoid hitting APIs too frequently
 
 
+
+
+
+

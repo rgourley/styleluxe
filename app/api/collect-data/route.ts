@@ -5,6 +5,9 @@ import { matchAmazonToReddit } from '../../../scripts/match-amazon-to-reddit'
 import { processGoogleTrends } from '../../../scripts/collect-google-trends'
 import { enrichProducts } from '../../../scripts/enrich-products'
 
+// Force dynamic rendering to prevent build-time data collection
+export const dynamic = 'force-dynamic'
+
 // Import the name extraction function
 async function extractNamesFromUrls() {
   const { exec } = require('child_process')

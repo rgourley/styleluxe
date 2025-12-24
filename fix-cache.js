@@ -53,3 +53,7 @@ let fixed = content
 fs.writeFileSync('lib/trending-products.ts', fixed);
 console.log('Fixed!');
 
+
+
+
+

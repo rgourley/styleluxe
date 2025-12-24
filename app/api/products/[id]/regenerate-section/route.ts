@@ -3,6 +3,9 @@ import { prisma } from '@/lib/prisma'
 import { generateProductContent } from '@/lib/generate-content'
 import { searchRedditForQuotes } from '@/lib/search-reddit-quotes'
 
+// Force dynamic rendering to prevent build-time data collection
+export const dynamic = 'force-dynamic'
+
 /**
  * Regenerate a single section of product content using Claude AI
  */

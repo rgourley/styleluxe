@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+// Force dynamic rendering to prevent build-time data collection
+export const dynamic = 'force-dynamic'
 // Cache API responses for 30 seconds
 export const revalidate = 30
 

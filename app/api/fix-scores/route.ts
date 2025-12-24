@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+// Force dynamic rendering to prevent build-time data collection
+export const dynamic = 'force-dynamic'
+
 function calculateScoreFromSignals(signals: any[]): number {
   let amazonScore = 0
   let redditScore = 0

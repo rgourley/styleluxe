@@ -4,6 +4,9 @@ import { weeklyRedditScan } from '../../../../scripts/weekly-reddit-scan'
 import { matchAmazonToReddit } from '../../../../scripts/match-amazon-to-reddit'
 import { recalculateAllScores } from '@/lib/trending-products'
 
+// Force dynamic rendering to prevent build-time data collection
+export const dynamic = 'force-dynamic'
+
 /**
  * Cron job endpoint for automatic data collection
  * Can be called by:

@@ -68,3 +68,7 @@ After clicking a button, check:
 Your database connection string is trying to connect to `localhost:51214` but nothing is running there. You need a real database (Neon, Supabase, or local PostgreSQL).
 
 
+
+
+
+

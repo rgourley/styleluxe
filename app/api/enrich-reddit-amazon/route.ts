@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { searchAmazonProduct } from '@/lib/amazon-search'
 
+// Force dynamic rendering to prevent build-time data collection
+export const dynamic = 'force-dynamic'
+
 export async function POST() {
   try {
     // Find all Reddit-only products

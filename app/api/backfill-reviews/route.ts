@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { backfillReviews } from '@/scripts/backfill-reviews'
 
+// Force dynamic rendering to prevent build-time data collection
+export const dynamic = 'force-dynamic'
+
 /**
  * API endpoint to backfill reviews for existing products
  * POST /api/backfill-reviews

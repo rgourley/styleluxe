@@ -3,6 +3,9 @@ import { searchAmazonProduct } from '@/lib/amazon-search'
 import { scrapeAmazonProductPage } from '@/lib/amazon-product-scraper'
 import { prisma } from '@/lib/prisma'
 
+// Force dynamic rendering to prevent build-time data collection
+export const dynamic = 'force-dynamic'
+
 interface RedditPost {
   title: string
   selftext: string

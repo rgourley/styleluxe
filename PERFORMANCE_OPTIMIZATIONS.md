@@ -4,7 +4,7 @@ This document outlines all performance optimizations implemented for the StyleLu
 
 ## ✅ Implemented Optimizations
 
-### 1. Next.js Configuration (`next.config.ts`)
+### 1. Next.js Configuration (`next.config.ts`)Collagen Night Wrapping Mask
 
 - **Image Optimization**:
   - AVIF and WebP formats enabled
