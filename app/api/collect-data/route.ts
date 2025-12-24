@@ -1,9 +1,4 @@
 import { NextResponse } from 'next/server'
-import { processAmazonData } from '../../../scripts/collect-amazon'
-import { weeklyRedditScan } from '../../../scripts/weekly-reddit-scan'
-import { matchAmazonToReddit } from '../../../scripts/match-amazon-to-reddit'
-import { processGoogleTrends } from '../../../scripts/collect-google-trends'
-import { enrichProducts } from '../../../scripts/enrich-products'
 
 // Force dynamic rendering to prevent build-time data collection
 export const dynamic = 'force-dynamic'
@@ -26,6 +21,7 @@ async function extractNamesFromUrls() {
 
 export async function POST(request: Request) {
   try {
+    // Lazy load all script functions to prevent build-time execution
     const { source } = await request.json()
 
     let result
@@ -33,15 +29,18 @@ export async function POST(request: Request) {
     switch (source) {
       case 'reddit':
         // Weekly Reddit scan (extract product names from high-engagement posts)
+        const { weeklyRedditScan } = await import('../../../scripts/weekly-reddit-scan')
         await weeklyRedditScan()
         result = { success: true, message: 'Weekly Reddit scan completed' }
         break
       case 'match':
         // Match Amazon products to Reddit products
+        const { matchAmazonToReddit } = await import('../../../scripts/match-amazon-to-reddit')
         await matchAmazonToReddit()
         result = { success: true, message: 'Amazon-Reddit matching completed' }
         break
       case 'amazon':
+        const { processAmazonData } = await import('../../../scripts/collect-amazon')
         await processAmazonData()
         // Try to extract names from URLs for products with missing names
         try {
@@ -52,37 +51,43 @@ export async function POST(request: Request) {
         result = { success: true, message: 'Amazon data collection completed' }
         break
       case 'trends':
+        const { processGoogleTrends } = await import('../../../scripts/collect-google-trends')
         await processGoogleTrends()
         result = { success: true, message: 'Google Trends collection completed' }
         break
       case 'all':
         // NEW APPROACH:
         // 1. Amazon discovery (primary source)
-        await processAmazonData()
+        const { processAmazonData: processAmazonDataAll } = await import('../../../scripts/collect-amazon')
+        await processAmazonDataAll()
         
         // 2. Weekly Reddit scan (extract product names from high-engagement posts)
         try {
-          await weeklyRedditScan()
+          const { weeklyRedditScan: weeklyRedditScanAll } = await import('../../../scripts/weekly-reddit-scan')
+          await weeklyRedditScanAll()
         } catch (redditError) {
           console.error('Weekly Reddit scan failed (non-critical):', redditError)
         }
         
         // 3. Match Amazon products to Reddit products (simple check)
         try {
-          await matchAmazonToReddit()
+          const { matchAmazonToReddit: matchAmazonToRedditAll } = await import('../../../scripts/match-amazon-to-reddit')
+          await matchAmazonToRedditAll()
         } catch (matchError) {
           console.error('Amazon-Reddit matching failed (non-critical):', matchError)
         }
         
         // 4. Google Trends (optional)
         try {
-          await processGoogleTrends()
+          const { processGoogleTrends: processGoogleTrendsAll } = await import('../../../scripts/collect-google-trends')
+          await processGoogleTrendsAll()
         } catch (trendsError) {
           console.error('Google Trends failed (non-critical):', trendsError)
         }
         
         // 5. Final enrichment to combine any remaining products
         try {
+          const { enrichProducts } = await import('../../../scripts/enrich-products')
           await enrichProducts()
         } catch (enrichError) {
           console.error('Final enrichment failed (non-critical):', enrichError)
@@ -91,7 +96,8 @@ export async function POST(request: Request) {
         result = { success: true, message: 'Full collection completed: Amazon → Weekly Reddit Scan → Matching → Enrichment' }
         break
       case 'enrich':
-        await enrichProducts()
+        const { enrichProducts: enrichProductsEnrich } = await import('../../../scripts/enrich-products')
+        await enrichProductsEnrich()
         result = { success: true, message: 'Product enrichment completed' }
         break
       default:
