@@ -317,9 +317,9 @@ export default async function Home({
             {/* How We Track Trends - SEO Content Section (Lower on page) */}
             <section className="mb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="bg-white rounded-2xl shadow-sm border border-[#e5e5e5] overflow-hidden">
-                <div className="grid md:grid-cols-2 gap-0">
+                <div className="grid md:grid-cols-2 gap-0 md:items-stretch">
                   {/* Image on Left */}
-                  <div className="relative w-full h-full min-h-[400px] md:min-h-[600px] bg-[#f5f5f5] overflow-hidden">
+                  <div className="relative w-full h-full min-h-[400px] md:min-h-[600px] md:h-auto bg-[#f5f5f5] overflow-hidden">
                     <img 
                       src="/images/unsplash-image-4nulm-JUYFo.webp" 
                       alt="Beauty trends tracking - woman with blonde hair" 
@@ -329,7 +329,7 @@ export default async function Home({
                   </div>
                   
                   {/* Content on Right */}
-                  <div className="p-10 md:p-12">
+                  <div className="p-10 md:p-12 flex flex-col">
                     <h2 className="text-3xl md:text-4xl font-bold text-[#1a1a1a] mb-6 tracking-tight">How We Track Trending Beauty Products</h2>
                     <div className="prose prose-lg max-w-none text-[#4a4a4a] space-y-5 leading-relaxed">
                       <p>
