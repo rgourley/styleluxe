@@ -4,56 +4,91 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }
 
-// Check if we're in a build context where DATABASE_URL might not be available
-const isBuildContext = process.env.NEXT_PHASE === 'phase-production-build'
+// LAZY INITIALIZATION: Only create PrismaClient when actually accessed
+// This prevents build-time database connection attempts
+let _prisma: PrismaClient | undefined = undefined
 
-// Only create PrismaClient if we have DATABASE_URL or we're not in build context
-// During build without DATABASE_URL, we'll create a client that won't connect
-const shouldCreateClient = !isBuildContext || !!process.env.DATABASE_URL
-
-if (!shouldCreateClient) {
-  // During build without DATABASE_URL, we still need to export something
-  // but it will fail gracefully when methods are called
-  console.warn('⚠️  Building without DATABASE_URL - database operations will be unavailable')
-}
-
-export const prisma = globalForPrisma.prisma ?? (shouldCreateClient ? new PrismaClient({
-  log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL || 'file:./dev.db', // Fallback URL that won't be used if DATABASE_URL is missing
-    },
-  },
-}) : (() => {
-  // Create a minimal mock client for build time
-  // This will throw errors if actually used, but won't cause build failures
-  const mockClient = {
-    $connect: async () => {},
-    $disconnect: async () => {},
-    $on: () => {},
-    $use: () => {},
-  } as any
-  
-  // Add all Prisma model methods as no-ops that throw helpful errors
-  const models = ['product', 'productContent', 'trendSignal', 'review', 'productMetadata', 'productQuestion']
-  for (const model of models) {
-    mockClient[model] = {
-      findMany: async () => { throw new Error('Database not available during build') },
-      findUnique: async () => { throw new Error('Database not available during build') },
-      findFirst: async () => { throw new Error('Database not available during build') },
-      create: async () => { throw new Error('Database not available during build') },
-      update: async () => { throw new Error('Database not available during build') },
-      delete: async () => { throw new Error('Database not available during build') },
-      upsert: async () => { throw new Error('Database not available during build') },
-      count: async () => { throw new Error('Database not available during build') },
-      updateMany: async () => { throw new Error('Database not available during build') },
-      deleteMany: async () => { throw new Error('Database not available during build') },
-      createMany: async () => { throw new Error('Database not available during build') },
-    }
+function getPrismaClient(): PrismaClient {
+  // Return cached instance if available
+  if (globalForPrisma.prisma) {
+    return globalForPrisma.prisma
   }
   
-  return mockClient as PrismaClient
-})())
+  if (_prisma) {
+    return _prisma
+  }
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+  // Check if we're in a build context
+  const isBuildContext = process.env.NEXT_PHASE === 'phase-production-build'
+  const hasDatabaseUrl = !!process.env.DATABASE_URL
+
+  // During build without DATABASE_URL, create a no-op mock client
+  if (isBuildContext && !hasDatabaseUrl) {
+    const mockClient = {
+      $connect: async () => {},
+      $disconnect: async () => {},
+      $on: () => {},
+      $use: () => {},
+      $queryRaw: async () => [],
+      $executeRaw: async () => 0,
+      $transaction: async (fn: any) => fn(mockClient),
+    } as any
+    
+    // Add all Prisma model methods as no-ops
+    const models = ['product', 'productContent', 'trendSignal', 'review', 'productMetadata', 'productQuestion']
+    for (const model of models) {
+      mockClient[model] = {
+        findMany: async () => [],
+        findUnique: async () => null,
+        findFirst: async () => null,
+        create: async () => ({}),
+        update: async () => ({}),
+        delete: async () => ({}),
+        upsert: async () => ({}),
+        count: async () => 0,
+        updateMany: async () => ({ count: 0 }),
+        deleteMany: async () => ({ count: 0 }),
+        createMany: async () => ({ count: 0 }),
+      }
+    }
+    
+    _prisma = mockClient as PrismaClient
+    if (process.env.NODE_ENV !== 'production') {
+      globalForPrisma.prisma = _prisma
+    }
+    return _prisma
+  }
+
+  // Create real PrismaClient for runtime
+  _prisma = new PrismaClient({
+    log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
+    datasources: {
+      db: {
+        url: process.env.DATABASE_URL || 'file:./dev.db',
+      },
+    },
+  })
+
+  if (process.env.NODE_ENV !== 'production') {
+    globalForPrisma.prisma = _prisma
+  }
+
+  return _prisma
+}
+
+// Export a Proxy that lazily initializes the client only when methods are called
+// This ensures PrismaClient is never created during module evaluation (build time)
+export const prisma = new Proxy({} as PrismaClient, {
+  get(_target, prop) {
+    const client = getPrismaClient()
+    const value = (client as any)[prop]
+    
+    // If it's a function, bind it to the client
+    if (typeof value === 'function') {
+      return value.bind(client)
+    }
+    
+    return value
+  },
+})
 
