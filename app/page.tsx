@@ -159,7 +159,7 @@ export default async function Home({
   }
 
   return (
-    <>
+    <div className="min-h-screen bg-[#fafafa]">
       {/* Structured Data for SEO */}
       <script
         type="application/ld+json"
@@ -169,8 +169,6 @@ export default async function Home({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionPageStructuredData) }}
       />
-      
-      <div className="min-h-screen bg-[#fafafa]">
         {/* Header */}
       <header className="border-b border-[#e5e5e5] bg-white/80 backdrop-blur-md sticky top-0 z-10 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -451,7 +449,6 @@ export default async function Home({
           </div>
         </div>
       </footer>
-      </div>
-    </>
+    </div>
   )
 }
