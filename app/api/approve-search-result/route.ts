@@ -3,6 +3,9 @@ import { prisma } from '@/lib/prisma'
 import { searchRedditForQuotes } from '@/lib/search-reddit-quotes'
 import { scrapeAmazonProductPage } from '@/lib/amazon-product-scraper'
 
+// Force dynamic rendering to prevent build-time data collection
+export const dynamic = 'force-dynamic'
+
 /**
  * Approve and add a search result to the database
  */
@@ -67,7 +70,7 @@ export async function POST(request: Request) {
 
       // Add Reddit signals if provided
       if (redditPostsToUse && redditPostsToUse.length > 0) {
-        for (const redditPost of redditPosts) {
+        for (const redditPost of redditPostsToUse) {
           // Check if signal already exists by checking all Reddit signals
           const allRedditSignals = await prisma.trendSignal.findMany({
             where: {
