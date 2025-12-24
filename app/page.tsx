@@ -58,7 +58,7 @@ export default async function Home({
     aboutToExplode,
     recentlyHot,
   ] = await Promise.all([
-    getTrendingNowHomepage(8),
+    getTrendingNowHomepage(6), // Changed to 6 for consistency
     getAboutToExplodeProducts(6),
     getRecentlyHotProducts(6),
   ])
@@ -238,13 +238,21 @@ export default async function Home({
             {/* Section 1: Trending Now */}
             {trendingNow.length > 0 && (
               <section className="mb-20">
-                <div className="mb-8">
-                  <h2 className="text-3xl md:text-4xl font-bold text-[#1a1a1a] mb-3 tracking-tight">
-                    Trending Now
-                  </h2>
-                  <p className="text-sm text-[#6b6b6b] tracking-wide">
-                    The hottest products right now - score 70+ and trending within the last 7 days
-                  </p>
+                <div className="mb-8 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-3xl md:text-4xl font-bold text-[#1a1a1a] mb-3 tracking-tight">
+                      Trending Now
+                    </h2>
+                    <p className="text-sm text-[#6b6b6b] tracking-wide">
+                      The hottest products right now - score 70+ and trending within the last 7 days
+                    </p>
+                  </div>
+                  <Link 
+                    href="/trending?filter=hot"
+                    className="text-sm font-medium text-[#8b5cf6] hover:text-[#7c3aed] transition-colors whitespace-nowrap"
+                  >
+                    View More →
+                  </Link>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {trendingNow.map((product, index) => (
@@ -257,13 +265,21 @@ export default async function Home({
             {/* Section 2: About to Explode */}
             {aboutToExplode.length > 0 && (
               <section className="mb-20">
-                <div className="mb-8">
-                  <h2 className="text-3xl md:text-4xl font-bold text-[#1a1a1a] mb-3 tracking-tight">
-                    About to Explode
-                  </h2>
-                  <p className="text-sm text-[#6b6b6b] tracking-wide">
-                    Products with rising scores (50-69) or early signals - trending within the last 7 days
-                  </p>
+                <div className="mb-8 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-3xl md:text-4xl font-bold text-[#1a1a1a] mb-3 tracking-tight">
+                      About to Explode
+                    </h2>
+                    <p className="text-sm text-[#6b6b6b] tracking-wide">
+                      Products with rising scores (50-69) or early signals - trending within the last 7 days
+                    </p>
+                  </div>
+                  <Link 
+                    href="/trending?filter=rising"
+                    className="text-sm font-medium text-[#8b5cf6] hover:text-[#7c3aed] transition-colors whitespace-nowrap"
+                  >
+                    View More →
+                  </Link>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {aboutToExplode.map((product) => (
@@ -276,13 +292,21 @@ export default async function Home({
             {/* Section 3: Recently Hot */}
             {recentlyHot.length > 0 && (
               <section className="mb-20">
-                <div className="mb-8">
-                  <h2 className="text-3xl md:text-4xl font-bold text-[#1a1a1a] mb-3 tracking-tight">
-                    Recently Hot
-                  </h2>
-                  <p className="text-sm text-[#6b6b6b] tracking-wide">
-                    Products that peaked at 70+ and were trending 8-30 days ago
-                  </p>
+                <div className="mb-8 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-3xl md:text-4xl font-bold text-[#1a1a1a] mb-3 tracking-tight">
+                      Recently Hot
+                    </h2>
+                    <p className="text-sm text-[#6b6b6b] tracking-wide">
+                      Products that peaked at 70+ and were trending 8-30 days ago
+                    </p>
+                  </div>
+                  <Link 
+                    href="/trending?filter=recent"
+                    className="text-sm font-medium text-[#8b5cf6] hover:text-[#7c3aed] transition-colors whitespace-nowrap"
+                  >
+                    View More →
+                  </Link>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {recentlyHot.map((product) => (
