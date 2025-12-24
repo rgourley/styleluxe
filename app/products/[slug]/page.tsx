@@ -1,4 +1,4 @@
-import { getProductBySlug } from '@/lib/products'
+import { getProductBySlug, getRelatedProducts } from '@/lib/products'
 import { getTrendEmoji, getTrendLabel, formatTrendDuration, getSalesSpikePercent } from '@/lib/product-utils'
 import { addAmazonAffiliateTag } from '@/lib/amazon-affiliate'
 import { notFound } from 'next/navigation'
@@ -16,10 +16,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     }
   }
 
-  // Get site URL (default to localhost for dev, should be set in env for production)
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://styleluxe.com')
-  
+  // Get site URL for canonical links - always use production domain, not preview URLs
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.thestyleluxe.com'
   const productUrl = `${siteUrl}/products/${slug}`
   
   // Get product image URL (prefer product image, fallback to Amazon image)
@@ -41,22 +39,70 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     imageUrl = `${siteUrl}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`
   }
   
-  // Create rich description from content
-  const description = product.content?.hook 
-    ? product.content.hook.replace(/[#*]/g, '').substring(0, 160) // Clean markdown, limit to 160 chars
-    : product.content?.whyTrending
-    ? product.content.whyTrending.replace(/[#*]/g, '').substring(0, 160)
-    : `Honest review of ${product.name}${product.brand ? ` by ${product.brand}` : ''}. Real user reviews, trending data, and whether it's worth the hype.`
+  // Get trend stats for SEO
+  const amazonSignals = (product.trendSignals || []).filter((s: any) => s.source === 'amazon_movers' || s.source === 'amazon')
+  const salesSpike = amazonSignals.find((s: any) => s.signalType === 'sales_spike')?.value ||
+                    amazonSignals.find((s: any) => s.metadata?.salesJumpPercent)?.metadata?.salesJumpPercent || 0
   
-  // Create title with brand if available
-  const title = product.brand 
-    ? `${product.name} by ${product.brand} Review - Is It Worth It? | StyleLuxe`
-    : `${product.name} Review - Is It Worth It? | StyleLuxe`
+  // Determine trending signal for title
+  let trendingSignal = 'trending'
+  if (salesSpike > 1000) trendingSignal = 'viral'
+  else if (salesSpike > 500) trendingSignal = 'viral'
+  else if (product.trendScore >= 70) trendingSignal = 'viral'
+  else if (product.trendScore >= 50) trendingSignal = 'trending'
+  else trendingSignal = 'popular'
+  
+  // Get category for title
+  const category = product.category || 'beauty product'
+  const categoryLower = category.toLowerCase()
+  
+  // Create SEO-optimized title (max 60 chars)
+  // Format: [Product Name] Review: Is This [Trending Signal] [Category] Worth It?
+  const productNameShort = product.name.length > 30 ? product.name.substring(0, 30) + '...' : product.name
+  const titleBase = `${productNameShort} Review: Is This ${trendingSignal === 'viral' ? 'Viral' : trendingSignal === 'trending' ? 'Trending' : 'Popular'} ${categoryLower} Worth It?`
+  const title = titleBase.length > 60 
+    ? `${product.name} Review: Worth It? | StyleLuxe`
+    : `${titleBase} | StyleLuxe`
+  
+  // Create SEO-optimized meta description (150-160 chars)
+  // Format: [Product] jumped [X%] in Amazon sales. At $[price], is this trending [category] actually worth it? Honest review based on real user experiences.
+  const priceText = product.price ? `$${product.price.toFixed(2)}` : ''
+  const salesSpikeText = salesSpike > 0 ? `jumped ${Math.round(salesSpike)}% in Amazon sales` : 'is trending on Amazon'
+  const reviewCount = product.metadata?.totalReviewCount || (product.reviews?.length || 0) * 20
+  const reviewText = reviewCount > 0 ? `${reviewCount.toLocaleString()}+ real user experiences` : 'real user experiences'
+  
+  let description = ''
+  if (salesSpike > 0 && priceText) {
+    description = `${product.name} ${salesSpikeText}. At ${priceText}, is this trending ${categoryLower} actually worth it? Honest review based on ${reviewText}.`
+  } else if (priceText) {
+    description = `${product.name} is trending on Amazon. At ${priceText}, is this ${categoryLower} actually worth it? Honest review based on ${reviewText}.`
+  } else {
+    description = `${product.name} is trending on Amazon. Is this ${categoryLower} actually worth it? Honest review based on ${reviewText}.`
+  }
+  
+  // Ensure description is 150-160 characters
+  if (description.length > 160) {
+    description = description.substring(0, 157) + '...'
+  } else if (description.length < 150) {
+    // Pad with more context if needed
+    const hook = product.content?.hook?.replace(/[#*]/g, '').substring(0, 160 - description.length - 3) || ''
+    if (hook) description = `${description} ${hook}`
+  }
   
   // Get price for structured data
-  const priceText = product.price ? `$${product.price.toFixed(2)}` : null
+  const priceAmount = product.price ? product.price.toFixed(2) : null
   const rating = product.metadata?.starRating || null
-  const reviewCount = product.metadata?.totalReviewCount || null
+  // reviewCount already defined above for meta description
+
+  // Enhanced Open Graph title with sales spike
+  const ogTitle = salesSpike > 0 
+    ? `${product.name} Review: ${Math.round(salesSpike)}% Sales Spike - Worth It?`
+    : title
+
+  // Enhanced Twitter description with price and worth-it question
+  const twitterDescription = priceText 
+    ? `${product.name} at ${priceText}. Is this trending ${categoryLower} worth the hype?`
+    : description
 
   return {
     title,
@@ -74,9 +120,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       'honest review',
     ].filter(Boolean).join(', '),
     
-    // Open Graph / Facebook
+    // Open Graph / Facebook - Enhanced with product data
     openGraph: {
-      title,
+      title: ogTitle,
       description,
       url: productUrl,
       siteName: 'StyleLuxe',
@@ -85,20 +131,20 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
           url: imageUrl,
           width: 1200,
           height: 630,
-          alt: `${product.name}${product.brand ? ` by ${product.brand}` : ''}`,
+          alt: `${product.name} - Trending ${product.category || 'Beauty'} Product`,
         },
       ],
       locale: 'en_US',
-      type: 'article',
+      type: 'product',
     },
     
-    // Twitter Card
+    // Twitter Card - Enhanced
     twitter: {
       card: 'summary_large_image',
-      title,
-      description,
+      title: ogTitle,
+      description: twitterDescription,
       images: [imageUrl],
-      creator: '@styleluxe', // Update with your Twitter handle if you have one
+      creator: '@styleluxe',
     },
     
     // Additional SEO
@@ -121,7 +167,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     
     // Structured Data (JSON-LD will be added in the page component)
     other: {
-      'product:price:amount': priceText ? product.price?.toFixed(2) : undefined,
+      'product:price:amount': priceAmount || undefined,
       'product:price:currency': product.currency || 'USD',
       'product:availability': 'in stock',
       'product:condition': 'new',
@@ -257,9 +303,16 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   // One-sentence verdict (from hook or generate from content)
   const verdict = product.content.hook || `${product.name} is ${product.trendScore >= 70 ? 'worth the hype' : 'trending but proceed with caution'}.`
 
-  // Get site URL for structured data
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://styleluxe.com')
+  // Get site URL for canonical links - always use production domain
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.thestyleluxe.com'
+  
+  // Get related products for internal linking
+  const relatedProducts = await getRelatedProducts(
+    product.id,
+    product.category,
+    product.currentScore || product.trendScore,
+    4
+  )
   
   // Get product image for structured data
   let imageUrl = product.imageUrl
@@ -316,11 +369,49 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     })) : undefined,
   }
 
+  // Review structured data (separate from Product schema)
+  const reviewStructuredData = {
+    '@context': 'https://schema.org',
+    '@type': 'Review',
+    itemReviewed: {
+      '@type': 'Product',
+      name: product.name,
+      brand: product.brand ? {
+        '@type': 'Brand',
+        name: product.brand,
+      } : undefined,
+      image: imageUrl,
+    },
+    reviewRating: {
+      '@type': 'Rating',
+      ratingValue: rating || 4, // Default to 4 out of 5
+      bestRating: 5,
+      worstRating: 1,
+    },
+    author: {
+      '@type': 'Organization',
+      name: 'StyleLuxe',
+      url: siteUrl,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'StyleLuxe',
+      url: siteUrl,
+      logo: {
+        '@type': 'ImageObject',
+        url: `${siteUrl}/logo.png`,
+      },
+    },
+    datePublished: product.content?.generatedAt || product.createdAt,
+    dateModified: product.content?.updatedAt || product.updatedAt,
+    reviewBody: product.content?.hook || product.content?.whyTrending || `Review of ${product.name}`,
+  }
+
   // Article structured data (for blog-style content)
   const articleStructuredData = {
     '@context': 'https://schema.org',
     '@type': 'Article',
-    headline: `${product.name} Review - Is It Worth It?`,
+    headline: `${product.name} Review: Is This ${stats.salesSpike ? `${Math.round(stats.salesSpike)}% Sales Spike` : 'Trending'} ${product.category || 'Beauty Product'} Worth It?`,
     description: product.content?.hook || `Review of ${product.name}`,
     image: imageUrl,
     datePublished: product.content?.generatedAt || product.createdAt,
@@ -345,30 +436,58 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     },
   }
 
-  // Breadcrumb structured data
+  // FAQPage structured data
+  const faqStructuredData = product.content?.faq && Array.isArray(product.content.faq) && product.content.faq.length > 0 ? {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: (product.content.faq as Array<{ question: string; answer: string }>).map(faq => ({
+      '@type': 'Question',
+      name: faq.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: faq.answer,
+      },
+    })),
+  } : null
+
+  // Breadcrumb structured data - includes category
+  const breadcrumbItems = [
+    {
+      '@type': 'ListItem',
+      position: 1,
+      name: 'Home',
+      item: siteUrl,
+    },
+    {
+      '@type': 'ListItem',
+      position: 2,
+      name: 'Trending Products',
+      item: `${siteUrl}/trending`,
+    },
+  ]
+  
+  // Add category if available
+  if (product.category) {
+    breadcrumbItems.push({
+      '@type': 'ListItem',
+      position: 3,
+      name: product.category,
+      item: `${siteUrl}/trending?category=${encodeURIComponent(product.category.toLowerCase())}`,
+    })
+  }
+  
+  // Add product name
+  breadcrumbItems.push({
+    '@type': 'ListItem',
+    position: breadcrumbItems.length + 1,
+    name: product.name,
+    item: `${siteUrl}/products/${slug}`,
+  })
+  
   const breadcrumbStructuredData = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
-    itemListElement: [
-      {
-        '@type': 'ListItem',
-        position: 1,
-        name: 'Home',
-        item: siteUrl,
-      },
-      {
-        '@type': 'ListItem',
-        position: 2,
-        name: 'Products',
-        item: `${siteUrl}/`,
-      },
-      {
-        '@type': 'ListItem',
-        position: 3,
-        name: product.name,
-        item: `${siteUrl}/products/${slug}`,
-      },
-    ],
+    itemListElement: breadcrumbItems,
   }
 
   return (
@@ -380,12 +499,22 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       />
       <script
         type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(reviewStructuredData) }}
+      />
+      <script
+        type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(articleStructuredData) }}
       />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbStructuredData) }}
       />
+      {faqStructuredData && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqStructuredData) }}
+        />
+      )}
       
       <div className="min-h-screen bg-[#fafafa]">
         {/* Header */}
@@ -396,17 +525,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               <span className="text-[#1a1a1a]">Style</span><span className="text-[#8b5cf6]">Luxe</span>
             </Link>
             <nav className="hidden md:flex items-center space-x-6">
-              <Link 
-                href={`/admin/products/${product.id}/edit`}
-                className="text-sm text-[#8b5cf6] hover:text-[#7c3aed] font-medium transition-colors"
-              >
-                ✏️ Edit
-              </Link>
               <Link href="/" className="text-sm text-[#4a4a4a] hover:text-[#1a1a1a] font-medium text-sm tracking-wide transition-colors">
                 Trending
-              </Link>
-              <Link href="/admin" className="text-sm text-[#8b8b8b] hover:text-[#4a4a4a] text-sm tracking-wide transition-colors">
-                Admin
               </Link>
             </nav>
           </div>
@@ -428,7 +548,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         
         {/* Breadcrumb Navigation */}
         <nav className="mb-8" aria-label="Breadcrumb">
-          <ol className="flex items-center space-x-2 text-sm text-[#6b6b6b]">
+          <ol className="flex items-center space-x-2 text-sm text-[#6b6b6b] flex-wrap">
             <li>
               <Link href="/" className="hover:text-[#1a1a1a] transition-colors">
                 Home
@@ -436,10 +556,20 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             </li>
             <li className="text-[#b8b8b8]">/</li>
             <li>
-              <Link href="/" className="hover:text-[#1a1a1a] transition-colors">
-                Products
+              <Link href="/trending" className="hover:text-[#1a1a1a] transition-colors">
+                Trending Products
               </Link>
             </li>
+            {product.category && (
+              <>
+                <li className="text-[#b8b8b8]">/</li>
+                <li>
+                  <Link href={`/trending?category=${encodeURIComponent(product.category.toLowerCase())}`} className="hover:text-[#1a1a1a] transition-colors">
+                    {product.category}
+                  </Link>
+                </li>
+              </>
+            )}
             <li className="text-[#b8b8b8]">/</li>
             <li className="text-[#1a1a1a] font-medium" aria-current="page">
               {product.name}
@@ -456,6 +586,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 imageUrl={product.imageUrl}
                 amazonUrl={product.amazonUrl}
                 productName={product.name}
+                category={product.category}
               />
             </div>
 
@@ -468,9 +599,43 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 </p>
               )}
 
-              {/* Product Name */}
+              {/* Publish/Update Dates */}
+              <div className="mb-4 text-xs text-[#6b6b6b] tracking-wide">
+                <time dateTime={product.content.generatedAt?.toISOString() || product.createdAt.toISOString()}>
+                  Published: {new Date(product.content.generatedAt || product.createdAt).toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  })}
+                </time>
+                {product.content.updatedAt && (
+                  <>
+                    {' • '}
+                    <time dateTime={product.content.updatedAt.toISOString()}>
+                      Updated: {new Date(product.content.updatedAt).toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      })}
+                    </time>
+                  </>
+                )}
+              </div>
+
+              {/* Product Name - SEO Optimized H1 */}
               <h1 className="text-4xl md:text-5xl font-bold text-[#1a1a1a] mb-6 tracking-tight leading-tight">
-                {product.name}
+                {(() => {
+                  const priceText = product.price ? `$${product.price.toFixed(2)} ` : ''
+                  const salesText = stats.salesSpike ? `${Math.round(stats.salesSpike)}% Sales Spike ` : ''
+                  const trendText = trendLabel === 'Hot' ? 'Viral ' : trendLabel === 'Rising' ? 'Trending ' : ''
+                  const categoryText = product.category || 'Beauty Product'
+                  const h1Text = `${product.name} Review: Is This ${priceText}${salesText}${trendText}${categoryText} Worth the Hype?`
+                  // If too long, shorten it
+                  if (h1Text.length > 100) {
+                    return `${product.name} Review: Is This ${priceText}${trendText}${categoryText} Worth It?`
+                  }
+                  return h1Text
+                })()}
               </h1>
 
               {/* Trend Indicator */}
@@ -697,6 +862,54 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                     <h3 className="text-xl font-semibold text-[#1a1a1a] mb-3">{faq.question}</h3>
                     <p className="prose prose-lg max-w-none text-[#4a4a4a] leading-relaxed">{faq.answer}</p>
                   </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Related Products Section */}
+          {relatedProducts.length > 0 && (
+            <section className="mt-20 pt-12 border-t-2 border-[#e5e5e5]">
+              <h2 className="text-3xl md:text-4xl font-bold text-[#1a1a1a] mb-8 tracking-tight">
+                {product.category ? `Similar Trending ${product.category} Products` : 'Similar Trending Products'}
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {relatedProducts.map((relatedProduct) => (
+                  <Link
+                    key={relatedProduct.id}
+                    href={`/products/${relatedProduct.content?.slug}`}
+                    className="block bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow"
+                  >
+                    <div className="aspect-square bg-[#f5f5f5] relative">
+                      {relatedProduct.imageUrl ? (
+                        <img
+                          src={relatedProduct.imageUrl}
+                          alt={`${relatedProduct.name} - Trending ${relatedProduct.category || 'Beauty'} Product`}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-400">
+                          <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                      )}
+                      <div className="absolute top-2 right-2">
+                        <span className="bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg text-xs font-semibold text-[#8b5cf6]">
+                          {getTrendEmoji(relatedProduct.trendScore)} {getTrendLabel(relatedProduct.trendScore)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="p-4">
+                      <h3 className="font-semibold text-[#1a1a1a] mb-2 line-clamp-2">{relatedProduct.name}</h3>
+                      {relatedProduct.brand && (
+                        <p className="text-xs text-[#6b6b6b] uppercase tracking-wide mb-2">{relatedProduct.brand}</p>
+                      )}
+                      {relatedProduct.price && (
+                        <p className="text-lg font-bold text-[#1a1a1a]">${relatedProduct.price.toFixed(2)}</p>
+                      )}
+                    </div>
+                  </Link>
                 ))}
               </div>
             </section>

@@ -1,8 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 
-  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://styleluxe.com')
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.thestyleluxe.com'
 
 export const metadata: Metadata = {
   title: 'About Us - StyleLuxe',
@@ -25,9 +24,6 @@ export default function AboutPage() {
             <nav className="hidden md:flex space-x-10">
               <Link href="/" className="text-[#4a4a4a] hover:text-[#1a1a1a] font-medium text-sm tracking-wide transition-colors">
                 Trending
-              </Link>
-              <Link href="/admin" className="text-[#8b8b8b] hover:text-[#4a4a4a] text-sm tracking-wide transition-colors">
-                Admin
               </Link>
             </nav>
           </div>

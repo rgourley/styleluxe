@@ -13,9 +13,8 @@ const headerText = "Trending Beauty Products Right Now"
 // Revalidate homepage every 60 seconds to keep it fresh
 export const revalidate = 60
 
-// Generate metadata for better SEO
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 
-  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://styleluxe.com')
+// Generate metadata for better SEO - canonical URLs always use production domain
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.thestyleluxe.com'
 
 export const metadata = {
   title: "Trending Beauty Products Right Now - What's Going Viral",
@@ -75,9 +74,8 @@ export default async function Home({
   
   // Removed currentDate to avoid hydration mismatch (timezone differences)
 
-  // Get site URL for structured data
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://styleluxe.com')
+  // Get site URL for canonical links - always use production domain
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.thestyleluxe.com'
 
   // Structured data for SEO
   const websiteStructuredData = {
@@ -183,9 +181,6 @@ export default async function Home({
             <nav className="flex space-x-6 md:space-x-10 flex-shrink-0">
               <Link href="/trending" className="text-[#4a4a4a] hover:text-[#1a1a1a] font-medium text-sm tracking-wide transition-colors">
                 All Trending
-              </Link>
-              <Link href="/admin" className="text-[#8b8b8b] hover:text-[#4a4a4a] text-sm tracking-wide transition-colors">
-                Admin
               </Link>
             </nav>
           </div>
@@ -350,7 +345,7 @@ export default async function Home({
               <p>💡 <strong>Getting started:</strong></p>
               <ol className="list-decimal list-inside space-y-1 max-w-md mx-auto text-left">
                 <li>Make sure your database is set up and migrations are run</li>
-                <li>Run data collection from the <Link href="/admin" className="underline">Admin page</Link></li>
+                <li>Run data collection automatically via scheduled cron jobs</li>
                 <li>Generate and publish product reviews</li>
               </ol>
             </div>

@@ -194,5 +194,67 @@ export async function getProductBySlug(slug: string): Promise<ProductWithRelatio
   )()
 }
 
+// Get related products by category or similar trend score
+export async function getRelatedProducts(
+  currentProductId: string,
+  category: string | null,
+  currentScore: number,
+  limit: number = 4
+): Promise<ProductWithRelations[]> {
+  return unstable_cache(
+    async () => {
+      if (!process.env.DATABASE_URL) {
+        return []
+      }
+
+      try {
+        const where: any = {
+          status: 'PUBLISHED',
+          id: { not: currentProductId },
+          content: { isNot: null },
+        }
+
+        // Prefer same category, otherwise similar score range
+        if (category) {
+          where.category = category
+        } else if (currentScore > 0) {
+          // Find products with similar trend scores (±20 points)
+          where.OR = [
+            { currentScore: { gte: Math.max(0, currentScore - 20), lte: currentScore + 20 } },
+            { trendScore: { gte: Math.max(0, currentScore - 20), lte: currentScore + 20 } },
+          ]
+        } else {
+          // If no score, just get any trending products
+          where.currentScore = { gte: 40 }
+        }
+
+        const products = await prisma.product.findMany({
+          where,
+          include: {
+            content: { select: { slug: true } },
+            trendSignals: { take: 1 },
+            reviews: { take: 1 },
+          },
+          orderBy: [
+            { currentScore: 'desc' },
+            { trendScore: 'desc' },
+          ],
+          take: limit,
+        })
+
+        return products.filter(p => p.content?.slug) as ProductWithRelations[]
+      } catch (error) {
+        console.error('Error fetching related products:', error)
+        return []
+      }
+    },
+    [`related-products-${currentProductId}-${category || 'similar'}`],
+    {
+      revalidate: 300,
+      tags: ['products', `product-${currentProductId}`],
+    }
+  )()
+}
+
 // Utility functions moved to lib/product-utils.ts to avoid Prisma imports in client components
 export { getTrendEmoji, getTrendLabel, formatTrendDuration, getSalesSpikePercent } from './product-utils'

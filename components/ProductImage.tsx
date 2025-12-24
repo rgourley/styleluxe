@@ -7,9 +7,10 @@ interface ProductImageProps {
   imageUrl: string | null
   amazonUrl: string | null
   productName: string
+  category?: string | null
 }
 
-export default function ProductImage({ imageUrl, amazonUrl, productName }: ProductImageProps) {
+export default function ProductImage({ imageUrl, amazonUrl, productName, category }: ProductImageProps) {
   const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(() => {
     // Priority: 1) product.imageUrl (if valid), 2) Amazon image from URL
     if (imageUrl && !imageUrl.endsWith('.gif') && imageUrl.startsWith('http')) {
@@ -50,7 +51,7 @@ export default function ProductImage({ imageUrl, amazonUrl, productName }: Produ
   return (
     <img 
       src={currentImageUrl} 
-      alt={productName}
+      alt={`${productName} - Trending ${category || 'Beauty'} Product`}
       className="w-full h-full object-cover"
       onError={handleError}
     />
