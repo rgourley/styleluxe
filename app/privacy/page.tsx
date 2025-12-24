@@ -1,9 +1,15 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://styleluxe.com')
+
 export const metadata: Metadata = {
   title: 'Privacy Policy - StyleLuxe',
   description: 'StyleLuxe Privacy Policy. Learn how we collect, use, and protect your personal information.',
+  alternates: {
+    canonical: `${siteUrl}/privacy`,
+  },
 }
 
 export default function PrivacyPage() {

@@ -14,13 +14,20 @@ const headerText = "Trending Beauty Products Right Now"
 export const revalidate = 60
 
 // Generate metadata for better SEO
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://styleluxe.com')
+
 export const metadata = {
   title: "Trending Beauty Products Right Now - What's Going Viral",
   description: "Discover the hottest trending beauty products on TikTok, Instagram, Reddit, and Amazon. Real data, honest reviews, no hype.",
+  alternates: {
+    canonical: siteUrl,
+  },
   openGraph: {
     title: "Trending Beauty Products Right Now - What's Going Viral",
     description: "Discover the hottest trending beauty products on TikTok, Instagram, Reddit, and Amazon. Real data, honest reviews, no hype.",
     type: "website",
+    url: siteUrl,
     images: [
       {
         url: "/images/unsplash-image-4nulm-JUYFo.webp",

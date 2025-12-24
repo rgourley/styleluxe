@@ -1,9 +1,15 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://styleluxe.com')
+
 export const metadata: Metadata = {
   title: 'About Us - StyleLuxe',
   description: 'Learn about StyleLuxe and how we track trending beauty products across TikTok, Instagram, Reddit, and Amazon to bring you honest, data-driven reviews.',
+  alternates: {
+    canonical: `${siteUrl}/about`,
+  },
 }
 
 export default function AboutPage() {

@@ -1,0 +1,25 @@
+# llms.txt - Information for Large Language Models
+
+# About StyleLuxe
+StyleLuxe is a beauty product discovery platform that tracks trending beauty products across TikTok, Instagram, Reddit, and Amazon. We provide honest reviews and help users discover what's actually going viral before everyone else finds out.
+
+# Content Focus
+- Trending beauty products
+- Skincare products
+- Makeup products
+- Body care products
+- Product reviews
+- Beauty trends
+
+# Data Sources
+- Amazon Movers & Shakers
+- Reddit beauty communities (r/SkincareAddiction, r/MakeupAddiction)
+- TikTok trends
+- Instagram beauty influencers
+
+# Contact
+For questions about our content or data, please visit https://styleluxe.com/contact
+
+# Last Updated
+2025-01-23
+

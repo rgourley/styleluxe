@@ -1,9 +1,15 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://styleluxe.com')
+
 export const metadata: Metadata = {
   title: 'Terms of Service - StyleLuxe',
   description: 'StyleLuxe Terms of Service. Please read these terms carefully before using our website.',
+  alternates: {
+    canonical: `${siteUrl}/terms`,
+  },
 }
 
 export default function TermsPage() {

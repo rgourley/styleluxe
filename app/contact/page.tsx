@@ -1,9 +1,15 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://styleluxe.com')
+
 export const metadata: Metadata = {
   title: 'Contact Us - StyleLuxe',
   description: 'Get in touch with StyleLuxe. Have a question, suggestion, or want to report an issue? We\'d love to hear from you.',
+  alternates: {
+    canonical: `${siteUrl}/contact`,
+  },
 }
 
 export default function ContactPage() {

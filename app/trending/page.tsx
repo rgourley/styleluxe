@@ -6,9 +6,15 @@ import { unstable_cache } from 'next/cache'
 // Revalidate every 60 seconds
 export const revalidate = 60
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://styleluxe.com')
+
 export const metadata = {
   title: "All Trending Beauty Products - Filter by Hot, Rising, Recent",
   description: "Browse all trending beauty products. Filter by hot products (70+), rising products (50-69), or recent trends. Discover what's going viral on TikTok, Instagram, Reddit, and Amazon.",
+  alternates: {
+    canonical: `${siteUrl}/trending`,
+  },
 }
 
 async function getFilteredProducts(filter: string) {
