@@ -3,7 +3,8 @@
 import Script from 'next/script'
 
 export default function GoogleAnalytics() {
-  const gaId = process.env.NEXT_PUBLIC_GA_ID
+  // Use environment variable or default to provided tracking ID
+  const gaId = process.env.NEXT_PUBLIC_GA_ID || 'G-B347YBM27N'
 
   if (!gaId) {
     return null
