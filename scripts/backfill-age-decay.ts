@@ -103,8 +103,8 @@ async function backfillAgeDecay() {
   }
 }
 
-// Run if called directly
-if (require.main === module) {
+// Run if called directly (ES module compatible)
+if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith('backfill-age-decay.ts')) {
   backfillAgeDecay()
     .then((result) => {
       console.log(`\n✅ All done!`)
@@ -117,4 +117,8 @@ if (require.main === module) {
 }
 
 export { backfillAgeDecay }
+
+
+
+
 

@@ -59,11 +59,18 @@
 
 ## After Making Changes
 
-- [ ] Run `npm run build` - Must pass
+- [ ] Run `npm run build` - **MUST PASS** (build errors block push)
 - [ ] Run `npm run check:hydration` - Should pass
 - [ ] Check for linting errors
 - [ ] Verify no breaking changes
 - [ ] Test in browser if possible
+
+## Before Pushing to Git
+
+- [ ] **ALWAYS run `npm run build` before pushing** - This is critical!
+- [ ] If build fails, fix errors before pushing
+- [ ] Pre-push hook will also run build automatically
+- [ ] Never push if build has errors
 
 ## If Hydration Error Occurs
 
