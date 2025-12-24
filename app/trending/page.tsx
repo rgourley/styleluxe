@@ -75,6 +75,10 @@ async function getFilteredProducts(filter: string) {
             break
           case 'recent':
             // daysTrending > 7 OR (daysTrending is null AND createdAt is old enough)
+            // Calculate cutoff date once (server-side, safe for hydration)
+            const eightDaysAgo = new Date()
+            eightDaysAgo.setDate(eightDaysAgo.getDate() - 8)
+            
             where.AND = [
               {
                 OR: [
@@ -84,7 +88,7 @@ async function getFilteredProducts(filter: string) {
                       { daysTrending: null },
                       {
                         createdAt: {
-                          lte: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000), // Created at least 8 days ago
+                          lte: eightDaysAgo, // Created at least 8 days ago
                         },
                       },
                     ],
