@@ -58,9 +58,9 @@ export default async function Home({
     aboutToExplode,
     recentlyHot,
   ] = await Promise.all([
-    getTrendingNowHomepage(6), // Changed to 6 for consistency
-    getAboutToExplodeProducts(6),
-    getRecentlyHotProducts(6),
+    getTrendingNowHomepage(8), // Show 8 products
+    getAboutToExplodeProducts(8),
+    getRecentlyHotProducts(8),
   ])
   
   // Handle search

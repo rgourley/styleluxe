@@ -42,10 +42,13 @@ export default function ProductImage({ imageUrl, amazonUrl, productName, categor
   }
 
   // Use a consistent alt text format to avoid hydration mismatches
+  // Memoize to ensure server/client consistency
   // Always include the category part to ensure server/client match
   // Default to "Beauty" if category is not provided
-  const categoryText = category || 'Beauty'
-  const altText = `${productName} - Trending ${categoryText} Product`
+  const altText = useMemo(() => {
+    const categoryText = category || 'Beauty'
+    return `${productName} - Trending ${categoryText} Product`
+  }, [productName, category])
 
   if (!currentImageUrl) {
     return (

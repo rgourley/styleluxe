@@ -26,6 +26,9 @@ async function getFilteredProducts(filter: string) {
       try {
         const where: any = {
           status: 'PUBLISHED',
+          content: {
+            isNot: null, // Must have content to show
+          },
           OR: [
             { price: { gte: 5 } },
             { price: null },
@@ -35,20 +38,65 @@ async function getFilteredProducts(filter: string) {
         // Apply filter
         switch (filter) {
           case 'hot':
-            where.currentScore = { gte: 70 }
+            // currentScore >= 70 OR (currentScore is null AND trendScore >= 70)
+            where.AND = [
+              {
+                OR: [
+                  { currentScore: { gte: 70 } },
+                  {
+                    AND: [
+                      { currentScore: null },
+                      { trendScore: { gte: 70 } },
+                    ],
+                  },
+                ],
+              },
+            ]
             break
           case 'rising':
-            where.currentScore = {
-              gte: 50,
-              lte: 69,
-            }
+            // currentScore 50-69 OR (currentScore is null AND trendScore 50-69)
+            where.AND = [
+              {
+                OR: [
+                  {
+                    AND: [
+                      { currentScore: { gte: 50, lte: 69 } },
+                    ],
+                  },
+                  {
+                    AND: [
+                      { currentScore: null },
+                      { trendScore: { gte: 50, lte: 69 } },
+                    ],
+                  },
+                ],
+              },
+            ]
             break
           case 'recent':
-            where.daysTrending = { gt: 7 }
+            // daysTrending > 7 OR (daysTrending is null AND createdAt is old enough)
+            where.AND = [
+              {
+                OR: [
+                  { daysTrending: { gt: 7 } },
+                  {
+                    AND: [
+                      { daysTrending: null },
+                      {
+                        createdAt: {
+                          lte: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000), // Created at least 8 days ago
+                        },
+                      },
+                    ],
+                  },
+                ],
+              },
+            ]
             break
           case 'all':
           default:
-            where.currentScore = { gte: 40 }
+            // Show all published products with content (no score filter)
+            // This will show all products regardless of score
             break
         }
 
@@ -68,8 +116,15 @@ async function getFilteredProducts(filter: string) {
               content: true,
             },
             orderBy: filter === 'recent' 
-              ? { peakScore: 'desc' }
-              : { currentScore: 'desc' },
+              ? [
+                  { peakScore: 'desc' },
+                  { currentScore: 'desc' },
+                  { trendScore: 'desc' },
+                ]
+              : [
+                  { currentScore: 'desc' },
+                  { trendScore: 'desc' }, // Fallback to trendScore if currentScore is null
+                ],
             take: 50,
           }),
           new Promise<any[]>((resolve) => 
@@ -107,7 +162,7 @@ export default async function TrendingPage({
   const products = await getFilteredProducts(activeFilter)
 
   const filters = [
-    { id: 'all', label: 'All', description: 'Score 40+' },
+    { id: 'all', label: 'All', description: 'All products' },
     { id: 'hot', label: 'Hot', description: 'Score 70+' },
     { id: 'rising', label: 'Rising', description: 'Score 50-69' },
     { id: 'recent', label: 'Recent', description: 'Days trending > 7' },

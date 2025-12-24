@@ -20,19 +20,39 @@ export async function getTrendingNowHomepage(limit: number = 8) {
       }
 
       try {
+        // Get products with currentScore >= 70 OR (currentScore is null AND trendScore >= 70)
+        // Also include products with daysTrending <= 7 OR daysTrending is null
         const products = await Promise.race([
           prisma.product.findMany({
             where: {
               status: 'PUBLISHED',
-              currentScore: {
-                gte: 70,
+              content: {
+                isNot: null, // Must have content to show on homepage
               },
-              daysTrending: {
-                lte: 7,
-              },
-              OR: [
-                { price: { gte: 5 } },
-                { price: null },
+              AND: [
+                {
+                  OR: [
+                    { currentScore: { gte: 70 } },
+                    {
+                      AND: [
+                        { currentScore: null },
+                        { trendScore: { gte: 70 } },
+                      ],
+                    },
+                  ],
+                },
+                {
+                  OR: [
+                    { daysTrending: { lte: 7 } },
+                    { daysTrending: null },
+                  ],
+                },
+                {
+                  OR: [
+                    { price: { gte: 5 } },
+                    { price: null },
+                  ],
+                },
               ],
             },
             include: {
@@ -47,9 +67,14 @@ export async function getTrendingNowHomepage(limit: number = 8) {
               },
               content: true,
             },
-            orderBy: {
-              currentScore: 'desc',
-            },
+            orderBy: [
+              {
+                currentScore: 'desc',
+              },
+              {
+                trendScore: 'desc', // Fallback to trendScore if currentScore is null
+              },
+            ],
             take: limit,
           }),
           new Promise<any[]>((resolve) => 
@@ -94,26 +119,55 @@ export async function getAboutToExplodeProducts(limit: number = 6) {
         // Use separate queries and combine for better performance
         const [scoreProducts, earlySignalProducts, newProducts] = await Promise.all([
           // Products with score 50-69 (higher priority)
-          // Exclude products in Section 1 (currentScore >= 70)
+          // Exclude products in Section 1 (currentScore >= 70 OR trendScore >= 70)
           prisma.product.findMany({
             where: {
               status: 'PUBLISHED',
-              currentScore: {
-                gte: 50,
-                lte: 69,
+              content: {
+                isNot: null, // Must have content
               },
-              daysTrending: {
-                lte: 7,
-              },
-              // Exclude products that belong in Section 1
-              NOT: {
-                currentScore: {
-                  gte: 70,
+              AND: [
+                {
+                  OR: [
+                    {
+                      AND: [
+                        { currentScore: { gte: 50, lte: 69 } },
+                        {
+                          OR: [
+                            { daysTrending: { lte: 7 } },
+                            { daysTrending: null },
+                          ],
+                        },
+                      ],
+                    },
+                    {
+                      AND: [
+                        { currentScore: null },
+                        { trendScore: { gte: 50, lte: 69 } },
+                      ],
+                    },
+                  ],
                 },
-              },
-              OR: [
-                { price: { gte: 5 } },
-                { price: null },
+                // Exclude products that belong in Section 1
+                {
+                  NOT: {
+                    OR: [
+                      { currentScore: { gte: 70 } },
+                      {
+                        AND: [
+                          { currentScore: null },
+                          { trendScore: { gte: 70 } },
+                        ],
+                      },
+                    ],
+                  },
+                },
+                {
+                  OR: [
+                    { price: { gte: 5 } },
+                    { price: null },
+                  ],
+                },
               ],
             },
             include: {
@@ -137,21 +191,41 @@ export async function getAboutToExplodeProducts(limit: number = 6) {
           prisma.product.findMany({
             where: {
               status: 'PUBLISHED',
-              daysTrending: {
-                lte: 7,
+              content: {
+                isNot: null, // Must have content
               },
-              trendSignals: {
-                some: {
-                  signalType: 'early_signal',
-                },
-              },
-              // Exclude products in Section 1 (currentScore >= 70) or already in score 50-69 range
               AND: [
+                {
+                  OR: [
+                    { daysTrending: { lte: 7 } },
+                    { daysTrending: null },
+                  ],
+                },
+                {
+                  trendSignals: {
+                    some: {
+                      signalType: 'early_signal',
+                    },
+                  },
+                },
+                // Exclude products in Section 1 or already in score 50-69 range
                 {
                   NOT: {
                     OR: [
                       { currentScore: { gte: 70 } },
+                      {
+                        AND: [
+                          { currentScore: null },
+                          { trendScore: { gte: 70 } },
+                        ],
+                      },
                       { currentScore: { gte: 50, lte: 69 } },
+                      {
+                        AND: [
+                          { currentScore: null },
+                          { trendScore: { gte: 50, lte: 69 } },
+                        ],
+                      },
                     ],
                   },
                 },
@@ -184,6 +258,9 @@ export async function getAboutToExplodeProducts(limit: number = 6) {
           prisma.product.findMany({
             where: {
               status: 'PUBLISHED',
+              content: {
+                isNot: null, // Must have content
+              },
               AND: [
                 // Include products with daysTrending <= 7 OR null
                 {
@@ -202,9 +279,31 @@ export async function getAboutToExplodeProducts(limit: number = 6) {
                       },
                     },
                     {
-                      currentScore: null,
+                      AND: [
+                        { currentScore: null },
+                        {
+                          OR: [
+                            { trendScore: { gte: 10, lt: 50 } },
+                            { trendScore: { gte: 10 } },
+                          ],
+                        },
+                      ],
                     },
                   ],
+                },
+                // Exclude products in Section 1
+                {
+                  NOT: {
+                    OR: [
+                      { currentScore: { gte: 70 } },
+                      {
+                        AND: [
+                          { currentScore: null },
+                          { trendScore: { gte: 70 } },
+                        ],
+                      },
+                    ],
+                  },
                 },
                 {
                   OR: [
@@ -243,10 +342,14 @@ export async function getAboutToExplodeProducts(limit: number = 6) {
           }
         }
 
-        // Sort by currentScore (higher first) and take limit
+        // Sort by currentScore (higher first), fallback to trendScore, and take limit
         // This ensures score 50-69 products appear first, then early signals, then new products
         const sorted = Array.from(productMap.values())
-          .sort((a, b) => (b.currentScore || 0) - (a.currentScore || 0))
+          .sort((a, b) => {
+            const scoreA = a.currentScore ?? a.trendScore ?? 0
+            const scoreB = b.currentScore ?? b.trendScore ?? 0
+            return scoreB - scoreA
+          })
           .slice(0, limit)
 
         return sorted
@@ -284,15 +387,53 @@ export async function getRecentlyHotProducts(limit: number = 6) {
           prisma.product.findMany({
             where: {
               status: 'PUBLISHED',
-              peakScore: {
-                gte: 70,
-              },
-              // Products that are older (8-30 days) - not currently trending
-              daysTrending: {
-                gte: 8,
-                lte: 30,
+              content: {
+                isNot: null, // Must have content
               },
               AND: [
+                {
+                  OR: [
+                    { peakScore: { gte: 70 } },
+                    {
+                      AND: [
+                        { peakScore: null },
+                        {
+                          OR: [
+                            { currentScore: { gte: 70 } },
+                            {
+                              AND: [
+                                { currentScore: null },
+                                { trendScore: { gte: 70 } },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+                // Products that are older (8-30 days) - not currently trending
+                // Also include products with daysTrending null (fallback)
+                {
+                  OR: [
+                    {
+                      daysTrending: {
+                        gte: 8,
+                        lte: 30,
+                      },
+                    },
+                    {
+                      AND: [
+                        { daysTrending: null },
+                        {
+                          createdAt: {
+                            lte: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000), // Created at least 8 days ago
+                          },
+                        },
+                      ],
+                    },
+                  ],
+                },
                 {
                   OR: [
                     { price: { gte: 5 } },
@@ -313,9 +454,17 @@ export async function getRecentlyHotProducts(limit: number = 6) {
               },
               content: true,
             },
-            orderBy: {
-              peakScore: 'desc',
-            },
+            orderBy: [
+              {
+                peakScore: 'desc',
+              },
+              {
+                currentScore: 'desc', // Fallback
+              },
+              {
+                trendScore: 'desc', // Fallback
+              },
+            ],
             take: limit,
           }),
           new Promise<any[]>((resolve) => 
