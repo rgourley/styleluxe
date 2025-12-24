@@ -1,58 +1,68 @@
 import { MetadataRoute } from 'next'
-import { prisma } from '@/lib/prisma'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Always use production domain for sitemap URLs
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.thestyleluxe.com'
+  
+  // Use fixed date for static pages to prevent hydration issues
+  const now = new Date('2025-01-01') // Fixed date for build consistency
 
   // Static pages
   const staticPages: MetadataRoute.Sitemap = [
     {
       url: baseUrl,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: 'daily',
       priority: 1,
     },
     {
       url: `${baseUrl}/trending`,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: 'daily',
       priority: 0.9,
     },
     {
       url: `${baseUrl}/faq`,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: 'monthly',
       priority: 0.7,
     },
     {
       url: `${baseUrl}/about`,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: 'monthly',
       priority: 0.6,
     },
     {
       url: `${baseUrl}/contact`,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: 'monthly',
       priority: 0.5,
     },
     {
       url: `${baseUrl}/privacy`,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: 'yearly',
       priority: 0.3,
     },
     {
       url: `${baseUrl}/terms`,
-      lastModified: new Date(),
+      lastModified: now,
       changeFrequency: 'yearly',
       priority: 0.3,
     },
   ]
 
-  // Dynamic product pages
+  // Dynamic product pages - lazy load prisma to prevent build errors
   try {
+    // Only try to connect if DATABASE_URL is available
+    if (!process.env.DATABASE_URL) {
+      console.warn('⚠️  DATABASE_URL not available, returning static sitemap only')
+      return staticPages
+    }
+    
+    // Lazy import prisma to prevent build-time connection attempts
+    const { prisma } = await import('@/lib/prisma')
     const products = await prisma.product.findMany({
       where: {
         status: 'PUBLISHED',
@@ -84,6 +94,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   } catch (error) {
     console.error('Error generating sitemap:', error)
     // Return static pages only if database query fails
+    // This is safe during build - sitemap will still work with static pages
     return staticPages
   }
 }
