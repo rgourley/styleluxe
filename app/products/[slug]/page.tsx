@@ -925,7 +925,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                         <p className="text-xs text-[#6b6b6b] uppercase tracking-wide mb-1">{relatedProduct.brand}</p>
                       )}
                       {relatedProduct.price && (
-                        <p className="text-base font-bold text-[#1a1a1a]">${relatedProduct.price.toFixed(2)}</p>
+                        <p className="text-base font-bold text-[#1a1a1a]" style={{ fontFamily: 'var(--font-atkinson)' }}>${relatedProduct.price.toFixed(2)}</p>
                       )}
                     </div>
                   </Link>
