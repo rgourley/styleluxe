@@ -333,22 +333,24 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   )
   
   // Format dates consistently for server/client rendering
+  // Use UTC dates and fixed format to avoid locale/timezone differences
   const publishedDate = product.content.generatedAt || product.createdAt
   const updatedDate = product.content.updatedAt
   const publishedDateObj = publishedDate ? new Date(publishedDate) : new Date(product.createdAt)
   const updatedDateObj = updatedDate ? new Date(updatedDate) : null
-  const formattedPublishedDate = publishedDateObj.toLocaleDateString('en-US', { 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
-  })
-  const formattedUpdatedDate = updatedDateObj
-    ? updatedDateObj.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      })
-    : ''
+  
+  // Format dates using UTC to ensure server/client consistency
+  const formatDate = (date: Date): string => {
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                    'July', 'August', 'September', 'October', 'November', 'December']
+    const month = months[date.getUTCMonth()]
+    const day = date.getUTCDate()
+    const year = date.getUTCFullYear()
+    return `${month} ${day}, ${year}`
+  }
+  
+  const formattedPublishedDate = formatDate(publishedDateObj)
+  const formattedUpdatedDate = updatedDateObj ? formatDate(updatedDateObj) : ''
   
   // Get product image for structured data
   let imageUrl = product.imageUrl

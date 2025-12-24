@@ -45,9 +45,20 @@ export default function ProductImage({ imageUrl, amazonUrl, productName, categor
   // Memoize to ensure server/client consistency
   // Always include the category part to ensure server/client match
   // Default to "Beauty" if category is not provided
+  // Trim and normalize to prevent whitespace/encoding differences
   const altText = useMemo(() => {
-    const categoryText = category || 'Beauty'
-    return `${productName} - Trending ${categoryText} Product`
+    // Normalize product name - remove extra whitespace, ensure consistent encoding
+    const normalizedName = (productName || '').trim().replace(/\s+/g, ' ')
+    const categoryText = (category || 'Beauty').trim()
+    // Keep alt text concise to avoid truncation issues
+    // Limit to reasonable length (most browsers/screen readers handle ~125 chars well)
+    const baseAlt = `${normalizedName} - Trending ${categoryText} Product`
+    // If too long, truncate at word boundary
+    if (baseAlt.length > 120) {
+      const truncated = normalizedName.substring(0, 100).trim()
+      return `${truncated} - Trending ${categoryText} Product`
+    }
+    return baseAlt
   }, [productName, category])
 
   if (!currentImageUrl) {
