@@ -59,6 +59,7 @@
 
 ## After Making Changes
 
+- [ ] Run `npm run check:api-routes` - **MUST PASS** (catches build issues early)
 - [ ] Run `npm run build` - **MUST PASS** (build errors block push)
 - [ ] Run `npm run check:hydration` - Should pass
 - [ ] Check for linting errors
@@ -67,10 +68,19 @@
 
 ## Before Pushing to Git
 
+- [ ] **ALWAYS run `npm run check:api-routes` first** - Catches issues early
 - [ ] **ALWAYS run `npm run build` before pushing** - This is critical!
-- [ ] If build fails, fix errors before pushing
-- [ ] Pre-push hook will also run build automatically
+- [ ] If checks fail, fix errors before pushing
+- [ ] Pre-push hook will run checks and build automatically
 - [ ] Never push if build has errors
+
+## API Route Best Practices (CRITICAL)
+
+When creating or modifying API routes:
+- [ ] **Always add** `export const dynamic = 'force-dynamic'` at the top
+- [ ] **Never use** static imports from `@/scripts/` - use `await import()` instead
+- [ ] **Prefer dynamic imports** for heavy dependencies (prisma, scripts)
+- [ ] **Test build** after every API route change
 
 ## If Hydration Error Occurs
 
