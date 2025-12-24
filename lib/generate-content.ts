@@ -364,9 +364,6 @@ export async function generateProductContent(
   let googleTrendsContext = ''
   if (googleTrendsData?.url) {
     googleTrendsContext = `\n**Google Trends Data:**\nA Google Trends URL is available for this product (worldwide view): ${googleTrendsData.url}\n\n**Important:** When writing the "Why It's Trending Right Now" section, if you can infer geographic trends from the URL or context (e.g., "trending strongly in South Korea and the UK", "gaining traction in the US", "popular in Asian markets", "biggest in Europe"), include that naturally. Be specific about regions if the data suggests it. The URL shows worldwide trends, so you can mention if it's trending globally or in specific regions. If you don't have specific geographic data, you can mention it's trending globally or skip geographic mentions.\n`
-  } else if (product.content?.googleTrendsData?.url) {
-    // Fallback: check product.content if googleTrendsData parameter wasn't passed
-    googleTrendsContext = `\n**Google Trends Data:**\nA Google Trends URL is available for this product (worldwide view): ${product.content.googleTrendsData.url}\n\n**Important:** When writing the "Why It's Trending Right Now" section, if you can infer geographic trends from the URL or context (e.g., "trending strongly in South Korea and the UK", "gaining traction in the US", "popular in Asian markets", "biggest in Europe"), include that naturally. Be specific about regions if the data suggests it. The URL shows worldwide trends, so you can mention if it's trending globally or in specific regions. If you don't have specific geographic data, you can mention it's trending globally or skip geographic mentions.\n`
   }
 
   const prompt = `You are Alex Chen, a 32-year-old beauty editor who's been testing products professionally for 8 years. You worked at Into The Gloss, now freelance. Write a product review for:

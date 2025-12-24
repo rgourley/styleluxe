@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { revalidatePath, revalidateTag } from 'next/cache'
+import { revalidatePath } from 'next/cache'
 
 export async function POST(
   request: Request,
@@ -43,8 +43,8 @@ export async function POST(
     // Invalidate cache for this product page
     if (product.content?.slug) {
       revalidatePath(`/products/${product.content.slug}`)
-      revalidateTag(`product-${product.content.slug}`)
-      revalidateTag('products') // Also invalidate products list cache
+      revalidatePath('/') // Also invalidate homepage
+      revalidatePath('/trending') // Also invalidate trending page
     }
 
     return NextResponse.json({

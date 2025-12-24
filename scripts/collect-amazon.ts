@@ -435,7 +435,7 @@ async function processAmazonData() {
                 category: product.category,
                 salesJumpPercent: product.salesJumpPercent,
                 position: product.position, // Store position on list
-                previousPosition: recentSignal?.metadata?.position || null, // Track position change
+                previousPosition: (recentSignal?.metadata as any)?.position || null, // Track position change
                 detectedAt: new Date().toISOString(),
               },
             },

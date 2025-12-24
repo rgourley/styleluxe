@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { generateAndSaveContent } from '@/lib/generate-content'
 import { prisma } from '@/lib/prisma'
-import { revalidatePath, revalidateTag } from 'next/cache'
+import { revalidatePath } from 'next/cache'
 
 // Extend timeout for content generation (can take 30-60 seconds)
 export const maxDuration = 60 // 60 seconds for Vercel Pro, 10s default on free tier
@@ -88,7 +88,6 @@ export async function POST(request: Request) {
     // Invalidate cache for this product page
     if (updatedProduct?.content?.slug) {
       revalidatePath(`/products/${updatedProduct.content.slug}`)
-      revalidateTag(`product-${updatedProduct.content.slug}`)
     }
 
     return NextResponse.json({

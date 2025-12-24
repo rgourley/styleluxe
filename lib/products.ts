@@ -25,7 +25,7 @@ type ProductWithRelations = {
     value: number | null
     metadata: any
     detectedAt: Date
-    createdAt: Date
+    createdAt?: Date
   }>
   reviews: Array<{
     id: string
@@ -38,7 +38,7 @@ type ProductWithRelations = {
     helpful: number | null
     verified: boolean
     scrapedAt: Date | null
-    createdAt: Date
+    createdAt?: Date
   }>
   content: {
     id: string
@@ -52,9 +52,26 @@ type ProductWithRelations = {
     whoShouldTry: string | null
     whoShouldSkip: string | null
     alternatives: string | null
+    whatRealUsersSay: string | null
     faq: any
     editedByHuman: boolean
-    createdAt: Date
+    generatedAt?: Date
+    createdAt?: Date
+    updatedAt: Date
+  } | null
+  metadata?: {
+    id: string
+    productId: string
+    starRating: number | null
+    totalReviewCount: number | null
+    availability: string | null
+    description: string | null
+    keyFeatures: any
+    positiveThemes: any
+    negativeThemes: any
+    specificDetails: any
+    memorableQuotes: any
+    lastScrapedAt: Date
     updatedAt: Date
   } | null
 }

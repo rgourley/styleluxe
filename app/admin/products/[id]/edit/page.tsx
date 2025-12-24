@@ -24,6 +24,7 @@ interface ProductContent {
   whoShouldTry: string | null
   whoShouldSkip: string | null
   alternatives: string | null
+  whatRealUsersSay: string | null
   editorNotes: string | null
   redditHotness: number | null
   googleTrendsData: any | null

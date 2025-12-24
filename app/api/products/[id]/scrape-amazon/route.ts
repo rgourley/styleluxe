@@ -72,10 +72,8 @@ export async function POST(
         availability: productData.availability,
         description: productData.description,
         keyFeatures: productData.keyFeatures || [],
-        positiveThemes: productData.positiveThemes || [],
-        negativeThemes: productData.negativeThemes || [],
-        specificDetails: productData.specificDetails || {},
-        memorableQuotes: productData.memorableQuotes || [],
+        // Note: positiveThemes, negativeThemes, specificDetails, memorableQuotes
+        // are not scraped from Amazon - they are populated later from review analysis
       }
 
       // @ts-ignore - ProductMetadata might not exist in Prisma client yet

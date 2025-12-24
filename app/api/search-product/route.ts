@@ -225,6 +225,7 @@ export async function POST(request: Request) {
         },
         include: {
           trendSignals: true,
+          content: true,
         },
       })
     }

@@ -210,7 +210,7 @@ export async function scrapeAmazonProductPage(amazonUrl: string): Promise<Amazon
       currency,
       imageUrl,
       amazonUrl: finalAmazonUrl,
-      asin,
+      asin: asin || undefined,
       starRating,
       totalReviewCount,
       availability,

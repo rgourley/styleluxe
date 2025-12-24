@@ -50,7 +50,7 @@ async function createLauraGellerContent() {
   const amazonSignals = product.trendSignals.filter(s => s.source === 'amazon_movers')
   const redditSignals = product.trendSignals.filter(s => s.source === 'reddit_skincare')
   
-  const salesJump = amazonSignals[0]?.value || amazonSignals[0]?.metadata?.salesJumpPercent || 0
+  const salesJump = amazonSignals[0]?.value || (amazonSignals[0]?.metadata as any)?.salesJumpPercent || 0
   const topRedditPost = redditSignals.sort((a, b) => (b.value || 0) - (a.value || 0))[0]
   const redditUpvotes = topRedditPost?.value || 0
 

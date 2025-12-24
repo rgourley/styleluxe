@@ -835,26 +835,32 @@ export async function getWarmingUpProducts(limit: number = 8) {
           prisma.product.findMany({
             where: {
               status: 'PUBLISHED', // Only show explicitly published products
-              // Low trend scores (warming up, not yet hot)
-              OR: [
+              AND: [
+                // Low trend scores (warming up, not yet hot)
                 {
-                  currentScore: {
-                    gte: 10,
-                    lt: 40, // Below trending threshold
-                  },
+                  OR: [
+                    {
+                      currentScore: {
+                        gte: 10,
+                        lt: 40, // Below trending threshold
+                      },
+                    },
+                    {
+                      trendScore: {
+                        gte: 10,
+                        lt: 40, // Fallback to legacy trendScore
+                      },
+                      currentScore: null, // If currentScore not set yet
+                    },
+                  ],
                 },
+                // Price >= $5 OR null (allow products without price set)
                 {
-                  trendScore: {
-                    gte: 10,
-                    lt: 40, // Fallback to legacy trendScore
-                  },
-                  currentScore: null, // If currentScore not set yet
+                  OR: [
+                    { price: { gte: 5 } },
+                    { price: null },
+                  ],
                 },
-              ],
-              // Price >= $5 OR null (allow products without price set)
-              OR: [
-                { price: { gte: 5 } },
-                { price: null },
               ],
             },
             include: {

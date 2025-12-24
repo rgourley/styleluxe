@@ -493,7 +493,8 @@ async function processRedditData() {
         }
 
         // Store Reddit reviews if we have review text
-        if (productInfo.review && topPost.selftext) {
+        const topPost = posts[0] // Get the top post (highest score)
+        if (productInfo.review && topPost?.selftext) {
           await prisma.review.create({
             data: {
               productId: existingForUpdate.id,
@@ -508,21 +509,7 @@ async function processRedditData() {
           })
         }
 
-        // Store Reddit reviews if we have review text
-        if (productInfo.review && topPost.selftext) {
-          await prisma.review.create({
-            data: {
-              productId: existing.id,
-              source: 'REDDIT',
-              content: productInfo.review,
-              rating: productInfo.rating || null,
-              author: topPost.author,
-              date: new Date(topPost.created_utc * 1000),
-              helpful: topPost.score,
-              verified: false,
-            },
-          })
-        }
+        // Note: Reddit review already stored above for existingForUpdate
 
         updated++
       } else {
@@ -619,23 +606,26 @@ async function processRedditData() {
           },
         })
 
+        // Get the top post (highest score)
+        const topPost = posts[0]
+
         // Add trend signal
         await prisma.trendSignal.create({
           data: {
             productId: product.id,
             source: 'reddit_skincare',
             signalType: 'reddit_mentions',
-            value: topPost.score, // Store upvote count as value for scoring
+            value: topPost?.score || 0, // Store upvote count as value for scoring
             metadata: {
               subreddits: [...new Set(posts.map(p => p.subreddit))],
               mentionCount: count,
-              topPost: {
+              topPost: topPost ? {
                 title: topPost.title,
                 score: topPost.score,
                 comments: topPost.num_comments,
                 url: topPost.url.startsWith('http') ? topPost.url : `https://reddit.com${topPost.url}`,
                 created: new Date(topPost.created_utc * 1000).toISOString(),
-              },
+              } : null,
               description: productInfo.description,
             },
           },
@@ -650,7 +640,7 @@ async function processRedditData() {
         })
 
         // Store Reddit review if we have review text
-        if (productInfo.review && topPost.selftext) {
+        if (productInfo.review && topPost?.selftext) {
           await prisma.review.create({
             data: {
               productId: product.id,
@@ -803,10 +793,10 @@ async function tryMatchAmazonProduct(productId: string, productName: string) {
             },
           },
           ...(brand ? [{
-            brand: {
-              contains: brand,
-              mode: 'insensitive',
-            },
+              brand: {
+                contains: brand,
+                mode: 'insensitive' as const,
+              },
           }] : []),
         ],
       },

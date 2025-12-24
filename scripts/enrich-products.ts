@@ -435,7 +435,7 @@ async function enrichProducts() {
 /**
  * Enrich a single product with data from other sources
  */
-async function enrichSingleProduct(product: any) {
+async function enrichSingleProduct(product: any): Promise<boolean> {
   const updates: any = {}
   const sources = product.trendSignals?.map((s: any) => s.source) || []
 
@@ -509,7 +509,9 @@ async function enrichSingleProduct(product: any) {
       where: { id: product.id },
       data: updates,
     })
+    return true
   }
+  return false
 }
 
 export { enrichProducts }
