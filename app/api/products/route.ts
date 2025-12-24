@@ -61,7 +61,7 @@ export async function GET(request: Request) {
         content: true,
       },
       orderBy: {
-        trendScore: 'desc', // Rank by trend score
+        updatedAt: 'desc', // Sort by last imported/updated (most recent first)
       },
       take: limit,
     })
@@ -143,8 +143,12 @@ export async function GET(request: Request) {
       filteredProducts = productsWithRecalculatedScores.filter(p => p._sourceType === source)
     }
 
-    // Sort by recalculated score
-    filteredProducts.sort((a, b) => b.trendScore - a.trendScore)
+    // Sort by last updated (most recently imported/updated first)
+    filteredProducts.sort((a, b) => {
+      const aDate = new Date(a.updatedAt).getTime()
+      const bDate = new Date(b.updatedAt).getTime()
+      return bDate - aDate // Most recent first
+    })
 
     return NextResponse.json({ success: true, products: filteredProducts })
   } catch (error) {

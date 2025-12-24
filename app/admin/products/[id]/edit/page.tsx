@@ -445,10 +445,44 @@ export default function EditProductPage() {
 
       if (data.success) {
         setMessage('✅ Content generated! Refreshing...')
-        // Wait a bit longer for database to be fully updated
-        await new Promise(resolve => setTimeout(resolve, 1500))
-        await fetchProduct()
-        setMessage('✅ Content generated! You can now view the page or publish it.')
+        // Wait longer for database to be fully updated and retry fetching
+        let retries = 3
+        let contentLoaded = false
+        
+        while (retries > 0 && !contentLoaded) {
+          await new Promise(resolve => setTimeout(resolve, 2000)) // Wait 2 seconds between retries
+          
+          await fetchProduct()
+          
+          // Check if content was actually loaded
+          const response = await fetch(`/api/products/${productId}`)
+          const checkData = await response.json()
+          
+          if (checkData.success && checkData.product?.content) {
+            // Check if content has actual fields (not just empty content)
+            const hasContent = checkData.product.content.hook || 
+                              checkData.product.content.whyTrending ||
+                              checkData.product.content.whatItDoes
+            if (hasContent) {
+              contentLoaded = true
+              setContent(checkData.product.content)
+              setFaqItems(checkData.product.content.faq || [])
+              setEditorNotes(checkData.product.content.editorNotes || '')
+            }
+          }
+          
+          retries--
+        }
+        
+        if (contentLoaded) {
+          setMessage('✅ Content generated! You can now view the page or publish it.')
+          // Force a router refresh to ensure all data is up to date
+          router.refresh()
+        } else {
+          setMessage('✅ Content generated! If content doesn\'t appear, please refresh the page.')
+          // Still refresh the router in case it helps
+          router.refresh()
+        }
       } else {
         setMessage(`❌ Failed: ${data.message}`)
       }

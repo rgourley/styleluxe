@@ -50,14 +50,49 @@ async function fetchAmazonMoversAndShakers(): Promise<AmazonProduct[]> {
     const $ = cheerio.load(html)
     const products: AmazonProduct[] = []
 
+    // Debug: Log HTML length and check if we got content
+    console.log(`📄 Fetched HTML: ${html.length} characters`)
+    if (html.length < 1000) {
+      console.warn('⚠️  HTML response seems too short - Amazon might be blocking or serving different content')
+      return []
+    }
+
     // Parse HTML using Cheerio
     // Amazon's structure varies, but we look for common patterns
     
-    // Find product containers - adjust selectors based on actual HTML structure
+    // First, try to find products by looking for numbered list items (#1, #2, etc.)
+    // The Movers & Shakers page typically has products in a list format
     let position = 0
-    $('[data-asin]').each((_, element) => {
+    
+    // Method 1: Look for elements containing position numbers (#1, #2) AND sales data
+    const potentialProducts = $('*').filter((_, el) => {
+      const text = $(el).text()
+      return /#\d+/.test(text) && (/increased|Sales rank/.test(text) || $(el).find('a[href*="/dp/"]').length > 0)
+    })
+    
+    console.log(`🔍 Found ${potentialProducts.length} potential product containers`)
+    
+    // Method 1: Look for list items with position numbers
+    potentialProducts.each((_, element) => {
       const $el = $(element)
-      const asin = $el.attr('data-asin')
+      const text = $el.text()
+      
+      // Check if this element contains a position number (#1, #2, etc.)
+      const positionMatch = text.match(/#(\d+)/)
+      if (!positionMatch) return
+      
+      position = parseInt(positionMatch[1])
+      
+      // Try to find ASIN in data-asin attribute or in links
+      let asin = $el.attr('data-asin')
+      if (!asin) {
+        const link = $el.find('a[href*="/dp/"]').first()
+        const href = link.attr('href') || ''
+        const asinMatch = href.match(/\/dp\/([A-Z0-9]{10})/)
+        if (asinMatch) {
+          asin = asinMatch[1]
+        }
+      }
       
       if (!asin || asin === '') return
 
@@ -226,8 +261,106 @@ async function fetchAmazonMoversAndShakers(): Promise<AmazonProduct[]> {
       }
     })
 
-    // If the above doesn't work, fall back to finding all /dp/ links
+    // Method 2: Fallback to [data-asin] if Method 1 didn't find products
     if (products.length === 0) {
+      console.log('Method 1 found 0 products, trying Method 2: [data-asin] elements')
+      position = 0
+      $('[data-asin]').each((_, element) => {
+        const $el = $(element)
+        const asin = $el.attr('data-asin')
+        
+        if (!asin || asin === '') return
+        
+        // Extract position from text if available
+        const text = $el.text() + ' ' + ($el.parent().text() || '')
+        const positionMatch = text.match(/#(\d+)/)
+        if (positionMatch) {
+          position = parseInt(positionMatch[1])
+        } else {
+          position++
+        }
+        
+        // Use the same extraction logic as Method 1 (copy from above)
+        // Extract product name
+        let name = $el.find('h2 a span, h2 span.a-text-normal').first().text().trim() ||
+                   $el.find('.a-text-normal').first().text().trim() ||
+                   $el.find('h2 a').first().text().trim() ||
+                   $el.find('a.a-link-normal span').first().text().trim()
+        
+        if (!name || name.match(/^\$[\d.,\s-]+$/)) {
+          name = $el.find('h2 a, a.a-link-normal').first().attr('title') || 
+                 $el.find('img').first().attr('alt') ||
+                 name
+        }
+        
+        if (name && name.includes('$')) {
+          const nameParts = name.split(/\$/)
+          if (nameParts[0].trim().length > 3) {
+            name = nameParts[0].trim()
+          }
+        }
+        
+        // Extract price
+        const priceText = $el.find('.a-price .a-offscreen').first().text() ||
+                         $el.find('.a-price-whole').first().text() ||
+                         $el.find('.a-price').first().text()
+        const priceMatch = priceText?.match(/\$?([\d,]+\.?\d*)/)
+        const price = priceMatch ? parseFloat(priceMatch[1].replace(/,/g, '')) : undefined
+        
+        // Extract image
+        const imageUrl = $el.find('img').first().attr('src') || 
+                        $el.find('img').first().attr('data-src')
+        
+        // Extract product URL
+        const relativeUrl = $el.find('h2 a, a.a-link-normal').first().attr('href')
+        const amazonUrl = relativeUrl 
+          ? (relativeUrl.startsWith('http') ? relativeUrl : `https://www.amazon.com${relativeUrl}`)
+          : `https://www.amazon.com/dp/${asin}`
+        
+        // Extract brand
+        const brandMatch = name.match(/^([A-Z][a-zA-Z\s&]+?)\s+/)
+        const brand = brandMatch ? brandMatch[1].trim() : undefined
+        
+        // Extract sales jump percentage
+        const salesJumpText = $el.text() + ' ' + ($el.find('.a-text-normal, span').text() || '')
+        let salesJumpPercent: number | undefined = undefined
+        
+        let percentMatch = salesJumpText.match(/increased\s*([\d,]+)\s*%/i)
+        if (percentMatch) {
+          salesJumpPercent = parseFloat(percentMatch[1].replace(/,/g, ''))
+        }
+        
+        if (!salesJumpPercent) {
+          const rankMatch = salesJumpText.match(/sales\s*rank[:\s]+(\d+)\s*\(was\s*(\d+)\)/i)
+          if (rankMatch) {
+            const currentRank = parseInt(rankMatch[1])
+            const previousRank = parseInt(rankMatch[2])
+            if (previousRank > currentRank && previousRank > 0) {
+              salesJumpPercent = Math.round(((previousRank - currentRank) / previousRank) * 100)
+            }
+          }
+        }
+        
+        // Skip if name is just a price or too short
+        if (name && name.length > 3 && !name.match(/^[\$0-9.,\s-]+$/)) {
+          products.push({
+            name: name.substring(0, 200),
+            brand,
+            price,
+            imageUrl,
+            amazonUrl,
+            salesJumpPercent,
+            position,
+            category: 'beauty',
+          })
+        }
+      })
+    }
+    
+    // Method 3: Last resort - find all /dp/ links
+    if (products.length === 0) {
+      console.log('Method 2 found 0 products, trying Method 3: all /dp/ links')
+      position = 0
       $('a[href*="/dp/"]').each((_, element) => {
         const $el = $(element)
         const href = $el.attr('href')
@@ -240,16 +373,20 @@ async function fetchAmazonMoversAndShakers(): Promise<AmazonProduct[]> {
         const asinMatch = fullUrl.match(/\/dp\/([A-Z0-9]{10})/)
         if (asinMatch) {
           const name = $el.text().trim() || $el.find('span').first().text().trim()
-          if (name && name.length > 3) {
+          if (name && name.length > 3 && !name.match(/^[\$0-9.,\s-]+$/)) {
+            position++
             products.push({
               name,
               amazonUrl: fullUrl,
+              position,
               category: 'beauty',
             })
           }
         }
       })
     }
+    
+    console.log(`After all methods: Found ${products.length} products`)
 
     // Remove duplicates based on ASIN
     const uniqueProducts = new Map<string, AmazonProduct>()
@@ -263,7 +400,16 @@ async function fetchAmazonMoversAndShakers(): Promise<AmazonProduct[]> {
       }
     }
 
-    console.log(`Found ${uniqueProducts.size} unique products on Amazon Movers & Shakers`)
+    console.log(`✅ Found ${uniqueProducts.size} unique products on Amazon Movers & Shakers`)
+    
+    // Log sample of what we found
+    if (uniqueProducts.size > 0) {
+      console.log('\n📋 Sample products found:')
+      Array.from(uniqueProducts.values()).slice(0, 5).forEach((p, i) => {
+        console.log(`   ${i + 1}. ${p.name?.substring(0, 50)}... (Pos: ${p.position || 'N/A'}, Jump: ${p.salesJumpPercent || 'N/A'}%)`)
+      })
+    }
+    
     // Limit to 30 products - enough to get good variety but not overwhelming
     return Array.from(uniqueProducts.values()).slice(0, 30)
   } catch (error) {

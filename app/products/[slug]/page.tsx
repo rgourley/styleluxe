@@ -58,11 +58,29 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   
   // Create SEO-optimized title (max 60 chars)
   // Format: [Product Name] Review: Is This [Trending Signal] [Category] Worth It?
-  const productNameShort = product.name.length > 30 ? product.name.substring(0, 30) + '...' : product.name
-  const titleBase = `${productNameShort} Review: Is This ${trendingSignal === 'viral' ? 'Viral' : trendingSignal === 'trending' ? 'Trending' : 'Popular'} ${categoryLower} Worth It?`
-  const title = titleBase.length > 60 
-    ? `${product.name} Review: Worth It? | StyleLuxe`
-    : `${titleBase} | StyleLuxe`
+  // Note: This is the META title (browser tab), not the H1 content title
+  const trendingSignalText = trendingSignal === 'viral' ? 'Viral' : trendingSignal === 'trending' ? 'Trending' : 'Popular'
+  
+  // Build title - NO price in meta title, just product name + review question
+  const suffix = ` Review: Is This ${trendingSignalText} ${categoryLower} Worth It?`
+  const siteName = ' | StyleLuxe'
+  const maxTitleLength = 60 // Max 60 chars for SEO (excluding site name)
+  
+  // Calculate available space for product name
+  const availableForName = maxTitleLength - suffix.length - siteName.length
+  
+  // Truncate product name if needed
+  let productNameForTitle = product.name
+  if (productNameForTitle.length > availableForName) {
+    productNameForTitle = productNameForTitle.substring(0, Math.max(10, availableForName - 3)) + '...'
+  }
+  
+  const title = `${productNameForTitle}${suffix}${siteName}`
+  
+  // Final fallback if still too long
+  const finalTitle = title.length > 60 
+    ? `${product.name.substring(0, Math.min(20, 60 - 20))}... Review: Worth It?${siteName}`
+    : title
   
   // Create SEO-optimized meta description (150-160 chars)
   // Format: [Product] jumped [X%] in Amazon sales. At $[price], is this trending [category] actually worth it? Honest review based on real user experiences.
@@ -105,7 +123,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     : description
 
   return {
-    title,
+    title: finalTitle,
     description,
     keywords: [
       product.name,
@@ -135,7 +153,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
         },
       ],
       locale: 'en_US',
-      type: 'product',
+      type: 'article',
     },
     
     // Twitter Card - Enhanced
@@ -311,8 +329,26 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     product.id,
     product.category,
     product.currentScore || product.trendScore,
-    4
+    3
   )
+  
+  // Format dates consistently for server/client rendering
+  const publishedDate = product.content.generatedAt || product.createdAt
+  const updatedDate = product.content.updatedAt
+  const publishedDateObj = publishedDate ? new Date(publishedDate) : new Date(product.createdAt)
+  const updatedDateObj = updatedDate ? new Date(updatedDate) : null
+  const formattedPublishedDate = publishedDateObj.toLocaleDateString('en-US', { 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  })
+  const formattedUpdatedDate = updatedDateObj
+    ? updatedDateObj.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      })
+    : ''
   
   // Get product image for structured data
   let imageUrl = product.imageUrl
@@ -384,7 +420,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     },
     reviewRating: {
       '@type': 'Rating',
-      ratingValue: rating || 4, // Default to 4 out of 5
+      ratingValue: product.metadata?.starRating || 4, // Default to 4 out of 5
       bestRating: 5,
       worstRating: 1,
     },
@@ -599,43 +635,9 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 </p>
               )}
 
-              {/* Publish/Update Dates */}
-              <div className="mb-4 text-xs text-[#6b6b6b] tracking-wide">
-                <time dateTime={product.content.generatedAt?.toISOString() || product.createdAt.toISOString()}>
-                  Published: {new Date(product.content.generatedAt || product.createdAt).toLocaleDateString('en-US', { 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                  })}
-                </time>
-                {product.content.updatedAt && (
-                  <>
-                    {' • '}
-                    <time dateTime={product.content.updatedAt.toISOString()}>
-                      Updated: {new Date(product.content.updatedAt).toLocaleDateString('en-US', { 
-                        year: 'numeric', 
-                        month: 'long', 
-                        day: 'numeric' 
-                      })}
-                    </time>
-                  </>
-                )}
-              </div>
-
-              {/* Product Name - SEO Optimized H1 */}
+              {/* Product Name - H1 */}
               <h1 className="text-4xl md:text-5xl font-bold text-[#1a1a1a] mb-6 tracking-tight leading-tight">
-                {(() => {
-                  const priceText = product.price ? `$${product.price.toFixed(2)} ` : ''
-                  const salesText = stats.salesSpike ? `${Math.round(stats.salesSpike)}% Sales Spike ` : ''
-                  const trendText = trendLabel === 'Hot' ? 'Viral ' : trendLabel === 'Rising' ? 'Trending ' : ''
-                  const categoryText = product.category || 'Beauty Product'
-                  const h1Text = `${product.name} Review: Is This ${priceText}${salesText}${trendText}${categoryText} Worth the Hype?`
-                  // If too long, shorten it
-                  if (h1Text.length > 100) {
-                    return `${product.name} Review: Is This ${priceText}${trendText}${categoryText} Worth It?`
-                  }
-                  return h1Text
-                })()}
+                {product.name}
               </h1>
 
               {/* Trend Indicator */}
@@ -864,6 +866,21 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                   </div>
                 ))}
               </div>
+              
+              {/* Publish/Update Dates */}
+              <div className="mt-8 text-xs text-[#6b6b6b] tracking-wide">
+                <time dateTime={publishedDateObj.toISOString()}>
+                  Published: {formattedPublishedDate}
+                </time>
+                {updatedDateObj && (
+                  <>
+                    {' • '}
+                    <time dateTime={updatedDateObj.toISOString()}>
+                      Updated: {formattedUpdatedDate}
+                    </time>
+                  </>
+                )}
+              </div>
             </section>
           )}
 
@@ -873,12 +890,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               <h2 className="text-3xl md:text-4xl font-bold text-[#1a1a1a] mb-8 tracking-tight">
                 {product.category ? `Similar Trending ${product.category} Products` : 'Similar Trending Products'}
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {relatedProducts.map((relatedProduct) => (
                   <Link
                     key={relatedProduct.id}
                     href={`/products/${relatedProduct.content?.slug}`}
-                    className="block bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow"
+                    className="block bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
                   >
                     <div className="aspect-square bg-[#f5f5f5] relative">
                       {relatedProduct.imageUrl ? (
@@ -889,24 +906,24 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-400">
-                          <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
                         </div>
                       )}
-                      <div className="absolute top-2 right-2">
-                        <span className="bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg text-xs font-semibold text-[#8b5cf6]">
-                          {getTrendEmoji(relatedProduct.trendScore)} {getTrendLabel(relatedProduct.trendScore)}
+                      <div className="absolute top-1.5 right-1.5">
+                        <span className="bg-white/90 backdrop-blur-sm px-1.5 py-0.5 rounded text-xs font-semibold text-[#8b5cf6]">
+                          {getTrendEmoji(relatedProduct.trendScore)}
                         </span>
                       </div>
                     </div>
-                    <div className="p-4">
-                      <h3 className="font-semibold text-[#1a1a1a] mb-2 line-clamp-2">{relatedProduct.name}</h3>
+                    <div className="p-3">
+                      <h3 className="font-semibold text-sm text-[#1a1a1a] mb-1 line-clamp-2 leading-tight">{relatedProduct.name}</h3>
                       {relatedProduct.brand && (
-                        <p className="text-xs text-[#6b6b6b] uppercase tracking-wide mb-2">{relatedProduct.brand}</p>
+                        <p className="text-xs text-[#6b6b6b] uppercase tracking-wide mb-1">{relatedProduct.brand}</p>
                       )}
                       {relatedProduct.price && (
-                        <p className="text-lg font-bold text-[#1a1a1a]">${relatedProduct.price.toFixed(2)}</p>
+                        <p className="text-base font-bold text-[#1a1a1a]">${relatedProduct.price.toFixed(2)}</p>
                       )}
                     </div>
                   </Link>
@@ -923,11 +940,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 <strong className="text-[#1a1a1a]">Is it worth the hype?</strong> {verdict}
               </p>
               <p className="text-sm text-[#6b6b6b] tracking-wide">
-                Last updated: {new Date(product.content.updatedAt).toLocaleDateString('en-US', { 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                })}
+                Last updated: {formattedUpdatedDate || formattedPublishedDate}
               </p>
             </div>
           </section>
@@ -1014,7 +1027,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
           <div className="pt-8 border-t border-[#e5e5e5] text-center">
             <p className="text-xs text-[#8b8b8b] tracking-wider uppercase">
-              © {new Date().getFullYear()} StyleLuxe. All rights reserved.
+              © 2025 StyleLuxe. All rights reserved.
             </p>
           </div>
         </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { getAmazonImageUrl } from '@/lib/amazon-image'
 
 interface ProductImageProps {
@@ -11,7 +11,8 @@ interface ProductImageProps {
 }
 
 export default function ProductImage({ imageUrl, amazonUrl, productName, category }: ProductImageProps) {
-  const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(() => {
+  // Calculate image URL deterministically using useMemo
+  const initialImageUrl = useMemo(() => {
     // Priority: 1) product.imageUrl (if valid), 2) Amazon image from URL
     if (imageUrl && !imageUrl.endsWith('.gif') && imageUrl.startsWith('http')) {
       return imageUrl
@@ -20,7 +21,9 @@ export default function ProductImage({ imageUrl, amazonUrl, productName, categor
       return getAmazonImageUrl(amazonUrl)
     }
     return null
-  })
+  }, [imageUrl, amazonUrl])
+  
+  const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(initialImageUrl)
   const [hasError, setHasError] = useState(false)
 
   const handleError = () => {
@@ -38,6 +41,12 @@ export default function ProductImage({ imageUrl, amazonUrl, productName, categor
     }
   }
 
+  // Use a consistent alt text format to avoid hydration mismatches
+  // Always include the category part to ensure server/client match
+  // Default to "Beauty" if category is not provided
+  const categoryText = category || 'Beauty'
+  const altText = `${productName} - Trending ${categoryText} Product`
+
   if (!currentImageUrl) {
     return (
       <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-100">
@@ -51,7 +60,7 @@ export default function ProductImage({ imageUrl, amazonUrl, productName, categor
   return (
     <img 
       src={currentImageUrl} 
-      alt={`${productName} - Trending ${category || 'Beauty'} Product`}
+      alt={altText}
       className="w-full h-full object-cover"
       onError={handleError}
     />
