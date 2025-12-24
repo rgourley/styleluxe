@@ -1,12 +1,20 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Outfit, Atkinson_Hyperlegible } from "next/font/google";
 import "./globals.css";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 
-const inter = Inter({
+const outfit = Outfit({
   subsets: ["latin"],
-  variable: "--font-inter",
-  display: "swap", // Optimize font loading
+  variable: "--font-outfit",
+  display: "swap",
+  preload: true,
+});
+
+const atkinsonHyperlegible = Atkinson_Hyperlegible({
+  weight: ["400", "700"],
+  subsets: ["latin"],
+  variable: "--font-atkinson",
+  display: "swap",
   preload: true,
 });
 
@@ -64,7 +72,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} font-sans antialiased`}>
+      <body className={`${outfit.variable} ${atkinsonHyperlegible.variable} font-body antialiased`}>
         <GoogleAnalytics />
         {children}
       </body>
