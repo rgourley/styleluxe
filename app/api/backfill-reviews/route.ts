@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
-import { backfillReviews } from '@/scripts/backfill-reviews'
 
-// Force dynamic rendering to prevent build-time data collection
+// Force dynamic rendering to prevent build-time execution
 export const dynamic = 'force-dynamic'
 
 /**
@@ -18,7 +17,8 @@ export async function POST(request: Request) {
     // Run backfill (this will take a while)
     // Note: This is a long-running operation, so you might want to run it as a background job
     // For now, we'll run it synchronously but with a timeout
-    
+    // Use dynamic import to prevent build-time execution
+    const { backfillReviews } = await import('@/scripts/backfill-reviews')
     const backfillPromise = backfillReviews()
     const timeoutPromise = new Promise((_, reject) => {
       setTimeout(() => {

@@ -19,8 +19,9 @@
     "daily-update": "tsx scripts/daily-update.ts",
     "backfill": "tsx scripts/backfill-age-decay.ts",
     "check:hydration": "tsx scripts/check-hydration.ts",
+    "check:api-routes": "tsx scripts/check-api-routes.ts",
     "pre-commit": "npm run check:hydration",
-    "pre-push": "npm run build",
+    "pre-push": "npm run check:api-routes && npm run build",
     "pre-push:check": "bash scripts/pre-push-check.sh"
   },
   "dependencies": {

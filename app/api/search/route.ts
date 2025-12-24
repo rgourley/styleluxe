@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
-import { searchProducts } from '@/lib/trending-products'
+
+// Force dynamic rendering to prevent build-time execution
+export const dynamic = 'force-dynamic'
 
 export async function GET(request: Request) {
   try {
@@ -15,6 +17,8 @@ export async function GET(request: Request) {
       })
     }
 
+    // Lazy import to prevent build-time execution
+    const { searchProducts } = await import('@/lib/trending-products')
     const products = await searchProducts(query, limit)
 
     return NextResponse.json({
