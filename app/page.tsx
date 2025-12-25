@@ -53,6 +53,16 @@ export default async function Home({
   const params = await searchParams
   const searchQuery = params.q
 
+  // Get current date (server-side, updates daily at midnight)
+  // Use UTC to ensure consistency across all servers
+  const now = new Date()
+  const currentDate = now.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric', 
+    year: 'numeric',
+    timeZone: 'America/New_York' // EST/EDT for consistency
+  })
+
   // Fetch all sections in parallel for better performance
   const [
     trendingNow,
@@ -230,7 +240,7 @@ export default async function Home({
                       Trending Now
                     </h2>
                     <p className="text-sm text-[#6b6b6b] tracking-wide">
-                      The hottest products right now - score 70+ and trending within the last 7 days
+                      The hottest products right now (score 70+) • Amazon sales data • Reddit trending • Updated {currentDate}
                     </p>
                   </div>
                   <Link 
