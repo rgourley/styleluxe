@@ -28,9 +28,9 @@ function LoginForm() {
 
       if (result?.error) {
         setError('Invalid email or password')
-      } else {
-        router.push(callbackUrl)
-        router.refresh()
+      } else if (result?.ok) {
+        // Force a full page reload to ensure cookies are set
+        window.location.href = callbackUrl
       }
     } catch (err) {
       setError('An error occurred. Please try again.')
