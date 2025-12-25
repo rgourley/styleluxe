@@ -193,12 +193,6 @@ export default async function Home({
             We track trending beauty products across <strong className="font-semibold text-[#2D2D2D]">TikTok</strong>, <strong className="font-semibold text-[#2D2D2D]">Instagram</strong>, <strong className="font-semibold text-[#2D2D2D]">Reddit</strong>, and <strong className="font-semibold text-[#2D2D2D]">Amazon</strong>. 
             Discover what's actually going viral before everyone else finds out.
           </p>
-          <p className="text-lg text-[#6b6b6b] max-w-2xl mx-auto mb-3 font-light">
-            Real data from multiple platforms. Honest reviews. No hype.
-          </p>
-          <p className="text-sm text-[#8b8b8b] mb-8 tracking-wide uppercase letter-spacing-wider">
-            Updated daily
-          </p>
         </div>
 
         {/* Search Results */}
