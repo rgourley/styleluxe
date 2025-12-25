@@ -91,7 +91,7 @@ export async function getTrendingNowHomepage(limit: number = 8) {
         return []
       }
     },
-    ['trending-now-homepage'],
+    ['trending-now-homepage-v2'],
     {
       revalidate: 60,
       tags: ['products', 'trending'],

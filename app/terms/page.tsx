@@ -13,16 +13,16 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <div className="min-h-screen bg-[#fafafa]">
+    <div className="min-h-screen bg-[#FFFBF5]">
       {/* Header */}
       <header className="border-b border-[#e5e5e5] bg-white/80 backdrop-blur-md sticky top-0 z-10 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             <Link href="/" className="text-3xl font-bold tracking-tight">
-              <span className="text-[#1a1a1a]">Style</span><span className="text-[#8b5cf6]">Luxe</span>
+              <span className="text-[#2D2D2D]">Style</span><span style={{ color: '#A8D5BA' }}>Luxe</span>
             </Link>
             <nav className="hidden md:flex space-x-10">
-              <Link href="/" className="text-[#4a4a4a] hover:text-[#1a1a1a] font-medium text-sm tracking-wide transition-colors">
+              <Link href="/" className="text-[#4a4a4a] hover:text-[#2D2D2D] font-medium text-sm tracking-wide transition-colors">
                 Trending
               </Link>
             </nav>
@@ -32,7 +32,7 @@ export default function TermsPage() {
 
       <main className="max-w-[920px] mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
         <div className="mb-12">
-          <h1 className="text-5xl md:text-6xl font-bold text-[#1a1a1a] mb-4 tracking-tight">
+          <h1 className="text-5xl md:text-6xl font-bold text-[#2D2D2D] mb-4 tracking-tight">
             Terms of Service
           </h1>
           <p className="text-sm text-[#8b8b8b] tracking-wide uppercase">
@@ -42,7 +42,7 @@ export default function TermsPage() {
 
         <div className="prose prose-lg max-w-none space-y-8 text-[#4a4a4a] leading-relaxed">
           <section>
-            <h2 className="text-3xl font-bold text-[#1a1a1a] mb-4 tracking-tight">Agreement to Terms</h2>
+            <h2 className="text-3xl font-bold text-[#2D2D2D] mb-4 tracking-tight">Agreement to Terms</h2>
             <p>
               By accessing or using StyleLuxe, you agree to be bound by these Terms of Service and all applicable 
               laws and regulations. If you do not agree with any of these terms, you are prohibited from using 
@@ -51,7 +51,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-3xl font-bold text-[#1a1a1a] mb-4 tracking-tight">Use License</h2>
+            <h2 className="text-3xl font-bold text-[#2D2D2D] mb-4 tracking-tight">Use License</h2>
             <p>
               Permission is granted to temporarily access the materials on StyleLuxe for personal, non-commercial 
               transitory viewing only. This is the grant of a license, not a transfer of title, and under this 
@@ -66,7 +66,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-3xl font-bold text-[#1a1a1a] mb-4 tracking-tight">Disclaimer</h2>
+            <h2 className="text-3xl font-bold text-[#2D2D2D] mb-4 tracking-tight">Disclaimer</h2>
             <p>
               The materials on StyleLuxe are provided on an 'as is' basis. StyleLuxe makes no warranties, expressed 
               or implied, and hereby disclaims and negates all other warranties including, without limitation, 
@@ -81,7 +81,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-3xl font-bold text-[#1a1a1a] mb-4 tracking-tight">Limitations</h2>
+            <h2 className="text-3xl font-bold text-[#2D2D2D] mb-4 tracking-tight">Limitations</h2>
             <p>
               In no event shall StyleLuxe or its suppliers be liable for any damages (including, without limitation, 
               damages for loss of data or profit, or due to business interruption) arising out of the use or 
@@ -91,7 +91,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-3xl font-bold text-[#1a1a1a] mb-4 tracking-tight">Accuracy of Materials</h2>
+            <h2 className="text-3xl font-bold text-[#2D2D2D] mb-4 tracking-tight">Accuracy of Materials</h2>
             <p>
               The materials appearing on StyleLuxe could include technical, typographical, or photographic errors. 
               StyleLuxe does not warrant that any of the materials on its website are accurate, complete, or current. 
@@ -100,7 +100,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-3xl font-bold text-[#1a1a1a] mb-4 tracking-tight">Links</h2>
+            <h2 className="text-3xl font-bold text-[#2D2D2D] mb-4 tracking-tight">Links</h2>
             <p>
               StyleLuxe has not reviewed all of the sites linked to its website and is not responsible for the 
               contents of any such linked site. The inclusion of any link does not imply endorsement by StyleLuxe 
@@ -109,7 +109,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-3xl font-bold text-[#1a1a1a] mb-4 tracking-tight">Affiliate Disclosure</h2>
+            <h2 className="text-3xl font-bold text-[#2D2D2D] mb-4 tracking-tight">Affiliate Disclosure</h2>
             <p>
               StyleLuxe participates in affiliate marketing programs, including the Amazon Associates Program. 
               This means we may earn commissions from qualifying purchases made through our affiliate links. 
@@ -118,7 +118,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-3xl font-bold text-[#1a1a1a] mb-4 tracking-tight">Modifications</h2>
+            <h2 className="text-3xl font-bold text-[#2D2D2D] mb-4 tracking-tight">Modifications</h2>
             <p>
               StyleLuxe may revise these terms of service for its website at any time without notice. By using 
               this website you are agreeing to be bound by the then current version of these terms of service.
@@ -126,7 +126,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-3xl font-bold text-[#1a1a1a] mb-4 tracking-tight">Governing Law</h2>
+            <h2 className="text-3xl font-bold text-[#2D2D2D] mb-4 tracking-tight">Governing Law</h2>
             <p>
               These terms and conditions are governed by and construed in accordance with applicable laws and 
               you irrevocably submit to the exclusive jurisdiction of the courts in that location.
@@ -134,10 +134,10 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-3xl font-bold text-[#1a1a1a] mb-4 tracking-tight">Contact Us</h2>
+            <h2 className="text-3xl font-bold text-[#2D2D2D] mb-4 tracking-tight">Contact Us</h2>
             <p>
               If you have any questions about these Terms of Service, please{' '}
-              <Link href="/contact" className="text-[#8b5cf6] hover:text-[#7c3aed] underline">
+              <Link href="/contact" className="text-[#FF6B6B] hover:text-[#E07856] underline">
                 contact us
               </Link>.
             </p>
@@ -152,7 +152,7 @@ export default function TermsPage() {
             {/* Brand Column */}
             <div>
               <Link href="/" className="text-2xl font-bold tracking-tight mb-4 inline-block">
-                <span className="text-[#1a1a1a]">Style</span><span className="text-[#8b5cf6]">Luxe</span>
+                <span className="text-[#2D2D2D]">Style</span><span style={{ color: '#A8D5BA' }}>Luxe</span>
               </Link>
               <p className="text-sm text-[#6b6b6b] leading-relaxed">
                 Tracking trending beauty products from TikTok, Instagram, Reddit, and Amazon.
@@ -161,25 +161,25 @@ export default function TermsPage() {
 
             {/* Pages Column */}
             <div>
-              <h3 className="text-sm font-semibold text-[#1a1a1a] mb-4 tracking-wide uppercase">Pages</h3>
+              <h3 className="text-sm font-semibold text-[#2D2D2D] mb-4 tracking-wide uppercase">Pages</h3>
               <ul className="space-y-3">
                 <li>
-                  <Link href="/" className="text-sm text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors">
+                  <Link href="/" className="text-sm text-[var(--secondary-link-color)] hover:text-[var(--secondary-link-hover)] transition-colors">
                     Trending Products
                   </Link>
                 </li>
                 <li>
-                  <Link href="/about" className="text-sm text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors">
+                  <Link href="/about" className="text-sm text-[var(--secondary-link-color)] hover:text-[var(--secondary-link-hover)] transition-colors">
                     About Us
                   </Link>
                 </li>
                 <li>
-                  <Link href="/faq" className="text-sm text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors">
+                  <Link href="/faq" className="text-sm text-[var(--secondary-link-color)] hover:text-[var(--secondary-link-hover)] transition-colors">
                     FAQ
                   </Link>
                 </li>
                 <li>
-                  <Link href="/contact" className="text-sm text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors">
+                  <Link href="/contact" className="text-sm text-[var(--secondary-link-color)] hover:text-[var(--secondary-link-hover)] transition-colors">
                     Contact
                   </Link>
                 </li>
@@ -188,15 +188,15 @@ export default function TermsPage() {
 
             {/* Legal Column */}
             <div>
-              <h3 className="text-sm font-semibold text-[#1a1a1a] mb-4 tracking-wide uppercase">Legal</h3>
+              <h3 className="text-sm font-semibold text-[#2D2D2D] mb-4 tracking-wide uppercase">Legal</h3>
               <ul className="space-y-3">
                 <li>
-                  <Link href="/privacy" className="text-sm text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors">
+                  <Link href="/privacy" className="text-sm text-[var(--secondary-link-color)] hover:text-[var(--secondary-link-hover)] transition-colors">
                     Privacy Policy
                   </Link>
                 </li>
                 <li>
-                  <Link href="/terms" className="text-sm text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors">
+                  <Link href="/terms" className="text-sm text-[var(--secondary-link-color)] hover:text-[var(--secondary-link-hover)] transition-colors">
                     Terms of Service
                   </Link>
                 </li>
@@ -205,7 +205,7 @@ export default function TermsPage() {
 
             {/* Info Column */}
             <div>
-              <h3 className="text-sm font-semibold text-[#1a1a1a] mb-4 tracking-wide uppercase">Info</h3>
+              <h3 className="text-sm font-semibold text-[#2D2D2D] mb-4 tracking-wide uppercase">Info</h3>
               <p className="text-sm text-[#6b6b6b] leading-relaxed mb-4">
                 Real data. Honest reviews. No hype.
               </p>
@@ -214,7 +214,7 @@ export default function TermsPage() {
 
           <div className="pt-8 border-t border-[#e5e5e5] text-center">
             <p className="text-xs text-[#8b8b8b] tracking-wider uppercase">
-              © {new Date().getFullYear()} StyleLuxe. All rights reserved.
+              © {2025} StyleLuxe. All rights reserved.
             </p>
           </div>
         </div>

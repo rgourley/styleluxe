@@ -179,10 +179,10 @@ export default async function TrendingPage({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 py-4 md:py-0 md:h-20">
             <Link href="/" className="text-2xl md:text-3xl font-bold tracking-tight flex-shrink-0">
-              <span className="text-[#1a1a1a]">Style</span><span className="text-[#8b5cf6]">Luxe</span>
+              <span className="text-[#2D2D2D]">Style</span><span style={{ color: '#A8D5BA' }}>Luxe</span>
             </Link>
             <nav className="flex space-x-6 md:space-x-10 flex-shrink-0">
-              <Link href="/trending" className="text-[#4a4a4a] hover:text-[#1a1a1a] font-medium text-sm tracking-wide transition-colors">
+              <Link href="/trending" className="text-[#4a4a4a] hover:text-[#2D2D2D] font-medium text-sm tracking-wide transition-colors">
                 All Trending
               </Link>
             </nav>
@@ -193,7 +193,7 @@ export default async function TrendingPage({
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
         <div className="mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold text-[#1a1a1a] mb-4 tracking-tight">
+          <h1 className="text-4xl md:text-5xl font-bold text-[#2D2D2D] mb-4 tracking-tight">
             All Trending Products
           </h1>
           <p className="text-lg text-[#6b6b6b] max-w-[920px]">
@@ -213,8 +213,8 @@ export default async function TrendingPage({
                   className={`
                     px-4 py-2 text-sm font-medium transition-colors border-b-2
                     ${isActive
-                      ? 'border-[#8b5cf6] text-[#8b5cf6]'
-                      : 'border-transparent text-[#6b6b6b] hover:text-[#1a1a1a] hover:border-[#d5d5d5]'
+                      ? 'border-[#FF6B6B] text-[#FF6B6B]'
+                      : 'border-transparent text-[var(--secondary-link-color)] hover:text-[var(--secondary-link-hover)] hover:border-[#d5d5d5]'
                     }
                   `}
                 >
@@ -240,7 +240,7 @@ export default async function TrendingPage({
             </p>
             <Link 
               href="/trending?filter=all" 
-              className="text-[#8b5cf6] hover:text-[#7c3aed] underline"
+              className="text-[#FF6B6B] hover:text-[#E07856] underline"
             >
               View all products
             </Link>
@@ -260,64 +260,64 @@ export default async function TrendingPage({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <div>
-              <h3 className="font-semibold text-[#1a1a1a] mb-4">Pages</h3>
+              <h3 className="font-semibold text-[#2D2D2D] mb-4">Pages</h3>
               <ul className="space-y-2">
                 <li>
-                  <Link href="/" className="text-sm text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors">
+                  <Link href="/" className="text-sm text-[var(--secondary-link-color)] hover:text-[var(--secondary-link-hover)] transition-colors">
                     Home
                   </Link>
                 </li>
                 <li>
-                  <Link href="/trending" className="text-sm text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors">
+                  <Link href="/trending" className="text-sm text-[var(--secondary-link-color)] hover:text-[var(--secondary-link-hover)] transition-colors">
                     All Trending
                   </Link>
                 </li>
                 <li>
-                  <Link href="/about" className="text-sm text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors">
+                  <Link href="/about" className="text-sm text-[var(--secondary-link-color)] hover:text-[var(--secondary-link-hover)] transition-colors">
                     About Us
                   </Link>
                 </li>
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold text-[#1a1a1a] mb-4">Legal</h3>
+              <h3 className="font-semibold text-[#2D2D2D] mb-4">Legal</h3>
               <ul className="space-y-2">
                 <li>
-                  <Link href="/privacy" className="text-sm text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors">
+                  <Link href="/privacy" className="text-sm text-[var(--secondary-link-color)] hover:text-[var(--secondary-link-hover)] transition-colors">
                     Privacy Policy
                   </Link>
                 </li>
                 <li>
-                  <Link href="/terms" className="text-sm text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors">
+                  <Link href="/terms" className="text-sm text-[var(--secondary-link-color)] hover:text-[var(--secondary-link-hover)] transition-colors">
                     Terms of Service
                   </Link>
                 </li>
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold text-[#1a1a1a] mb-4">Support</h3>
+              <h3 className="font-semibold text-[#2D2D2D] mb-4">Support</h3>
               <ul className="space-y-2">
                 <li>
-                  <Link href="/contact" className="text-sm text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors">
+                  <Link href="/contact" className="text-sm text-[var(--secondary-link-color)] hover:text-[var(--secondary-link-hover)] transition-colors">
                     Contact
                   </Link>
                 </li>
                 <li>
-                  <Link href="/faq" className="text-sm text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors">
+                  <Link href="/faq" className="text-sm text-[var(--secondary-link-color)] hover:text-[var(--secondary-link-hover)] transition-colors">
                     FAQ
                   </Link>
                 </li>
               </ul>
             </div>
             <div>
-              <h3 className="font-semibold text-[#1a1a1a] mb-4">StyleLuxe</h3>
+              <h3 className="font-semibold text-[#2D2D2D] mb-4">StyleLuxe</h3>
               <p className="text-sm text-[#6b6b6b]">
                 Track trending beauty products from TikTok, Instagram, Reddit, and Amazon.
               </p>
             </div>
           </div>
           <div className="mt-12 pt-8 border-t border-[#e5e5e5] text-center text-sm text-[#8b8b8b]">
-            <p>&copy; {new Date().getFullYear()} StyleLuxe. All rights reserved.</p>
+            <p>&copy; 2025 StyleLuxe. All rights reserved.</p>
           </div>
         </div>
       </footer>

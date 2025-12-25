@@ -1367,7 +1367,7 @@ export default function AdminPage() {
                         {!product.content?.slug && (
                           <Link
                             href={`/admin/products/${product.id}/edit`}
-                            className="text-sm text-purple-600 hover:text-purple-800 underline"
+                            className="text-sm text-[var(--link-color)] hover:text-purple-800 underline"
                           >
                             Generate Detail Page →
                           </Link>
@@ -1440,7 +1440,7 @@ export default function AdminPage() {
                   />
                   <button
                     onClick={handleMergeSearch}
-                    className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium"
+                    className="px-4 py-2 bg-[var(--button-primary-bg)] hover:bg-[var(--button-primary-hover)] text-white rounded-lg font-medium"
                   >
                     Search
                   </button>
@@ -1469,7 +1469,7 @@ export default function AdminPage() {
                             </p>
                           </div>
                           {selectedTargetProduct === product.id && (
-                            <span className="text-purple-600">✓ Selected</span>
+                            <span className="text-[var(--link-color)]">✓ Selected</span>
                           )}
                         </div>
                       </button>

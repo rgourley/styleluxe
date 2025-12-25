@@ -76,16 +76,16 @@ export default function FAQPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqStructuredData) }}
       />
       
-      <div className="min-h-screen bg-[#fafafa]">
+      <div className="min-h-screen bg-[#FFFBF5]">
         {/* Header */}
         <header className="border-b border-[#e5e5e5] bg-white/80 backdrop-blur-md sticky top-0 z-10 shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-20">
               <Link href="/" className="text-3xl font-bold tracking-tight">
-                <span className="text-[#1a1a1a]">Style</span><span className="text-[#8b5cf6]">Luxe</span>
+                <span className="text-[#2D2D2D]">Style</span><span style={{ color: '#A8D5BA' }}>Luxe</span>
               </Link>
               <nav className="hidden md:flex space-x-10">
-                <Link href="/" className="text-[#4a4a4a] hover:text-[#1a1a1a] font-medium text-sm tracking-wide transition-colors">
+                <Link href="/" className="text-[#4a4a4a] hover:text-[#2D2D2D] font-medium text-sm tracking-wide transition-colors">
                   Trending
                 </Link>
               </nav>
@@ -95,7 +95,7 @@ export default function FAQPage() {
 
         <main className="max-w-[920px] mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
           <div className="mb-12">
-            <h1 className="text-5xl md:text-6xl font-bold text-[#1a1a1a] mb-4 tracking-tight">
+            <h1 className="text-5xl md:text-6xl font-bold text-[#2D2D2D] mb-4 tracking-tight">
               Frequently Asked Questions
             </h1>
             <p className="text-xl text-[#4a4a4a] font-light leading-relaxed">
@@ -105,8 +105,8 @@ export default function FAQPage() {
 
           <div className="space-y-8">
             {faqs.map((faq, index) => (
-              <div key={index} className="border-l-4 border-[#8b5cf6] pl-8 py-4 bg-white rounded-r-lg shadow-sm">
-                <h2 className="text-xl font-semibold text-[#1a1a1a] mb-3">{faq.question}</h2>
+              <div key={index} className="border-l-4 border-[#FF6B6B] pl-8 py-4 bg-white rounded-r-lg shadow-sm">
+                <h2 className="text-xl font-semibold text-[#2D2D2D] mb-3">{faq.question}</h2>
                 <p className="text-[#4a4a4a] leading-relaxed">{faq.answer}</p>
               </div>
             ))}
@@ -116,7 +116,7 @@ export default function FAQPage() {
             <p className="text-[#6b6b6b] mb-4">Still have questions?</p>
             <Link 
               href="/contact" 
-              className="text-[#8b5cf6] hover:text-[#7c3aed] font-medium transition-colors"
+              className="text-[#FF6B6B] hover:text-[#E07856] font-medium transition-colors"
             >
               Contact us →
             </Link>
@@ -130,7 +130,7 @@ export default function FAQPage() {
               {/* Brand Column */}
               <div>
                 <Link href="/" className="text-2xl font-bold tracking-tight mb-4 inline-block">
-                  <span className="text-[#1a1a1a]">Style</span><span className="text-[#8b5cf6]">Luxe</span>
+                  <span className="text-[#2D2D2D]">Style</span><span style={{ color: '#A8D5BA' }}>Luxe</span>
                 </Link>
                 <p className="text-sm text-[#6b6b6b] leading-relaxed">
                   Tracking trending beauty products from TikTok, Instagram, Reddit, and Amazon.
@@ -139,25 +139,25 @@ export default function FAQPage() {
 
               {/* Pages Column */}
               <div>
-                <h3 className="text-sm font-semibold text-[#1a1a1a] mb-4 tracking-wide uppercase">Pages</h3>
+                <h3 className="text-sm font-semibold text-[#2D2D2D] mb-4 tracking-wide uppercase">Pages</h3>
                 <ul className="space-y-3">
                   <li>
-                    <Link href="/" className="text-sm text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors">
+                    <Link href="/" className="text-sm text-[var(--secondary-link-color)] hover:text-[var(--secondary-link-hover)] transition-colors">
                       Trending Products
                     </Link>
                   </li>
                   <li>
-                    <Link href="/about" className="text-sm text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors">
+                    <Link href="/about" className="text-sm text-[var(--secondary-link-color)] hover:text-[var(--secondary-link-hover)] transition-colors">
                       About Us
                     </Link>
                   </li>
                   <li>
-                    <Link href="/faq" className="text-sm text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors">
+                    <Link href="/faq" className="text-sm text-[var(--secondary-link-color)] hover:text-[var(--secondary-link-hover)] transition-colors">
                       FAQ
                     </Link>
                   </li>
                   <li>
-                    <Link href="/contact" className="text-sm text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors">
+                    <Link href="/contact" className="text-sm text-[var(--secondary-link-color)] hover:text-[var(--secondary-link-hover)] transition-colors">
                       Contact
                     </Link>
                   </li>
@@ -166,15 +166,15 @@ export default function FAQPage() {
 
               {/* Legal Column */}
               <div>
-                <h3 className="text-sm font-semibold text-[#1a1a1a] mb-4 tracking-wide uppercase">Legal</h3>
+                <h3 className="text-sm font-semibold text-[#2D2D2D] mb-4 tracking-wide uppercase">Legal</h3>
                 <ul className="space-y-3">
                   <li>
-                    <Link href="/privacy" className="text-sm text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors">
+                    <Link href="/privacy" className="text-sm text-[var(--secondary-link-color)] hover:text-[var(--secondary-link-hover)] transition-colors">
                       Privacy Policy
                     </Link>
                   </li>
                   <li>
-                    <Link href="/terms" className="text-sm text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors">
+                    <Link href="/terms" className="text-sm text-[var(--secondary-link-color)] hover:text-[var(--secondary-link-hover)] transition-colors">
                       Terms of Service
                     </Link>
                   </li>
@@ -183,7 +183,7 @@ export default function FAQPage() {
 
               {/* Info Column */}
               <div>
-                <h3 className="text-sm font-semibold text-[#1a1a1a] mb-4 tracking-wide uppercase">Info</h3>
+                <h3 className="text-sm font-semibold text-[#2D2D2D] mb-4 tracking-wide uppercase">Info</h3>
                 <p className="text-sm text-[#6b6b6b] leading-relaxed mb-4">
                   Real data. Honest reviews. No hype.
                 </p>
@@ -192,7 +192,7 @@ export default function FAQPage() {
 
             <div className="pt-8 border-t border-[#e5e5e5] text-center">
               <p className="text-xs text-[#8b8b8b] tracking-wider uppercase">
-                © {new Date().getFullYear()} StyleLuxe. All rights reserved.
+                © {2025} StyleLuxe. All rights reserved.
               </p>
             </div>
           </div>

@@ -159,7 +159,7 @@ export default async function Home({
   }
 
   return (
-    <div className="min-h-screen bg-[#fafafa]">
+    <div className="min-h-screen bg-[#FFFBF5]">
       {/* Structured Data for SEO */}
       <script
         type="application/ld+json"
@@ -170,14 +170,14 @@ export default async function Home({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionPageStructuredData) }}
       />
         {/* Header */}
-      <header className="border-b border-[#e5e5e5] bg-white/80 backdrop-blur-md sticky top-0 z-10 shadow-sm">
+      <header className="border-b border-[#F0F0F0] bg-white/80 backdrop-blur-md sticky top-0 z-10 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 py-4 md:py-0 md:h-20">
             <Link href="/" className="text-2xl md:text-3xl font-bold tracking-tight flex-shrink-0">
-              <span className="text-[#1a1a1a]">Style</span><span className="text-[#8b5cf6]">Luxe</span>
+              <span className="text-[#2D2D2D]">Style</span><span className="text-[#FF6B6B]">Luxe</span>
             </Link>
             <nav className="flex space-x-6 md:space-x-10 flex-shrink-0">
-              <Link href="/trending" className="text-[#4a4a4a] hover:text-[#1a1a1a] font-medium text-sm tracking-wide transition-colors">
+              <Link href="/trending" className="text-[#2D2D2D] hover:text-[#FF6B6B] font-medium text-sm tracking-wide transition-colors">
                 All Trending
               </Link>
             </nav>
@@ -188,11 +188,11 @@ export default async function Home({
       {/* Hero Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
         <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-[#1a1a1a] mb-6 tracking-tight leading-tight">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-[#2D2D2D] mb-6 tracking-tight leading-tight">
             Trending Beauty Products<br />Right Now
           </h1>
-          <p className="text-xl md:text-2xl text-[#4a4a4a] max-w-3xl mx-auto mb-4 leading-relaxed font-light">
-            We track trending beauty products across <strong className="font-semibold text-[#1a1a1a]">TikTok</strong>, <strong className="font-semibold text-[#1a1a1a]">Instagram</strong>, <strong className="font-semibold text-[#1a1a1a]">Reddit</strong>, and <strong className="font-semibold text-[#1a1a1a]">Amazon</strong>. 
+          <p className="text-xl md:text-2xl text-[#2D2D2D] max-w-3xl mx-auto mb-4 leading-relaxed font-light">
+            We track trending beauty products across <strong className="font-semibold text-[#2D2D2D]">TikTok</strong>, <strong className="font-semibold text-[#2D2D2D]">Instagram</strong>, <strong className="font-semibold text-[#2D2D2D]">Reddit</strong>, and <strong className="font-semibold text-[#2D2D2D]">Amazon</strong>. 
             Discover what's actually going viral before everyone else finds out.
           </p>
           <p className="text-lg text-[#6b6b6b] max-w-2xl mx-auto mb-3 font-light">
@@ -238,7 +238,7 @@ export default async function Home({
               <section className="mb-20">
                 <div className="mb-8 flex items-center justify-between">
                   <div>
-                    <h2 className="text-3xl md:text-4xl font-bold text-[#1a1a1a] mb-3 tracking-tight">
+                    <h2 className="text-3xl md:text-4xl font-bold text-[#2D2D2D] mb-3 tracking-tight">
                       Trending Now
                     </h2>
                     <p className="text-sm text-[#6b6b6b] tracking-wide">
@@ -247,7 +247,7 @@ export default async function Home({
                   </div>
                   <Link 
                     href="/trending?filter=hot"
-                    className="text-sm font-medium text-[#8b5cf6] hover:text-[#7c3aed] transition-colors whitespace-nowrap"
+                    className="text-sm font-medium text-[#FF6B6B] hover:text-[#E07856] transition-colors whitespace-nowrap"
                   >
                     View More →
                   </Link>
@@ -265,7 +265,7 @@ export default async function Home({
               <section className="mb-20">
                 <div className="mb-8 flex items-center justify-between">
                   <div>
-                    <h2 className="text-3xl md:text-4xl font-bold text-[#1a1a1a] mb-3 tracking-tight">
+                    <h2 className="text-3xl md:text-4xl font-bold text-[#2D2D2D] mb-3 tracking-tight">
                       About to Explode
                     </h2>
                     <p className="text-sm text-[#6b6b6b] tracking-wide">
@@ -274,7 +274,7 @@ export default async function Home({
                   </div>
                   <Link 
                     href="/trending?filter=rising"
-                    className="text-sm font-medium text-[#8b5cf6] hover:text-[#7c3aed] transition-colors whitespace-nowrap"
+                    className="text-sm font-medium text-[#FF6B6B] hover:text-[#E07856] transition-colors whitespace-nowrap"
                   >
                     View More →
                   </Link>
@@ -292,7 +292,7 @@ export default async function Home({
               <section className="mb-20">
                 <div className="mb-8 flex items-center justify-between">
                   <div>
-                    <h2 className="text-3xl md:text-4xl font-bold text-[#1a1a1a] mb-3 tracking-tight">
+                    <h2 className="text-3xl md:text-4xl font-bold text-[#2D2D2D] mb-3 tracking-tight">
                       Recently Hot
                     </h2>
                     <p className="text-sm text-[#6b6b6b] tracking-wide">
@@ -301,7 +301,7 @@ export default async function Home({
                   </div>
                   <Link 
                     href="/trending?filter=recent"
-                    className="text-sm font-medium text-[#8b5cf6] hover:text-[#7c3aed] transition-colors whitespace-nowrap"
+                    className="text-sm font-medium text-[#FF6B6B] hover:text-[#E07856] transition-colors whitespace-nowrap"
                   >
                     View More →
                   </Link>
@@ -316,7 +316,7 @@ export default async function Home({
 
             {/* How We Track Trends - SEO Content Section (Lower on page) */}
             <section className="mb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="bg-white rounded-2xl shadow-sm border border-[#e5e5e5] overflow-hidden">
+              <div className="bg-white rounded-2xl shadow-sm border border-[#F0F0F0] overflow-hidden">
                 <div className="grid md:grid-cols-2 gap-0 md:items-stretch">
                   {/* Image on Left */}
                   <div className="relative w-full h-full min-h-[400px] md:min-h-[600px] md:h-auto bg-[#f5f5f5] overflow-hidden">
@@ -330,8 +330,8 @@ export default async function Home({
                   
                   {/* Content on Right */}
                   <div className="p-10 md:p-12 flex flex-col">
-                    <h2 className="text-3xl md:text-4xl font-bold text-[#1a1a1a] mb-6 tracking-tight">How We Track Trending Beauty Products</h2>
-                    <div className="prose prose-lg max-w-none text-[#4a4a4a] space-y-5 leading-relaxed">
+                    <h2 className="text-3xl md:text-4xl font-bold text-[#2D2D2D] mb-6 tracking-tight">How We Track Trending Beauty Products</h2>
+                    <div className="prose prose-lg max-w-none text-[#2D2D2D] space-y-5 leading-relaxed">
                       <p>
                         We monitor multiple platforms to identify which beauty products are trending right now. Our system tracks:
                       </p>
@@ -376,13 +376,13 @@ export default async function Home({
       </div>
 
       {/* Footer */}
-      <footer className="border-t border-[#e5e5e5] mt-24 bg-white/50">
+      <footer className="border-t border-[#F0F0F0] mt-24 bg-white/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
             {/* Brand Column */}
             <div>
               <Link href="/" className="text-2xl font-bold tracking-tight mb-4 inline-block">
-                <span className="text-[#1a1a1a]">Style</span><span className="text-[#8b5cf6]">Luxe</span>
+                <span className="text-[#2D2D2D]">Style</span><span className="text-[#FF6B6B]">Luxe</span>
               </Link>
               <p className="text-sm text-[#6b6b6b] leading-relaxed">
                 Tracking trending beauty products from TikTok, Instagram, Reddit, and Amazon.
@@ -391,10 +391,10 @@ export default async function Home({
 
             {/* Pages Column */}
             <div>
-              <h3 className="text-sm font-semibold text-[#1a1a1a] mb-4 tracking-wide uppercase">Pages</h3>
+              <h3 className="text-sm font-semibold text-[#2D2D2D] mb-4 tracking-wide uppercase">Pages</h3>
               <ul className="space-y-3">
                 <li>
-                  <Link href="/" className="text-sm text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors">
+                  <Link href="/" className="text-sm text-[#6b6b6b] hover:text-[#E07856] transition-colors">
                     Trending Products
                   </Link>
                 </li>
@@ -418,7 +418,7 @@ export default async function Home({
 
             {/* Legal Column */}
             <div>
-              <h3 className="text-sm font-semibold text-[#1a1a1a] mb-4 tracking-wide uppercase">Legal</h3>
+              <h3 className="text-sm font-semibold text-[#2D2D2D] mb-4 tracking-wide uppercase">Legal</h3>
               <ul className="space-y-3">
                 <li>
                   <Link href="/privacy" className="text-sm text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors">
@@ -435,14 +435,14 @@ export default async function Home({
 
             {/* Info Column */}
             <div>
-              <h3 className="text-sm font-semibold text-[#1a1a1a] mb-4 tracking-wide uppercase">Info</h3>
+              <h3 className="text-sm font-semibold text-[#2D2D2D] mb-4 tracking-wide uppercase">Info</h3>
               <p className="text-sm text-[#6b6b6b] leading-relaxed mb-4">
                 Real data. Honest reviews. No hype.
               </p>
             </div>
           </div>
 
-          <div className="pt-8 border-t border-[#e5e5e5] text-center">
+          <div className="pt-8 border-t border-[#F0F0F0] text-center">
             <p className="text-xs text-[#8b8b8b] tracking-wider uppercase">
               © {new Date().getFullYear()} StyleLuxe. All rights reserved.
             </p>

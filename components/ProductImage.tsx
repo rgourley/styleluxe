@@ -8,9 +8,10 @@ interface ProductImageProps {
   amazonUrl: string | null
   productName: string
   category?: string | null
+  constrainSize?: boolean
 }
 
-export default function ProductImage({ imageUrl, amazonUrl, productName, category }: ProductImageProps) {
+export default function ProductImage({ imageUrl, amazonUrl, productName, category, constrainSize = false }: ProductImageProps) {
   // Calculate image URL deterministically using useMemo
   const initialImageUrl = useMemo(() => {
     // Priority: 1) product.imageUrl (if valid), 2) Amazon image from URL
@@ -68,6 +69,23 @@ export default function ProductImage({ imageUrl, amazonUrl, productName, categor
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
       </div>
+    )
+  }
+
+  if (constrainSize) {
+    return (
+      <img 
+        src={currentImageUrl} 
+        alt={altText}
+        style={{
+          objectFit: 'contain',
+          maxHeight: '400px',
+          width: 'auto',
+          height: 'auto',
+          maxWidth: '100%',
+        }}
+        onError={handleError}
+      />
     )
   }
 

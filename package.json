@@ -26,9 +26,12 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",
+    "@auth/prisma-adapter": "^2.11.1",
     "@prisma/client": "^6.19.1",
     "@uiw/react-md-editor": "^4.0.11",
+    "bcryptjs": "^3.0.3",
     "next": "16.1.0",
+    "next-auth": "^5.0.0-beta.30",
     "next-cloudinary": "^6.17.5",
     "node-fetch": "^2.7.0",
     "prisma": "^6.19.1",
@@ -38,6 +41,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/bcryptjs": "^2.4.6",
     "@types/cheerio": "^0.22.35",
     "@types/node": "^20",
     "@types/node-fetch": "^2.6.13",

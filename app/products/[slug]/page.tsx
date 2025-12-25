@@ -1,10 +1,13 @@
 import { getProductBySlug, getRelatedProducts } from '@/lib/products'
 import { getTrendEmoji, getTrendLabel, formatTrendDuration, getSalesSpikePercent } from '@/lib/product-utils'
+import { getTimelineText } from '@/lib/age-decay'
 import { addAmazonAffiliateTag } from '@/lib/amazon-affiliate'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import MarkdownContent from '@/components/MarkdownContent'
 import ProductImage from '@/components/ProductImage'
+import ProductHeroSection from '@/components/ProductHeroSection'
+import StatCard from '@/components/StatCard'
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
@@ -318,6 +321,13 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const trendLabel = getTrendLabel(product.trendScore)
   const stats = getTrendStats(product)
   
+  // Calculate days trending for timeline text
+  const daysTrending = product.daysTrending ?? null
+  const timelineText = daysTrending !== null ? getTimelineText(daysTrending) : 'Just detected'
+  
+  // Get Amazon star rating
+  const amazonStarRating = product.metadata?.starRating || null
+  
   // One-sentence verdict (from hook or generate from content)
   const verdict = product.content.hook || `${product.name} is ${product.trendScore >= 70 ? 'worth the hype' : 'trending but proceed with caution'}.`
 
@@ -554,47 +564,63 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         />
       )}
       
-      <div className="min-h-screen bg-[#fafafa]">
+      <div className="min-h-screen bg-[#FFFBF5]">
         {/* Header */}
-      <header className="border-b border-[#e5e5e5] bg-white/80 backdrop-blur-md sticky top-0 z-10 shadow-sm">
+      <header className="border-b border-[#F0F0F0] bg-white/80 backdrop-blur-md sticky top-0 z-10 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
-            <Link href="/" className="text-3xl font-bold tracking-tight">
-              <span className="text-[#1a1a1a]">Style</span><span className="text-[#8b5cf6]">Luxe</span>
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 py-4 md:py-0 md:h-20">
+            <Link href="/" className="text-2xl md:text-3xl font-bold tracking-tight flex-shrink-0">
+              <span className="text-[#2D2D2D]">Style</span><span className="text-[#FF6B6B]">Luxe</span>
             </Link>
-            <nav className="hidden md:flex items-center space-x-6">
-              <Link href="/" className="text-sm text-[#4a4a4a] hover:text-[#1a1a1a] font-medium text-sm tracking-wide transition-colors">
-                Trending
+            <nav className="flex space-x-6 md:space-x-10 flex-shrink-0">
+              <Link href="/trending" className="text-[#2D2D2D] hover:text-[#FF6B6B] font-medium text-sm tracking-wide transition-colors">
+                All Trending
               </Link>
             </nav>
           </div>
         </div>
       </header>
 
-      <article className="max-w-[920px] mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
+      <article style={{ paddingTop: '4rem', paddingBottom: '5rem' }}>
         {/* Preview Banner for DRAFT products */}
         {product.status === 'DRAFT' && (
-          <div className="mb-6 p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-r-lg">
-            <p className="text-sm text-yellow-800">
-              <strong>Preview Mode:</strong> This product is in DRAFT status and not yet published. 
-              <Link href={`/admin/products/${product.id}/edit`} className="ml-2 underline font-medium">
-                Edit & Publish →
-              </Link>
-            </p>
+          <div style={{
+            maxWidth: '1100px',
+            marginLeft: 'auto',
+            marginRight: 'auto',
+            paddingLeft: '40px',
+            paddingRight: '40px',
+            marginBottom: '1.5rem',
+          }}>
+            <div className="p-4 bg-yellow-50 border-l-4 border-yellow-400 rounded-r-lg">
+              <p className="text-sm text-yellow-800">
+                <strong>Preview Mode:</strong> This product is in DRAFT status and not yet published. 
+                <Link href={`/admin/products/${product.id}/edit`} className="ml-2 underline font-medium">
+                  Edit & Publish →
+                </Link>
+              </p>
+            </div>
           </div>
         )}
         
         {/* Breadcrumb Navigation */}
-        <nav className="mb-8" aria-label="Breadcrumb">
+        <nav style={{
+          maxWidth: '1100px',
+          marginLeft: 'auto',
+          marginRight: 'auto',
+          paddingLeft: '40px',
+          paddingRight: '40px',
+          marginBottom: '2rem',
+        }} aria-label="Breadcrumb">
           <ol className="flex items-center space-x-2 text-sm text-[#6b6b6b] flex-wrap">
             <li>
-              <Link href="/" className="hover:text-[#1a1a1a] transition-colors">
+              <Link href="/" className="hover:text-[#E07856] transition-colors">
                 Home
               </Link>
             </li>
             <li className="text-[#b8b8b8]">/</li>
             <li>
-              <Link href="/trending" className="hover:text-[#1a1a1a] transition-colors">
+              <Link href="/trending" className="hover:text-[#E07856] transition-colors">
                 Trending Products
               </Link>
             </li>
@@ -602,193 +628,158 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               <>
                 <li className="text-[#b8b8b8]">/</li>
                 <li>
-                  <Link href={`/trending?category=${encodeURIComponent(product.category.toLowerCase())}`} className="hover:text-[#1a1a1a] transition-colors">
+                  <Link href={`/trending?category=${encodeURIComponent(product.category.toLowerCase())}`} className="hover:text-[#E07856] transition-colors">
                     {product.category}
                   </Link>
                 </li>
               </>
             )}
             <li className="text-[#b8b8b8]">/</li>
-            <li className="text-[#1a1a1a] font-medium" aria-current="page">
+            <li className="text-[#2D2D2D] font-medium" aria-current="page">
               {product.name}
             </li>
           </ol>
         </nav>
 
         {/* Hero Section */}
-        <section className="mb-20">
-          <div className="grid md:grid-cols-2 gap-12 mb-12">
+        <section className="product-hero-section" style={{
+          marginBottom: '5rem',
+          maxWidth: '1100px',
+          marginLeft: 'auto',
+          marginRight: 'auto',
+          paddingLeft: '40px',
+          paddingRight: '40px',
+        }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '45% 55%',
+            gap: '60px',
+            marginBottom: '3rem',
+          }} className="product-hero-grid" suppressHydrationWarning>
             {/* Product Image */}
-            <div className="aspect-square bg-[#f5f5f5] rounded-2xl overflow-hidden shadow-lg">
-              <ProductImage 
-                imageUrl={product.imageUrl}
-                amazonUrl={product.amazonUrl}
-                productName={product.name}
-                category={product.category}
-              />
+            <div style={{
+              maxWidth: '450px',
+              aspectRatio: '1 / 1',
+              backgroundColor: '#FFFBF5',
+              borderRadius: '16px',
+              padding: '4px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <div style={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <ProductImage 
+                  imageUrl={product.imageUrl}
+                  amazonUrl={product.amazonUrl}
+                  productName={product.name}
+                  category={product.category}
+                  constrainSize={true}
+                />
+              </div>
             </div>
 
             {/* Product Info */}
             <div>
-              {/* Brand */}
-              {product.brand && (
-                <p className="text-sm font-light text-[#6b6b6b] uppercase tracking-wider mb-3">
-                  {product.brand}
-                </p>
-              )}
-
-              {/* Product Name - H1 */}
-              <h1 className="text-4xl md:text-5xl font-bold text-[#1a1a1a] mb-6 tracking-tight leading-tight">
-                {product.name}
-              </h1>
-
-              {/* Trend Indicator */}
-              <div className="flex items-center gap-4 mb-8">
-                <span className="text-4xl">{trendEmoji}</span>
-                <div>
-                  <div className="text-base font-semibold text-[#1a1a1a]">{trendLabel}</div>
-                  <div className="text-xs text-[#6b6b6b] tracking-wide">
-                    Trend Score: {product.trendScore.toFixed(0)}/100
-                  </div>
-                </div>
-              </div>
-
-              {/* Price & Buy */}
-              <div className="mb-8">
-                {product.price && (
-                  <p className="text-4xl font-bold text-[#1a1a1a] mb-6 tracking-tight" style={{ fontFamily: 'var(--font-atkinson)' }}>
-                    ${product.price.toFixed(2)}
-                    {product.currency && product.currency !== 'USD' && ` ${product.currency}`}
-                  </p>
-                )}
-
-                {/* Where to Buy */}
-                {product.amazonUrl ? (
-                  <a
-                    href={addAmazonAffiliateTag(product.amazonUrl) || product.amazonUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block w-full md:w-auto bg-[#8b5cf6] hover:bg-[#7c3aed] text-white px-10 py-4 rounded-xl font-semibold text-center transition-all duration-300 shadow-md hover:shadow-lg"
-                  >
-                    Buy on Amazon →
-                  </a>
-                ) : (
-                  <div className="text-sm text-[#6b6b6b] italic font-light">
-                    Purchase link coming soon
-                  </div>
-                )}
-              </div>
+              <ProductHeroSection
+                product={product}
+                stats={{
+                  salesSpike: stats.salesSpike,
+                  redditMentions: stats.redditMentions,
+                  redditHotnessLabel: stats.redditHotnessLabel,
+                  redditScale: stats.redditScale,
+                }}
+                timelineText={timelineText}
+                amazonReviewCount={stats.amazonReviewCount}
+                amazonStarRating={amazonStarRating}
+                onAmazonClick={addAmazonAffiliateTag(product.amazonUrl) || product.amazonUrl || '#'}
+              />
             </div>
-          </div>
-
-          {/* One-Sentence Verdict - Full Width */}
-          <div className="border-l-4 border-[#8b5cf6] pl-6 py-4 bg-white rounded-r-lg shadow-sm">
-            <p className="text-[#4a4a4a] font-medium italic leading-relaxed">
-              "{verdict}"
-            </p>
           </div>
         </section>
 
         {/* Content Sections */}
-        <div className="space-y-20">
+        <div className="content-sections-wrapper" style={{
+          maxWidth: '800px',
+          marginLeft: 'auto',
+          marginRight: 'auto',
+          paddingLeft: '40px',
+          paddingRight: '40px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '5rem',
+        }}>
           {/* Why It's Trending Right Now */}
           {product.content.whyTrending && (
             <section>
-              <h2 className="text-3xl md:text-4xl font-bold text-[#1a1a1a] mb-6 tracking-tight">Why It's Trending Right Now</h2>
-              <div className="prose prose-lg max-w-none text-[#4a4a4a] leading-relaxed">
+              <h2 className="text-3xl md:text-4xl font-bold text-[#2D2D2D] mb-6 tracking-tight">Why It's Trending Right Now</h2>
+              <div className="prose prose-lg max-w-none text-[#2D2D2D] leading-relaxed">
                 <MarkdownContent content={product.content.whyTrending || ''} />
               </div>
               
-              {/* Actual Numbers */}
-              {(stats.amazonReviewCount || stats.redditHotness || stats.redditScale || stats.salesSpike || stats.googleTrendsUrl || stats.trendDuration) && (
-                <div className="mt-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                  {/* Amazon Reviews - Show if we have count OR if product has Amazon URL (estimate) */}
-                  {(stats.amazonReviewCount || product.amazonUrl) ? (
-                    <div className="bg-orange-50 rounded-xl p-4 border border-orange-200 shadow-sm">
-                      <div className="text-2xl font-bold text-orange-900">
-                        {stats.amazonReviewCount 
-                          ? (stats.amazonReviewCount >= 1000 
-                              ? `${(stats.amazonReviewCount / 1000).toFixed(1)}k`
-                              : stats.amazonReviewCount.toLocaleString())
-                          : '—'}
-                      </div>
-                      <div className="text-sm text-orange-700 mt-1 font-light">Amazon reviews</div>
-                    </div>
-                  ) : null}
-                  {/* Reddit Trending - Show if we have hotness, scale, or any Reddit signals */}
-                  {(stats.redditHotness || stats.redditScale || (product.trendSignals && product.trendSignals.some((s: any) => s.source?.includes('reddit')))) ? (
-                    <div className={`rounded-xl p-4 border shadow-sm ${
-                      stats.redditHotness === 1 ? 'bg-[#f5f5f5] border-[#e5e5e5]' :
-                      stats.redditHotness === 2 ? 'bg-blue-50 border-blue-200' :
-                      stats.redditHotness === 3 ? 'bg-green-50 border-green-200' :
-                      stats.redditHotness === 4 ? 'bg-orange-50 border-orange-200' :
-                      stats.redditHotness === 5 ? 'bg-red-50 border-red-200' :
-                      'bg-blue-50 border-blue-200'
-                    }`}>
-                      <div className={`text-lg font-bold ${
-                        stats.redditHotness === 1 ? 'text-[#1a1a1a]' :
-                        stats.redditHotness === 2 ? 'text-blue-900' :
-                        stats.redditHotness === 3 ? 'text-green-900' :
-                        stats.redditHotness === 4 ? 'text-orange-900' :
-                        stats.redditHotness === 5 ? 'text-red-900' :
-                        'text-blue-900'
-                      }`}>
-                        {stats.redditHotnessLabel || stats.redditScale || 'Reddit'}
-                      </div>
-                      <div className={`text-xs mt-1 font-light ${
-                        stats.redditHotness === 1 ? 'text-[#6b6b6b]' :
-                        stats.redditHotness === 2 ? 'text-blue-700' :
-                        stats.redditHotness === 3 ? 'text-green-700' :
-                        stats.redditHotness === 4 ? 'text-orange-700' :
-                        stats.redditHotness === 5 ? 'text-red-700' :
-                        'text-blue-700'
-                      }`}>
-                        Reddit trending
-                      </div>
-                    </div>
-                  ) : null}
-                  {/* Sales Spike */}
-                  {stats.salesSpike ? (
-                    <div className="bg-green-50 rounded-xl p-4 border border-green-200 shadow-sm">
-                      <div className="text-2xl font-bold text-green-900">+{stats.salesSpike}%</div>
-                      <div className="text-sm text-green-700 mt-1 font-light">Sales spike</div>
-                    </div>
-                  ) : null}
-                  {/* Google Trends - Show if URL exists */}
-                  {stats.googleTrendsUrl ? (
-                    <div className="bg-[#f3e8ff] rounded-xl p-4 border border-[#8b5cf6]/20 shadow-sm">
-                      <a
-                        href={stats.googleTrendsUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block group"
-                      >
-                        <div className="text-sm font-bold text-[#8b5cf6] group-hover:text-[#7c3aed] transition-colors">
-                          Google Trends
-                        </div>
-                        <div className="text-xs text-[#6b6b6b] mt-1 group-hover:underline font-light">
-                          View trends →
-                        </div>
-                      </a>
-                    </div>
-                  ) : null}
-                  {/* Timeline */}
-                  {stats.trendDuration ? (
-                    <div className="bg-[#f5f5f5] rounded-xl p-4 border border-[#e5e5e5] shadow-sm">
-                      <div className="text-sm font-semibold text-[#1a1a1a]">{stats.trendDuration}</div>
-                      <div className="text-xs text-[#6b6b6b] mt-1 font-light">Timeline</div>
-                    </div>
-                  ) : null}
-                </div>
-              )}
+              {/* Actual Numbers - Fixed 4 Cards */}
+              <div style={{
+                marginTop: '48px',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(4, 1fr)',
+                gap: '16px',
+              }}>
+                {/* Card 1 - Amazon Reviews */}
+                <StatCard
+                  number={stats.amazonReviewCount 
+                    ? (stats.amazonReviewCount >= 1000 
+                        ? `${(stats.amazonReviewCount / 1000).toFixed(1)}k`
+                        : stats.amazonReviewCount.toString())
+                    : '—'}
+                  label="AMAZON REVIEWS"
+                  backgroundColor="#FFF5F7"
+                  numberColor="#FF6B6B"
+                  labelColor="#6b6b6b"
+                />
+                
+                {/* Card 2 - Reddit Trending */}
+                <StatCard
+                  number={stats.redditHotnessLabel || stats.redditScale || 'Strong'}
+                  label="REDDIT TRENDING"
+                  backgroundColor="#F0F4E8"
+                  numberColor="#FF6B6B"
+                  labelColor="#6b6b6b"
+                />
+                
+                {/* Card 3 - Sales Spike */}
+                <StatCard
+                  number={stats.salesSpike ? `+${stats.salesSpike}%` : '+—%'}
+                  label="SALES SPIKE"
+                  backgroundColor="#E8F5F5"
+                  numberColor="#FF6B6B"
+                  labelColor="#6b6b6b"
+                />
+                
+                {/* Card 4 - Google Trends (Interactive Link) */}
+                <StatCard
+                  number="View →"
+                  label="GOOGLE TRENDS"
+                  backgroundColor="#FFFBF5"
+                  numberColor="#FF6B6B"
+                  labelColor="#6b6b6b"
+                  isLink={true}
+                  href={stats.googleTrendsUrl || `https://trends.google.com/trends/explore?q=${encodeURIComponent(product.name)}`}
+                />
+              </div>
             </section>
           )}
 
           {/* What It Actually Does */}
           {product.content.whatItDoes && (
             <section>
-              <h2 className="text-3xl md:text-4xl font-bold text-[#1a1a1a] mb-6 tracking-tight">What It Actually Does</h2>
-              <div className="prose prose-lg max-w-none text-[#4a4a4a] leading-relaxed">
+              <h2 className="text-3xl md:text-4xl font-bold text-[#2D2D2D] mb-6 tracking-tight">What It Actually Does</h2>
+              <div className="prose prose-lg max-w-none text-[#2D2D2D] leading-relaxed">
                 <MarkdownContent content={product.content.whatItDoes || ''} />
               </div>
             </section>
@@ -799,7 +790,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             {product.content.theGood && (
               <section>
                 <h2 className="text-3xl md:text-4xl font-bold text-green-700 mb-6 tracking-tight">The Good</h2>
-                <div className="prose prose-lg max-w-none text-[#4a4a4a] leading-relaxed">
+                <div className="prose prose-lg max-w-none text-[#2D2D2D] leading-relaxed">
                   <MarkdownContent content={product.content.theGood || ''} />
                 </div>
               </section>
@@ -808,7 +799,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             {product.content.theBad && (
               <section>
                 <h2 className="text-3xl md:text-4xl font-bold text-red-700 mb-6 tracking-tight">The Bad</h2>
-                <div className="prose prose-lg max-w-none text-[#4a4a4a] leading-relaxed">
+                <div className="prose prose-lg max-w-none text-[#2D2D2D] leading-relaxed">
                   <MarkdownContent content={product.content.theBad || ''} />
                 </div>
               </section>
@@ -818,8 +809,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           {/* What Real Users Are Saying */}
           {product.content.whatRealUsersSay && (
             <section>
-              <h2 className="text-3xl md:text-4xl font-bold text-[#1a1a1a] mb-6 tracking-tight">What Real Users Are Saying</h2>
-              <div className="prose prose-lg max-w-none text-[#4a4a4a] leading-relaxed">
+              <h2 className="text-3xl md:text-4xl font-bold text-[#2D2D2D] mb-6 tracking-tight">What Real Users Are Saying</h2>
+              <div className="prose prose-lg max-w-none text-[#2D2D2D] leading-relaxed">
                 <MarkdownContent content={product.content.whatRealUsersSay || ''} />
               </div>
             </section>
@@ -829,8 +820,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           <div className="grid md:grid-cols-2 gap-12">
             {product.content.whoShouldTry && (
               <section>
-                <h2 className="text-3xl md:text-4xl font-bold text-[#1a1a1a] mb-6 tracking-tight">Who Should Try It</h2>
-                <div className="prose prose-lg max-w-none text-[#4a4a4a] leading-relaxed">
+                <h2 className="text-3xl md:text-4xl font-bold text-[#2D2D2D] mb-6 tracking-tight">Who Should Try It</h2>
+                <div className="prose prose-lg max-w-none text-[#2D2D2D] leading-relaxed">
                   <MarkdownContent content={product.content.whoShouldTry || ''} />
                 </div>
               </section>
@@ -838,8 +829,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
             {product.content.whoShouldSkip && (
               <section>
-                <h2 className="text-3xl md:text-4xl font-bold text-[#1a1a1a] mb-6 tracking-tight">Who Should Skip It</h2>
-                <div className="prose prose-lg max-w-none text-[#4a4a4a] leading-relaxed">
+                <h2 className="text-3xl md:text-4xl font-bold text-[#2D2D2D] mb-6 tracking-tight">Who Should Skip It</h2>
+                <div className="prose prose-lg max-w-none text-[#2D2D2D] leading-relaxed">
                   <MarkdownContent content={product.content.whoShouldSkip || ''} />
                 </div>
               </section>
@@ -849,8 +840,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           {/* Alternatives Worth Considering */}
           {product.content.alternatives && (
             <section>
-              <h2 className="text-3xl md:text-4xl font-bold text-[#1a1a1a] mb-6 tracking-tight">Alternatives Worth Considering</h2>
-              <div className="prose prose-lg max-w-none text-[#4a4a4a] leading-relaxed">
+              <h2 className="text-3xl md:text-4xl font-bold text-[#2D2D2D] mb-6 tracking-tight">Alternatives Worth Considering</h2>
+              <div className="prose prose-lg max-w-none text-[#2D2D2D] leading-relaxed">
                 <MarkdownContent content={product.content.alternatives || ''} />
               </div>
             </section>
@@ -859,12 +850,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           {/* FAQ */}
           {product.content.faq && Array.isArray(product.content.faq) && product.content.faq.length > 0 && (
             <section>
-              <h2 className="text-3xl md:text-4xl font-bold text-[#1a1a1a] mb-6 tracking-tight">FAQ</h2>
+              <h2 className="text-3xl md:text-4xl font-bold text-[#2D2D2D] mb-6 tracking-tight">FAQ</h2>
               <div className="space-y-8">
                 {(product.content.faq as Array<{ question: string; answer: string }>).map((faq, index) => (
-                  <div key={index} className="border-l-4 border-[#8b5cf6] pl-8 py-4 bg-white rounded-r-lg shadow-sm">
-                    <h3 className="text-xl font-semibold text-[#1a1a1a] mb-3">{faq.question}</h3>
-                    <p className="prose prose-lg max-w-none text-[#4a4a4a] leading-relaxed">{faq.answer}</p>
+                  <div key={index} className="border-l-4 border-[#FF6B6B] pl-8 py-4 bg-white rounded-r-lg shadow-sm">
+                    <h3 className="text-xl font-semibold text-[#2D2D2D] mb-3">{faq.question}</h3>
+                    <p className="prose prose-lg max-w-none text-[#2D2D2D] leading-relaxed">{faq.answer}</p>
                   </div>
                 ))}
               </div>
@@ -888,8 +879,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
           {/* Related Products Section */}
           {relatedProducts.length > 0 && (
-            <section className="mt-20 pt-12 border-t-2 border-[#e5e5e5]">
-              <h2 className="text-3xl md:text-4xl font-bold text-[#1a1a1a] mb-8 tracking-tight">
+            <section className="mt-20 pt-12 border-t-2 border-[#F0F0F0]">
+              <h2 className="text-3xl md:text-4xl font-bold text-[#2D2D2D] mb-8 tracking-tight">
                 {product.category ? `Similar Trending ${product.category} Products` : 'Similar Trending Products'}
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -914,18 +905,18 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                         </div>
                       )}
                       <div className="absolute top-1.5 right-1.5">
-                        <span className="bg-white/90 backdrop-blur-sm px-1.5 py-0.5 rounded text-xs font-semibold text-[#8b5cf6]">
+                        <span className="bg-white/90 backdrop-blur-sm px-1.5 py-0.5 rounded text-xs font-semibold text-[#FF6B6B]">
                           {getTrendEmoji(relatedProduct.trendScore)}
                         </span>
                       </div>
                     </div>
                     <div className="p-3">
-                      <h3 className="font-semibold text-sm text-[#1a1a1a] mb-1 line-clamp-2 leading-tight">{relatedProduct.name}</h3>
+                      <h3 className="font-semibold text-sm text-[#2D2D2D] mb-1 line-clamp-2 leading-tight">{relatedProduct.name}</h3>
                       {relatedProduct.brand && (
                         <p className="text-xs text-[#6b6b6b] uppercase tracking-wide mb-1">{relatedProduct.brand}</p>
                       )}
                       {relatedProduct.price && (
-                        <p className="text-base font-bold text-[#1a1a1a]" style={{ fontFamily: 'var(--font-atkinson)' }}>${relatedProduct.price.toFixed(2)}</p>
+                        <p className="text-base font-bold text-[#2D2D2D]" style={{ fontFamily: 'var(--font-atkinson)' }}>${relatedProduct.price.toFixed(2)}</p>
                       )}
                     </div>
                   </Link>
@@ -935,10 +926,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           )}
 
           {/* The Verdict (Optional Footer) */}
-          <section className="mt-20 pt-12 border-t-2 border-[#e5e5e5]">
-            <h2 className="text-3xl md:text-4xl font-bold text-[#1a1a1a] mb-6 tracking-tight">The Verdict</h2>
-            <div className="bg-white rounded-2xl p-8 mb-4 shadow-sm border border-[#e5e5e5]">
-              <p className="text-lg text-[#4a4a4a] leading-relaxed mb-4">
+          <section className="mt-20 pt-12 border-t-2 border-[#F0F0F0]">
+            <h2 className="text-3xl md:text-4xl font-bold text-[#2D2D2D] mb-6 tracking-tight">The Verdict</h2>
+            <div className="bg-white rounded-2xl p-8 mb-4 shadow-sm border border-[#F0F0F0]">
+              <p className="text-lg text-[#2D2D2D] leading-relaxed mb-4">
                 {verdict}
               </p>
               <p className="text-sm text-[#6b6b6b] tracking-wide">
@@ -949,11 +940,11 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         </div>
 
         {/* Footer CTA */}
-        <div className="mt-20 pt-12 border-t border-[#e5e5e5] text-center">
+        <div className="mt-20 pt-12 border-t border-[#F0F0F0] text-center">
           <p className="text-[#6b6b6b] mb-4 font-light">Found this helpful? Check out more trending products.</p>
           <Link 
             href="/"
-            className="inline-block text-[#8b5cf6] font-medium hover:text-[#7c3aed] transition-colors"
+            className="inline-block text-[#FF6B6B] font-medium hover:text-[#E07856] transition-colors"
           >
             ← Back to Trending Dashboard
           </Link>
@@ -961,13 +952,13 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       </article>
 
       {/* Footer */}
-      <footer className="border-t border-[#e5e5e5] mt-24 bg-white/50">
+      <footer className="border-t border-[#F0F0F0] mt-24 bg-white/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
             {/* Brand Column */}
             <div>
               <Link href="/" className="text-2xl font-bold tracking-tight mb-4 inline-block">
-                <span className="text-[#1a1a1a]">Style</span><span className="text-[#8b5cf6]">Luxe</span>
+                <span className="text-[#2D2D2D]">Style</span><span className="text-[#FF6B6B]">Luxe</span>
               </Link>
               <p className="text-sm text-[#6b6b6b] leading-relaxed">
                 Tracking trending beauty products from TikTok, Instagram, Reddit, and Amazon.
@@ -976,25 +967,25 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
             {/* Pages Column */}
             <div>
-              <h3 className="text-sm font-semibold text-[#1a1a1a] mb-4 tracking-wide uppercase">Pages</h3>
+              <h3 className="text-sm font-semibold text-[#2D2D2D] mb-4 tracking-wide uppercase">Pages</h3>
               <ul className="space-y-3">
                 <li>
-                  <Link href="/" className="text-sm text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors">
+                  <Link href="/" className="text-sm text-[#6b6b6b] hover:text-[#2D2D2D] transition-colors">
                     Trending Products
                   </Link>
                 </li>
                 <li>
-                  <Link href="/about" className="text-sm text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors">
+                  <Link href="/about" className="text-sm text-[#6b6b6b] hover:text-[#2D2D2D] transition-colors">
                     About Us
                   </Link>
                 </li>
                 <li>
-                  <Link href="/faq" className="text-sm text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors">
+                  <Link href="/faq" className="text-sm text-[#6b6b6b] hover:text-[#2D2D2D] transition-colors">
                     FAQ
                   </Link>
                 </li>
                 <li>
-                  <Link href="/contact" className="text-sm text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors">
+                  <Link href="/contact" className="text-sm text-[#6b6b6b] hover:text-[#2D2D2D] transition-colors">
                     Contact
                   </Link>
                 </li>
@@ -1003,15 +994,15 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
             {/* Legal Column */}
             <div>
-              <h3 className="text-sm font-semibold text-[#1a1a1a] mb-4 tracking-wide uppercase">Legal</h3>
+              <h3 className="text-sm font-semibold text-[#2D2D2D] mb-4 tracking-wide uppercase">Legal</h3>
               <ul className="space-y-3">
                 <li>
-                  <Link href="/privacy" className="text-sm text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors">
+                  <Link href="/privacy" className="text-sm text-[#6b6b6b] hover:text-[#2D2D2D] transition-colors">
                     Privacy Policy
                   </Link>
                 </li>
                 <li>
-                  <Link href="/terms" className="text-sm text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors">
+                  <Link href="/terms" className="text-sm text-[#6b6b6b] hover:text-[#2D2D2D] transition-colors">
                     Terms of Service
                   </Link>
                 </li>
@@ -1020,14 +1011,14 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
             {/* Info Column */}
             <div>
-              <h3 className="text-sm font-semibold text-[#1a1a1a] mb-4 tracking-wide uppercase">Info</h3>
+              <h3 className="text-sm font-semibold text-[#2D2D2D] mb-4 tracking-wide uppercase">Info</h3>
               <p className="text-sm text-[#6b6b6b] leading-relaxed mb-4">
                 Real data. Honest reviews. No hype.
               </p>
             </div>
           </div>
 
-          <div className="pt-8 border-t border-[#e5e5e5] text-center">
+          <div className="pt-8 border-t border-[#F0F0F0] text-center">
             <p className="text-xs text-[#8b8b8b] tracking-wider uppercase">
               © 2025 StyleLuxe. All rights reserved.
             </p>

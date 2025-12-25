@@ -824,7 +824,7 @@ export default function EditProductPage() {
                 <button
                   onClick={handleGenerateContent}
                   disabled={generating || savingName || scrapingAmazon}
-                  className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg disabled:bg-gray-400"
+                  className="px-6 py-3 bg-[var(--button-primary-bg)] hover:bg-[var(--button-primary-hover)] text-white font-semibold rounded-lg disabled:bg-gray-400"
                 >
                   {generating ? 'Generating...' : '✨ Generate Detail Page with Claude AI'}
                 </button>
@@ -1033,7 +1033,7 @@ export default function EditProductPage() {
               <button
                 onClick={handleGenerateContent}
                 disabled={generating || saving}
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-[var(--button-primary-bg)] hover:bg-[var(--button-primary-hover)] text-white rounded-lg text-sm font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
                 {generating ? 'Regenerating...' : '🔄 Regenerate All'}
               </button>
