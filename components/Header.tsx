@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
@@ -19,6 +19,7 @@ export default function Header() {
   const router = useRouter()
   const [searchValue, setSearchValue] = useState('')
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -30,6 +31,20 @@ export default function Header() {
   const handleCategoryClick = (category: string) => {
     router.push(`/trending?category=${encodeURIComponent(category)}`)
     setIsDropdownOpen(false)
+  }
+
+  const handleMouseEnter = () => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current)
+      closeTimeoutRef.current = null
+    }
+    setIsDropdownOpen(true)
+  }
+
+  const handleMouseLeave = () => {
+    closeTimeoutRef.current = setTimeout(() => {
+      setIsDropdownOpen(false)
+    }, 300) // 300ms delay before closing
   }
 
   return (
@@ -116,8 +131,8 @@ export default function Header() {
             {/* Categories Dropdown */}
             <div 
               style={{ position: 'relative' }} 
-              onMouseEnter={() => setIsDropdownOpen(true)}
-              onMouseLeave={() => setIsDropdownOpen(false)}
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
             >
               <button style={{
                 fontSize: '15px',
