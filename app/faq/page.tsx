@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import Header from '@/components/Header'
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.thestyleluxe.com'
 
@@ -78,20 +79,7 @@ export default function FAQPage() {
       
       <div className="min-h-screen bg-[#FFFBF5]">
         {/* Header */}
-        <header className="border-b border-[#e5e5e5] bg-white/80 backdrop-blur-md sticky top-0 z-10 shadow-sm">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-20">
-              <Link href="/" className="text-3xl font-bold tracking-tight">
-                <span className="text-[#2D2D2D]">Style</span><span style={{ color: '#A8D5BA' }}>Luxe</span>
-              </Link>
-              <nav className="hidden md:flex space-x-10">
-                <Link href="/" className="text-[#4a4a4a] hover:text-[#2D2D2D] font-medium text-sm tracking-wide transition-colors">
-                  Trending
-                </Link>
-              </nav>
-            </div>
-          </div>
-        </header>
+        <Header />
 
         <main className="max-w-[920px] mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
           <div className="mb-12">
