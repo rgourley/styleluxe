@@ -52,19 +52,20 @@ export default function Header() {
           {/* Logo */}
           <Link href="/" style={{
             fontSize: '28px',
-            fontWeight: '700',
+            fontWeight: '400',
             textDecoration: 'none',
             display: 'flex',
             alignItems: 'center',
             flexShrink: 0,
           }}>
             <span style={{
-              fontFamily: 'var(--font-outfit), sans-serif',
+              fontFamily: 'var(--font-instrument), sans-serif',
+              fontWeight: '400', // Regular weight for "Style"
               color: '#2D2D2D',
             }}>Style</span>
             <span style={{
-              fontFamily: 'Georgia, "Playfair Display", serif',
-              fontStyle: 'italic',
+              fontFamily: 'var(--font-instrument), sans-serif',
+              fontWeight: '500', // Medium weight for "Luxe"
               background: 'linear-gradient(135deg, #FF6B6B, #E07856)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',

@@ -1,15 +1,24 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Instrument_Sans, Atkinson_Hyperlegible } from "next/font/google";
 import "./globals.css";
+import { Providers } from '@/components/providers'
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Logo font - Instrument Sans with multiple weights
+const instrumentSans = Instrument_Sans({
+  variable: "--font-instrument",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"], // Regular (400) for "Style", Medium (500) for "Luxe"
+  display: 'swap',
+  preload: true,
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+// Body font - Atkinson Hyperlegible
+const atkinsonHyperlegible = Atkinson_Hyperlegible({
+  variable: "--font-atkinson",
   subsets: ["latin"],
+  weight: ["400", "700"],
+  display: 'swap',
+  preload: true,
 });
 
 export const metadata: Metadata = {
@@ -23,11 +32,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" data-scroll-behavior="smooth">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${instrumentSans.variable} ${atkinsonHyperlegible.variable} antialiased`}
       >
-        {children}
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );
