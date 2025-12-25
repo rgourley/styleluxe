@@ -1,8 +1,37 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+
+const categories = [
+  'Skincare',
+  'Makeup',
+  'Hair Care',
+  'Body Care',
+  'Fragrance',
+  'Tools & Accessories',
+  'Men\'s Grooming',
+  'Other'
+]
 
 export default function Header() {
+  const router = useRouter()
+  const [searchValue, setSearchValue] = useState('')
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (searchValue.trim()) {
+      router.push(`/trending?q=${encodeURIComponent(searchValue.trim())}`)
+    }
+  }
+
+  const handleCategoryClick = (category: string) => {
+    router.push(`/trending?category=${encodeURIComponent(category)}`)
+    setIsDropdownOpen(false)
+  }
+
   return (
     <header style={{
       backgroundColor: '#FFFFFF',
@@ -52,7 +81,7 @@ export default function Header() {
             justifyContent: 'flex-end',
           }} className="hidden md:flex">
             {/* Search Bar */}
-            <div style={{
+            <form onSubmit={handleSearch} style={{
               position: 'relative',
               width: '280px',
             }}>
@@ -66,6 +95,8 @@ export default function Header() {
               <input
                 type="text"
                 placeholder="Search trending products..."
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
                 style={{
                   width: '100%',
                   backgroundColor: '#FFFFFF',
@@ -79,14 +110,18 @@ export default function Header() {
                 onFocus={(e) => e.currentTarget.style.borderColor = '#FF6B6B'}
                 onBlur={(e) => e.currentTarget.style.borderColor = '#F0F0F0'}
               />
-            </div>
+            </form>
 
             {/* Categories Dropdown */}
-            <div style={{ position: 'relative' }} className="categories-dropdown">
+            <div 
+              style={{ position: 'relative' }} 
+              onMouseEnter={() => setIsDropdownOpen(true)}
+              onMouseLeave={() => setIsDropdownOpen(false)}
+            >
               <button style={{
                 fontSize: '15px',
                 fontWeight: '500',
-                color: '#2D2D2D',
+                color: isDropdownOpen ? '#FF6B6B' : '#2D2D2D',
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
@@ -95,11 +130,48 @@ export default function Header() {
                 alignItems: 'center',
                 gap: '6px',
                 transition: 'color 0.2s',
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.color = '#FF6B6B'}
-              onMouseLeave={(e) => e.currentTarget.style.color = '#2D2D2D'}>
+              }}>
                 Categories <span style={{ fontSize: '10px' }}>▼</span>
               </button>
+              
+              {/* Dropdown Menu */}
+              {isDropdownOpen && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: '-16px',
+                  marginTop: '8px',
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid #F0F0F0',
+                  borderRadius: '12px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                  padding: '8px 0',
+                  minWidth: '200px',
+                  zIndex: 1000,
+                }}>
+                  {categories.map((category) => (
+                    <button
+                      key={category}
+                      onClick={() => handleCategoryClick(category)}
+                      style={{
+                        width: '100%',
+                        textAlign: 'left',
+                        padding: '10px 20px',
+                        fontSize: '14px',
+                        color: '#2D2D2D',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        transition: 'background-color 0.15s',
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#FFF5F7'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      {category}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* About Link */}

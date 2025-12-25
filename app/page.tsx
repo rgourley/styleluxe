@@ -6,6 +6,7 @@ import {
 } from '@/lib/trending-products'
 import Link from 'next/link'
 import ProductCard from '@/components/ProductCard'
+import Header from '@/components/Header'
 
 // Fixed header for consistency (no date dependency to avoid hydration issues)
 const headerText = "Trending Beauty Products Right Now"
@@ -170,20 +171,7 @@ export default async function Home({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionPageStructuredData) }}
       />
         {/* Header */}
-      <header className="border-b border-[#F0F0F0] bg-white/80 backdrop-blur-md sticky top-0 z-10 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4 py-4 md:py-0 md:h-20">
-            <Link href="/" className="text-2xl md:text-3xl font-bold tracking-tight flex-shrink-0">
-              <span className="text-[#2D2D2D]">Style</span><span className="text-[#FF6B6B]">Luxe</span>
-            </Link>
-            <nav className="flex space-x-6 md:space-x-10 flex-shrink-0">
-              <Link href="/trending" className="text-[#2D2D2D] hover:text-[#FF6B6B] font-medium text-sm tracking-wide transition-colors">
-                All Trending
-              </Link>
-            </nav>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Hero Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">

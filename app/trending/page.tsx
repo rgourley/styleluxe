@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import ProductCard from '@/components/ProductCard'
+import Header from '@/components/Header'
 import { unstable_cache } from 'next/cache'
 
 // Revalidate every 60 seconds
@@ -16,7 +17,7 @@ export const metadata = {
   },
 }
 
-async function getFilteredProducts(filter: string) {
+async function getFilteredProducts(filter: string, category?: string | null, searchQuery?: string | null) {
   const cachedFn = unstable_cache(
     async () => {
       if (!process.env.DATABASE_URL) {
@@ -33,6 +34,19 @@ async function getFilteredProducts(filter: string) {
             { price: { gte: 5 } },
             { price: null },
           ],
+        }
+
+        // Add category filter if provided
+        if (category) {
+          where.category = category
+        }
+
+        // Add search filter if provided
+        if (searchQuery) {
+          where.OR = [
+            { name: { contains: searchQuery, mode: 'insensitive' } },
+            { brand: { contains: searchQuery, mode: 'insensitive' } },
+          ]
         }
 
         // Apply filter
@@ -145,7 +159,7 @@ async function getFilteredProducts(filter: string) {
         return []
       }
     },
-    [`trending-${filter}`],
+    [`trending-${filter}-${category || 'all'}-${searchQuery || 'none'}`],
     {
       revalidate: 60,
       tags: ['products', 'trending', filter],
@@ -158,12 +172,14 @@ async function getFilteredProducts(filter: string) {
 export default async function TrendingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ filter?: string }>
+  searchParams: Promise<{ filter?: string; category?: string; q?: string }>
 }) {
   const params = await searchParams
   const activeFilter = params.filter || 'all'
+  const category = params.category
+  const searchQuery = params.q
 
-  const products = await getFilteredProducts(activeFilter)
+  const products = await getFilteredProducts(activeFilter, category, searchQuery)
 
   const filters = [
     { id: 'all', label: 'All', description: 'All products' },
@@ -175,20 +191,7 @@ export default async function TrendingPage({
   return (
     <div className="min-h-screen bg-[#fafafa]">
       {/* Header */}
-      <header className="border-b border-[#e5e5e5] bg-white/80 backdrop-blur-md sticky top-0 z-10 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4 py-4 md:py-0 md:h-20">
-            <Link href="/" className="text-2xl md:text-3xl font-bold tracking-tight flex-shrink-0">
-              <span className="text-[#2D2D2D]">Style</span><span style={{ color: '#A8D5BA' }}>Luxe</span>
-            </Link>
-            <nav className="flex space-x-6 md:space-x-10 flex-shrink-0">
-              <Link href="/trending" className="text-[#4a4a4a] hover:text-[#2D2D2D] font-medium text-sm tracking-wide transition-colors">
-                All Trending
-              </Link>
-            </nav>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
