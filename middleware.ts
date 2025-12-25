@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-  // Only protect admin routes
-  if (request.nextUrl.pathname.startsWith('/admin')) {
+  // Only protect admin routes (but not the login page itself)
+  if (request.nextUrl.pathname.startsWith('/admin') && 
+      !request.nextUrl.pathname.startsWith('/admin/login')) {
     // Check for session token in cookies
     const token = request.cookies.get('next-auth.session-token') || 
                   request.cookies.get('__Secure-next-auth.session-token')
