@@ -51,7 +51,7 @@ export default function Header() {
         }}>
           {/* Logo */}
           <Link href="/" style={{
-            fontSize: '28px',
+            fontSize: '24px',
             fontWeight: '400',
             textDecoration: 'none',
             display: 'flex',
