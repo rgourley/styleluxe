@@ -24,7 +24,7 @@ export default function TermsPage() {
             Terms of Service
           </h1>
           <p className="text-sm text-[#8b8b8b] tracking-wide uppercase">
-            Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+            Last updated: December 24, 2025
           </p>
         </div>
 
