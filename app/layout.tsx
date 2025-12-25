@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Instrument_Sans, Atkinson_Hyperlegible } from "next/font/google";
+import { Instrument_Sans, Atkinson_Hyperlegible, Outfit } from "next/font/google";
 import "./globals.css";
 import { Providers } from '@/components/providers'
 import GoogleAnalytics from '@/components/GoogleAnalytics'
@@ -9,6 +9,15 @@ const instrumentSans = Instrument_Sans({
   variable: "--font-instrument",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"], // Regular (400) for "Style", Medium (500) for "Luxe"
+  display: 'swap',
+  preload: true,
+});
+
+// Heading font - Outfit
+const outfit = Outfit({
+  variable: "--font-outfit",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
   display: 'swap',
   preload: true,
 });
@@ -35,7 +44,7 @@ export default function RootLayout({
   return (
     <html lang="en" data-scroll-behavior="smooth">
       <body
-        className={`${instrumentSans.variable} ${atkinsonHyperlegible.variable} antialiased`}
+        className={`${instrumentSans.variable} ${outfit.variable} ${atkinsonHyperlegible.variable} antialiased`}
       >
         <GoogleAnalytics />
         <Providers>
