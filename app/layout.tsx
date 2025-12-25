@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Instrument_Sans, Atkinson_Hyperlegible } from "next/font/google";
 import "./globals.css";
 import { Providers } from '@/components/providers'
+import GoogleAnalytics from '@/components/GoogleAnalytics'
 
 // Logo font - Instrument Sans with multiple weights
 const instrumentSans = Instrument_Sans({
@@ -36,6 +37,7 @@ export default function RootLayout({
       <body
         className={`${instrumentSans.variable} ${atkinsonHyperlegible.variable} antialiased`}
       >
+        <GoogleAnalytics />
         <Providers>
           {children}
         </Providers>
