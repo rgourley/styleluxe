@@ -63,12 +63,9 @@ export async function getTrendingNowHomepage(limit: number = 8) {
                         { trendScore: { gte: 70 } },
                       ],
                     },
-                    // Fallback: if no scores, include products with content that are PUBLISHED
+                    // Fallback: if no currentScore, include products with content that are PUBLISHED
                     {
-                      AND: [
-                        { currentScore: null },
-                        { trendScore: null },
-                      ],
+                      currentScore: null,
                     },
                   ],
                 },
