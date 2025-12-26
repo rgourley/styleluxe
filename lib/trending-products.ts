@@ -56,14 +56,14 @@ export async function getTrendingNowHomepage(limit: number = 8) {
               AND: [
                 {
                   OR: [
-                    { currentScore: { gte: 70 } },
+                    { currentScore: { gte: 60 } }, // Lowered from 70 to 60
                     {
                       AND: [
                         { currentScore: null },
-                        { trendScore: { gte: 70 } },
+                        { trendScore: { gte: 60 } }, // Lowered from 70 to 60
                       ],
                     },
-                    // Fallback: if no currentScore, include products with content that are PUBLISHED
+                    // Fallback: include products with any score if they have content
                     {
                       currentScore: null,
                     },
@@ -71,16 +71,16 @@ export async function getTrendingNowHomepage(limit: number = 8) {
                 },
                 {
                   OR: [
-                    { daysTrending: { lte: 7 } },
+                    { daysTrending: { lte: 14 } }, // Extended from 7 to 14 days
                     { daysTrending: null },
-                    // Allow products up to 14 days if they have high scores
+                    // Allow products up to 21 days if they have high scores
                     {
                       AND: [
-                        { daysTrending: { lte: 14 } },
+                        { daysTrending: { lte: 21 } },
                         {
                           OR: [
-                            { currentScore: { gte: 80 } },
-                            { trendScore: { gte: 80 } },
+                            { currentScore: { gte: 70 } },
+                            { trendScore: { gte: 70 } },
                           ],
                         },
                       ],
