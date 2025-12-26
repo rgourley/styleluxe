@@ -108,19 +108,19 @@ async function getFilteredProducts(filter: string, category?: string | null, sea
             })
             break
           case 'recent':
-            // daysTrending > 7 OR (daysTrending is null AND createdAt is old enough)
-            const eightDaysAgo = new Date()
-            eightDaysAgo.setDate(eightDaysAgo.getDate() - 8)
+            // daysTrending <= 7 (recently trending) OR (daysTrending is null AND recently created)
+            const sevenDaysAgo = new Date()
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
             
             baseConditions.push({
               OR: [
-                { daysTrending: { gt: 7 } },
+                { daysTrending: { lte: 7 } }, // Trending within last 7 days
                 {
                   AND: [
                     { daysTrending: null },
                     {
                       createdAt: {
-                        lte: eightDaysAgo, // Created at least 8 days ago
+                        gte: sevenDaysAgo, // Created within last 7 days
                       },
                     },
                   ],
