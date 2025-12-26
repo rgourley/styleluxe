@@ -654,12 +654,11 @@ export async function recalculateAllScores() {
         baseScore: true,
         firstDetected: true,
         peakScore: true,
-        // @ts-ignore - pageViews and clicks will be available after migration
-        pageViews: true,
-        // @ts-ignore
-        clicks: true,
         onMoversShakers: true,
         lastSeenOnMoversShakers: true,
+        // Try to select pageViews and clicks if they exist
+        // @ts-ignore - pageViews and clicks will be available after migration
+        ...(process.env.DATABASE_URL?.includes('localhost') || process.env.DATABASE_URL?.includes('127.0.0.1') ? { pageViews: true, clicks: true } : {}),
   },
     })
 
@@ -1174,12 +1173,26 @@ export async function setFirstDetected(productId: string, baseScore: number) {
       },
     })
 
-    // Get current pageViews and clicks for traffic boost
-    const fullProduct = await prisma.product.findUnique({
-      where: { id: productId },
-      // @ts-ignore - pageViews and clicks will be available after migration
-      select: { pageViews: true, clicks: true },
-    })
+    // Get current pageViews and clicks for traffic boost (if columns exist)
+    let pageViews: number | null = null
+    let clicks: number | null = null
+    
+    try {
+      const fullProduct = await prisma.product.findUnique({
+        where: { id: productId },
+        // @ts-ignore - pageViews and clicks will be available after migration
+        select: { pageViews: true, clicks: true },
+      })
+      // @ts-ignore
+      pageViews = fullProduct?.pageViews || null
+      // @ts-ignore
+      clicks = fullProduct?.clicks || null
+    } catch (error) {
+      // Columns don't exist yet, use defaults
+      console.warn('pageViews/clicks columns not available, using defaults')
+      pageViews = null
+      clicks = null
+    }
 
     // Check if product dropped off M&S (was on M&S but now off)
     const droppedOffMS = product?.onMoversShakers === false && 
@@ -1190,8 +1203,8 @@ export async function setFirstDetected(productId: string, baseScore: number) {
       const result = calculateCurrentScore(
         baseScore, 
         null,
-        fullProduct?.pageViews,
-        fullProduct?.clicks,
+        pageViews,
+        clicks,
         false // New products haven't dropped off M&S yet
       )
       
@@ -1211,8 +1224,8 @@ export async function setFirstDetected(productId: string, baseScore: number) {
       const result = calculateCurrentScore(
         baseScore, 
         product.firstDetected,
-        fullProduct?.pageViews,
-        fullProduct?.clicks,
+        pageViews,
+        clicks,
         droppedOffMS
       )
       const newPeakScore = updatePeakScore(result.currentScore, product.baseScore || 0)
