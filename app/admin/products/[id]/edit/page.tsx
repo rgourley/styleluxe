@@ -552,9 +552,7 @@ export default function EditProductPage() {
         while (retries > 0 && !contentLoaded) {
           await new Promise(resolve => setTimeout(resolve, 2000)) // Wait 2 seconds between retries
           
-          await fetchProduct()
-          
-          // Check if content was actually loaded
+          // Check if content was actually loaded (don't call fetchProduct to preserve edited name)
           const response = await fetch(`/api/products/${productId}`)
           const checkData = await response.json()
           
