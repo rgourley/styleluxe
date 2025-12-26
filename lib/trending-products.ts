@@ -656,9 +656,8 @@ export async function recalculateAllScores() {
         peakScore: true,
         onMoversShakers: true,
         lastSeenOnMoversShakers: true,
-        // Try to select pageViews and clicks if they exist
-        // @ts-ignore - pageViews and clicks will be available after migration
-        ...(process.env.DATABASE_URL?.includes('localhost') || process.env.DATABASE_URL?.includes('127.0.0.1') ? { pageViews: true, clicks: true } : {}),
+        // Note: pageViews and clicks are not selected here to avoid errors if columns don't exist
+        // They will be null in calculateCurrentScore calls
   },
     })
 
