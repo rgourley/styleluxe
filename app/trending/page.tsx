@@ -18,9 +18,10 @@ export const metadata = {
   },
 }
 
-async function getFilteredProducts(filter: string, category?: string | null, searchQuery?: string | null) {
+async function getFilteredProducts(filter: string, category?: string | null, searchQuery?: string | null, page: number = 1, pageSize: number = 24) {
   const cachedFn = unstable_cache(
     async () => {
+      const skip = (page - 1) * pageSize
       if (!process.env.DATABASE_URL) {
         return []
       }
@@ -141,7 +142,8 @@ async function getFilteredProducts(filter: string, category?: string | null, sea
                   { currentScore: 'desc' }, // Zero scores at bottom (0 < any positive number)
                   { trendScore: 'desc' }, // Fallback to trendScore if currentScore is null
                 ],
-            take: 50,
+            skip: skip,
+            take: pageSize,
           }),
           new Promise<any[]>((resolve) => 
             setTimeout(() => {
@@ -163,7 +165,7 @@ async function getFilteredProducts(filter: string, category?: string | null, sea
         return []
       }
     },
-    [`trending-${filter}-${category || 'all'}-${searchQuery || 'none'}-v2`], // v2 to bust cache
+    [`trending-${filter}-${category || 'all'}-${searchQuery || 'none'}-page-${page}-v2`], // Include page in cache key
     {
       revalidate: 10, // Reduced from 60 to 10 seconds for faster updates
       tags: ['products', 'trending', filter],
@@ -176,14 +178,20 @@ async function getFilteredProducts(filter: string, category?: string | null, sea
 export default async function TrendingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ filter?: string; category?: string; q?: string }>
+  searchParams: Promise<{ filter?: string; category?: string; q?: string; page?: string }>
 }) {
   const params = await searchParams
   const activeFilter = params.filter || 'all'
   const category = params.category
   const searchQuery = params.q
+  const page = parseInt(params.page || '1', 10)
+  const pageSize = 24
 
-  const products = await getFilteredProducts(activeFilter, category, searchQuery)
+  const products = await getFilteredProducts(activeFilter, category, searchQuery, page, pageSize)
+  
+  // Check if there are more products (fetch one extra to see if there's a next page)
+  const nextPageProducts = await getFilteredProducts(activeFilter, category, searchQuery, page + 1, 1)
+  const hasMore = nextPageProducts.length > 0
 
   const filters = [
     { id: 'all', label: 'All', description: 'All products' },
@@ -254,10 +262,28 @@ export default async function TrendingPage({
           </div>
         )}
 
-        {/* Results Count */}
+        {/* Load More / Pagination */}
         {products.length > 0 && (
-          <div className="mt-12 text-center text-sm text-[#6b6b6b]">
-            Showing {products.length} {products.length === 1 ? 'product' : 'products'}
+          <div className="mt-12 flex flex-col items-center gap-4">
+            <div className="text-sm text-[#6b6b6b]">
+              Showing {((page - 1) * pageSize) + 1}-{((page - 1) * pageSize) + products.length} products
+            </div>
+            {hasMore && (
+              <Link
+                href={`/trending?filter=${activeFilter}${category ? `&category=${encodeURIComponent(category)}` : ''}${searchQuery ? `&q=${encodeURIComponent(searchQuery)}` : ''}&page=${page + 1}`}
+                className="px-6 py-3 bg-[#FF6B6B] hover:bg-[#E07856] text-white font-medium rounded-lg transition-colors"
+              >
+                Load More Products
+              </Link>
+            )}
+            {page > 1 && (
+              <Link
+                href={`/trending?filter=${activeFilter}${category ? `&category=${encodeURIComponent(category)}` : ''}${searchQuery ? `&q=${encodeURIComponent(searchQuery)}` : ''}${page > 2 ? `&page=${page - 1}` : ''}`}
+                className="text-sm text-[#6b6b6b] hover:text-[#FF6B6B] transition-colors"
+              >
+                ← Previous Page
+              </Link>
+            )}
           </div>
         )}
       </div>
