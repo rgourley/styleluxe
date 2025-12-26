@@ -168,17 +168,26 @@ export default function EditProductPage() {
         
         // Update slug in content if it exists, or create content with the slug
         if (content) {
-          // Update existing content slug
+          // Store old slug in previousSlugs array before updating
+          const oldSlug = content.slug
+          const previousSlugs = Array.isArray(content.previousSlugs) 
+            ? [...content.previousSlugs, oldSlug]
+            : oldSlug ? [oldSlug] : []
+          
+          // Update existing content slug and add old slug to previousSlugs
           const contentResponse = await fetch(`/api/products/${productId}/content`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ slug: newSlug }),
+            body: JSON.stringify({ 
+              slug: newSlug,
+              previousSlugs: previousSlugs,
+            }),
           })
           
           if (contentResponse.ok) {
             const contentData = await contentResponse.json()
             if (contentData.success) {
-              setContent({ ...content, slug: newSlug })
+              setContent({ ...content, slug: newSlug, previousSlugs: previousSlugs })
             }
           }
         } else {

@@ -139,7 +139,7 @@ export async function getProductBySlug(slug: string): Promise<ProductWithRelatio
 
       try {
         // Allow PUBLISHED and DRAFT products (DRAFT for preview before publishing)
-        const product = await prisma.product.findFirst({
+        let product = await prisma.product.findFirst({
           where: {
             content: {
               slug: slug,
@@ -162,6 +162,68 @@ export async function getProductBySlug(slug: string): Promise<ProductWithRelatio
             content: true,
           },
         })
+        
+        // If not found by current slug, check previous slugs
+        if (!product) {
+          const productsWithOldSlugs = await prisma.product.findMany({
+            where: {
+              status: {
+                in: ['PUBLISHED', 'DRAFT'],
+              },
+              content: {
+                isNot: null,
+                previousSlugs: {
+                  not: null,
+                },
+              },
+            },
+            include: {
+              content: {
+                select: {
+                  slug: true,
+                  previousSlugs: true,
+                },
+              },
+            },
+          })
+          
+          // Check if the requested slug is in any product's previousSlugs
+          for (const p of productsWithOldSlugs) {
+            if (p.content?.previousSlugs) {
+              const previousSlugs = Array.isArray(p.content.previousSlugs) 
+                ? p.content.previousSlugs 
+                : (p.content.previousSlugs as any)?.slugs || []
+              
+              if (previousSlugs.includes(slug)) {
+                // Found product with this old slug, return it (caller will handle redirect)
+                product = await prisma.product.findFirst({
+                  where: {
+                    id: p.id,
+                  },
+                  include: {
+                    trendSignals: {
+                      orderBy: {
+                        detectedAt: 'desc',
+                      },
+                    },
+                    reviews: {
+                      orderBy: {
+                        date: 'desc',
+                      },
+                    },
+                    content: true,
+                  },
+                })
+                // Mark that this is an old slug for redirect
+                if (product) {
+                  (product as any)._isOldSlug = true
+                  (product as any)._newSlug = p.content?.slug
+                }
+                break
+              }
+            }
+          }
+        }
         
         if (!product) {
           return null
