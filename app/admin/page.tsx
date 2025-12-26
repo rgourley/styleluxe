@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { getAmazonImageUrl } from '@/lib/amazon-image'
 import { addAmazonAffiliateTag } from '@/lib/amazon-affiliate'
@@ -29,6 +31,8 @@ interface Product {
 }
 
 export default function AdminPage() {
+  const { data: session, status } = useSession()
+  const router = useRouter()
   const [collectionStatus, setCollectionStatus] = useState<CollectionStatus>('idle')
   const [enrichStatus, setEnrichStatus] = useState<CollectionStatus>('idle')
   const [generateStatus, setGenerateStatus] = useState<CollectionStatus>('idle')
@@ -63,6 +67,28 @@ export default function AdminPage() {
   const [mergeSearchResults, setMergeSearchResults] = useState<Product[]>([])
   const [mergingProductId, setMergingProductId] = useState<string | null>(null)
   const [selectedTargetProduct, setSelectedTargetProduct] = useState<string | null>(null)
+
+  // Auth check
+  useEffect(() => {
+    if (status === 'loading') return // Still loading
+    if (status === 'unauthenticated') {
+      router.push('/admin/login')
+    }
+  }, [status, router])
+
+  // Show loading while checking auth
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-600">Loading...</div>
+      </div>
+    )
+  }
+
+  // Don't render admin content if not authenticated
+  if (status === 'unauthenticated') {
+    return null
+  }
 
   const addMessage = (message: string) => {
     setMessages(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`])
