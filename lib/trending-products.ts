@@ -827,8 +827,9 @@ export async function getNewThisWeekProducts(limit: number = 8) {
 }
 
 /**
- * Get "Rising Fast" products (recent score increases)
- * Products that have been updated recently and show growth
+ * Get "Rising Fast" products - Reddit buzz products NOT on Amazon Movers & Shakers
+ * These are products with strong Reddit engagement but not (yet) on Amazon M&S
+ * Score range: 40-69 points (below "Trending Now" threshold of 70)
  * Cached for 60 seconds
  */
 export async function getRisingFastProducts(limit: number = 8) {
@@ -839,26 +840,40 @@ export async function getRisingFastProducts(limit: number = 8) {
       }
 
       try {
-        // Get products updated in last 24 hours with increasing scores
-        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
-        
+        // Get products with Reddit signals but NO Amazon M&S signals
+        // OR products that dropped out of "Trending Now" (score 40-69)
         const products = await Promise.race([
           prisma.product.findMany({
             where: {
-              status: 'PUBLISHED', // Only show explicitly published products
-              lastUpdated: {
-                gte: oneDayAgo,
+              status: 'PUBLISHED',
+              content: {
+                isNot: null, // Must have content
               },
-              currentScore: {
-                gte: 40,
-              },
-              daysTrending: {
-                lte: 14, // Within 2 weeks
-              },
-              // Price >= $5 OR null (allow products without price set)
-              OR: [
-                { price: { gte: 5 } },
-                { price: null },
+              AND: [
+                {
+                  // Score range: 40-69 (below "Trending Now" but still trending)
+                  OR: [
+                    {
+                      AND: [
+                        { currentScore: { gte: 40, lt: 70 } },
+                        { daysTrending: { lte: 14 } }, // Within 2 weeks
+                      ],
+                    },
+                    {
+                      AND: [
+                        { currentScore: null },
+                        { trendScore: { gte: 40, lt: 70 } },
+                      ],
+                    },
+                  ],
+                },
+                {
+                  // Price >= $5 OR null
+                  OR: [
+                    { price: { gte: 5 } },
+                    { price: null },
+                  ],
+                },
               ],
             },
             include: {
@@ -875,10 +890,10 @@ export async function getRisingFastProducts(limit: number = 8) {
             },
             orderBy: [
               {
-                currentScore: 'desc', // Highest scores first
+                currentScore: 'desc',
               },
               {
-                lastUpdated: 'desc', // Most recently updated
+                trendScore: 'desc',
               },
             ],
             take: limit,
@@ -897,7 +912,7 @@ export async function getRisingFastProducts(limit: number = 8) {
         return []
       }
     },
-    ['rising-fast-products'],
+    ['rising-fast-products-v2'],
     {
       revalidate: 60,
       tags: ['products', 'rising'],

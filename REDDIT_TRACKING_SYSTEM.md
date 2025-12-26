@@ -41,13 +41,12 @@ StyleLuxe tracks trending beauty products by combining data from **Amazon Movers
 - Extracts: product name, brand, price, sales jump %, reviews, rating
 - Calculates Amazon trend score based on sales velocity
 
-**Amazon Score Calculation (max 70 points):**
+**Amazon Score Calculation:**
 ```typescript
-// Formula: salesJumpPercent / 20 (capped at 70)
-// Examples:
-- 1000% sales jump = 50 points
-- 2000% sales jump = 70 points (max)
-- Base score (on list) = 10 points minimum
+// ALL products on Amazon Movers & Shakers = 100 points (base)
+// These products are TRULY VIRAL with massive sales spikes
+// With age decay, they stay in "Trending Now" (70+) for 5-7 days
+// Then gradually move to lower sections as they age
 ```
 
 ### 3. **Product Matching** (`scripts/enrich-amazon-with-reddit.ts`)
@@ -73,10 +72,17 @@ StyleLuxe tracks trending beauty products by combining data from **Amazon Movers
    - Check if key product words match
    - Requires both brand AND product type to match
 
-**Combined Score:**
+**Score Hierarchy:**
 ```
-Total Score = Amazon Score (0-70) + Reddit Score (0-30)
-Max: 100 points
+Amazon Movers & Shakers products: 100 points (base)
+  → With age decay, stay in "Trending Now" (70+) for 5-7 days
+  → Gradually decay to lower sections
+
+Reddit-only products: 0-50 points (based on engagement)
+  → Appear in "Rising Fast" section (40-69 points)
+  → Can be promoted to "Trending Now" if they hit Amazon M&S
+
+Combined (Amazon M&S + Reddit): 100 points + Reddit bonus (rare)
 ```
 
 ---
@@ -270,11 +276,18 @@ const SUBREDDITS = [
 ]
 ```
 
-### Score Thresholds
-- **Flagged for review:** 60+ points
+### Score Thresholds & Homepage Sections
+- **"Trending Now" (70+ points):** Amazon Movers & Shakers products
+  - Start at 100 points (base)
+  - With age decay, stay here for 5-7 days
+  - Day 1: 100 points, Day 2-3: 95 points, Day 4-7: 85 points, Day 8: 70 points
+  
+- **"Rising Fast" (40-69 points):** Reddit buzz products NOT on Amazon M&S
+  - Strong Reddit engagement but not (yet) on M&S
+  - Also includes M&S products that aged out of "Trending Now"
+  
+- **Flagged for content generation:** 60+ points
 - **Auto-publish:** Not implemented (manual review required)
-- **Homepage "Trending Now":** 70+ points with age decay
-- **Homepage "Rising Fast":** 50-69 points, <7 days old
 
 ### Age Decay Multipliers
 ```typescript

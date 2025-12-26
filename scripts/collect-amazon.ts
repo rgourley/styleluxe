@@ -429,16 +429,20 @@ async function fetchAmazonMoversAndShakers(): Promise<AmazonProduct[]> {
  * - 200% increase = 10 points
  */
 function calculateAmazonTrendScore(salesJumpPercent?: number): number {
+  // Products on Amazon Movers & Shakers are TRULY VIRAL
+  // They get a base score of 100 to ensure they dominate "Trending Now"
+  // This creates a clear hierarchy:
+  // - "Trending Now" (70+) = Amazon M&S products (start at 100, decay over time)
+  // - "Rising Fast" (50-69) = Reddit buzz products NOT on M&S
+  
   if (!salesJumpPercent || salesJumpPercent <= 0) {
-    // If no specific sales jump %, being on Movers & Shakers is still significant
-    // Give a base score of 10 points
-    return 10
+    // Even without specific sales jump %, being on M&S means it's viral
+    return 100
   }
   
-  // Percentage ÷ 20 = points (capped at 70)
-  // Minimum 10 points for being on Movers & Shakers, even with low percentages
-  const calculatedScore = Math.min(70, Math.floor(salesJumpPercent / 20))
-  return Math.max(10, calculatedScore)
+  // All M&S products start at 100 points
+  // With age decay, they'll stay in "Trending Now" for 5-7 days
+  return 100
 }
 
 /**
