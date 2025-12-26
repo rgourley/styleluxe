@@ -29,8 +29,8 @@ const contentSelect = {
   // previousSlugs excluded - will be available after migration
 }
 
-// Revalidate every 60 seconds
-export const revalidate = 60
+// Revalidate every 10 seconds (reduced for faster cache updates)
+export const revalidate = 10
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.thestyleluxe.com'
 
@@ -188,9 +188,9 @@ async function getFilteredProducts(filter: string, category?: string | null, sea
         return []
       }
     },
-    [`trending-${filter}-${category || 'all'}-${searchQuery || 'none'}`],
+    [`trending-${filter}-${category || 'all'}-${searchQuery || 'none'}-v2`], // v2 to bust cache
     {
-      revalidate: 60,
+      revalidate: 10, // Reduced from 60 to 10 seconds for faster updates
       tags: ['products', 'trending', filter],
     }
   )
