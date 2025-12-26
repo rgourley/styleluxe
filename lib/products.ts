@@ -163,65 +163,76 @@ export async function getProductBySlug(slug: string): Promise<ProductWithRelatio
           },
         })
         
-        // If not found by current slug, check previous slugs
+        // If not found by current slug, check previous slugs (if column exists)
         if (!product) {
-          // @ts-ignore - previousSlugs field will be available after migration
-          const productsWithOldSlugs = await prisma.product.findMany({
-            where: {
-              status: {
-                in: ['PUBLISHED', 'DRAFT'],
-              },
-              content: {
-                isNot: null,
-              },
-            },
-            include: {
-              content: {
-                select: {
-                  slug: true,
-                  // @ts-ignore
-                  previousSlugs: true,
+          try {
+            // @ts-ignore - previousSlugs field will be available after migration
+            const productsWithOldSlugs = await prisma.product.findMany({
+              where: {
+                status: {
+                  in: ['PUBLISHED', 'DRAFT'],
+                },
+                content: {
+                  isNot: null,
                 },
               },
-            },
-          })
-          
-          // Check if the requested slug is in any product's previousSlugs
-          for (const p of productsWithOldSlugs) {
-            if (p.content?.previousSlugs) {
-              const previousSlugs = Array.isArray(p.content.previousSlugs) 
-                ? p.content.previousSlugs 
-                : (p.content.previousSlugs as any)?.slugs || []
-              
-              if (previousSlugs.includes(slug)) {
-                // Found product with this old slug, return it (caller will handle redirect)
-                const foundProduct = await prisma.product.findFirst({
-                  where: {
-                    id: p.id,
+              include: {
+                content: {
+                  select: {
+                    slug: true,
+                    // @ts-ignore
+                    previousSlugs: true,
                   },
-                  include: {
-                    trendSignals: {
-                      orderBy: {
-                        detectedAt: 'desc',
-                      },
+                },
+              },
+            })
+            
+            // Check if the requested slug is in any product's previousSlugs
+            for (const p of productsWithOldSlugs) {
+              // @ts-ignore
+              if (p.content?.previousSlugs) {
+                // @ts-ignore
+                const previousSlugs = Array.isArray(p.content.previousSlugs) 
+                  ? p.content.previousSlugs 
+                  : (p.content.previousSlugs as any)?.slugs || []
+                
+                if (previousSlugs.includes(slug)) {
+                  // Found product with this old slug, return it (caller will handle redirect)
+                  const foundProduct = await prisma.product.findFirst({
+                    where: {
+                      id: p.id,
                     },
-                    reviews: {
-                      orderBy: {
-                        date: 'desc',
+                    include: {
+                      trendSignals: {
+                        orderBy: {
+                          detectedAt: 'desc',
+                        },
                       },
+                      reviews: {
+                        orderBy: {
+                          date: 'desc',
+                        },
+                      },
+                      content: true,
                     },
-                    content: true,
-                  },
-                })
-                // Mark that this is an old slug for redirect
-                if (foundProduct) {
-                  const productWithRedirect = foundProduct as any
-                  productWithRedirect._isOldSlug = true
-                  productWithRedirect._newSlug = p.content?.slug
-                  product = productWithRedirect
+                  })
+                  // Mark that this is an old slug for redirect
+                  if (foundProduct) {
+                    const productWithRedirect = foundProduct as any
+                    productWithRedirect._isOldSlug = true
+                    productWithRedirect._newSlug = p.content?.slug
+                    product = productWithRedirect
+                  }
+                  break
                 }
-                break
               }
+            }
+          } catch (error: any) {
+            // Column doesn't exist yet, skip old slug lookup
+            if (error.code === 'P2022' || error.message?.includes('previousSlugs')) {
+              // Column doesn't exist, skip this check
+            } else {
+              throw error
             }
           }
         }
