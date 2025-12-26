@@ -166,35 +166,22 @@ export async function getProductBySlug(slug: string): Promise<ProductWithRelatio
         // If not found by current slug, check previous slugs (if column exists)
         if (!product) {
           try {
-            // @ts-ignore - previousSlugs field will be available after migration
-            const productsWithOldSlugs = await prisma.product.findMany({
-              where: {
-                status: {
-                  in: ['PUBLISHED', 'DRAFT'],
-                },
-                content: {
-                  isNot: null,
-                },
-              },
-              include: {
-                content: {
-                  select: {
-                    slug: true,
-                    // @ts-ignore
-                    previousSlugs: true,
-                  },
-                },
-              },
-            })
+            // Use raw query to check for old slugs (works even if column doesn't exist yet)
+            // @ts-ignore - Using raw query to avoid Prisma validation errors
+            const productsWithOldSlugs = await prisma.$queryRaw<Array<{ id: string; slug: string; previousSlugs: any }>>`
+              SELECT p.id, pc.slug, pc."previousSlugs"
+              FROM "Product" p
+              INNER JOIN "ProductContent" pc ON p.id = pc."productId"
+              WHERE p.status IN ('PUBLISHED', 'DRAFT')
+                AND pc."previousSlugs" IS NOT NULL
+            `.catch(() => []) // If column doesn't exist, return empty array
             
             // Check if the requested slug is in any product's previousSlugs
             for (const p of productsWithOldSlugs) {
-              // @ts-ignore
-              if (p.content?.previousSlugs) {
-                // @ts-ignore
-                const previousSlugs = Array.isArray(p.content.previousSlugs) 
-                  ? p.content.previousSlugs 
-                  : (p.content.previousSlugs as any)?.slugs || []
+              if (p.previousSlugs) {
+                const previousSlugs = Array.isArray(p.previousSlugs) 
+                  ? p.previousSlugs 
+                  : (p.previousSlugs as any)?.slugs || []
                 
                 if (previousSlugs.includes(slug)) {
                   // Found product with this old slug, return it (caller will handle redirect)
@@ -220,7 +207,7 @@ export async function getProductBySlug(slug: string): Promise<ProductWithRelatio
                   if (foundProduct) {
                     const productWithRedirect = foundProduct as any
                     productWithRedirect._isOldSlug = true
-                    productWithRedirect._newSlug = p.content?.slug
+                    productWithRedirect._newSlug = p.slug
                     product = productWithRedirect
                   }
                   break
@@ -228,12 +215,8 @@ export async function getProductBySlug(slug: string): Promise<ProductWithRelatio
               }
             }
           } catch (error: any) {
-            // Column doesn't exist yet, skip old slug lookup
-            if (error.code === 'P2022' || error.message?.includes('previousSlugs')) {
-              // Column doesn't exist, skip this check
-            } else {
-              throw error
-            }
+            // Column doesn't exist yet, skip old slug lookup silently
+            // This is expected until the migration runs
           }
         }
         
