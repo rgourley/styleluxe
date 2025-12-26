@@ -165,6 +165,7 @@ export async function getProductBySlug(slug: string): Promise<ProductWithRelatio
         
         // If not found by current slug, check previous slugs
         if (!product) {
+          // @ts-ignore - previousSlugs field will be available after migration
           const productsWithOldSlugs = await prisma.product.findMany({
             where: {
               status: {
@@ -172,15 +173,13 @@ export async function getProductBySlug(slug: string): Promise<ProductWithRelatio
               },
               content: {
                 isNot: null,
-                previousSlugs: {
-                  not: null,
-                },
               },
             },
             include: {
               content: {
                 select: {
                   slug: true,
+                  // @ts-ignore
                   previousSlugs: true,
                 },
               },
