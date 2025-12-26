@@ -1172,26 +1172,10 @@ export async function setFirstDetected(productId: string, baseScore: number) {
       },
     })
 
-    // Get current pageViews and clicks for traffic boost (if columns exist)
-    let pageViews: number | null = null
-    let clicks: number | null = null
-    
-    try {
-      const fullProduct = await prisma.product.findUnique({
-        where: { id: productId },
-        // @ts-ignore - pageViews and clicks will be available after migration
-        select: { pageViews: true, clicks: true },
-      })
-      // @ts-ignore
-      pageViews = fullProduct?.pageViews || null
-      // @ts-ignore
-      clicks = fullProduct?.clicks || null
-    } catch (error) {
-      // Columns don't exist yet, use defaults
-      console.warn('pageViews/clicks columns not available, using defaults')
-      pageViews = null
-      clicks = null
-    }
+    // pageViews and clicks are not available until migration is run
+    // Use null values - they'll be handled gracefully in calculateCurrentScore
+    const pageViews: number | null = null
+    const clicks: number | null = null
 
     // Check if product dropped off M&S (was on M&S but now off)
     const droppedOffMS = product?.onMoversShakers === false && 
