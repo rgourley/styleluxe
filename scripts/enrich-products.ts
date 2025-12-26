@@ -107,6 +107,9 @@ function nameSimilarity(name1: string, name2: string): number {
 
 /**
  * Match and enrich products across sources
+ * 
+ * IMPORTANT: Products should NEVER be deleted except during intentional merging of duplicates.
+ * Even products with zero scores should remain in the database and appear at the bottom of lists.
  */
 async function enrichProducts() {
   console.log('='.repeat(60))

@@ -106,7 +106,8 @@ async function getFilteredProducts(filter: string, category?: string | null, sea
             break
           case 'all':
           default:
-            // Show all published products with content (no score filter)
+            // Show all published products with content (including zero scores)
+            // No score filter - will be sorted by score descending (zero scores at bottom)
             break
         }
 
@@ -133,11 +134,11 @@ async function getFilteredProducts(filter: string, category?: string | null, sea
             orderBy: filter === 'recent' 
               ? [
                   { peakScore: 'desc' },
-                  { currentScore: 'desc' },
+                  { currentScore: 'desc' }, // Zero scores at bottom (0 < any positive number)
                   { trendScore: 'desc' },
                 ]
               : [
-                  { currentScore: 'desc' },
+                  { currentScore: 'desc' }, // Zero scores at bottom (0 < any positive number)
                   { trendScore: 'desc' }, // Fallback to trendScore if currentScore is null
                 ],
             take: 50,

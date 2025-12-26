@@ -106,9 +106,14 @@ export async function getTrendingProducts(): Promise<ProductWithRelations[]> {
         },
         content: true,
       },
-      orderBy: {
-        trendScore: 'desc',
-      },
+      orderBy: [
+        {
+          currentScore: 'desc', // Zero scores at bottom (0 < any positive number)
+        },
+        {
+          trendScore: 'desc', // Fallback to trendScore if currentScore is null
+        },
+      ],
       take: 20,
     }),
       new Promise<ProductWithRelations[]>((resolve) => 

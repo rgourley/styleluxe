@@ -860,3 +860,16 @@ async function findMatchingRedditProduct(amazonProductName: string, amazonBrand?
 
 export { processAmazonData }
 
+// Run if called directly
+if (require.main === module) {
+  processAmazonData()
+    .then(() => {
+      console.log('\n✅ Script completed successfully')
+      process.exit(0)
+    })
+    .catch((error) => {
+      console.error('\n❌ Script failed:', error)
+      process.exit(1)
+    })
+}
+
