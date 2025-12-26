@@ -20,46 +20,60 @@ function parseAttribution(attribution?: string): ParsedAttribution {
 
   const lower = attribution.toLowerCase()
   
-  // Check for verified
-  const isVerified = lower.includes('verified buyer') || lower.includes('verified purchase') || lower.includes('verified')
+  // Check for verified (any mention of verified)
+  const isVerified = lower.includes('verified')
   
-  // Extract skin type - more comprehensive patterns
+  // Split by common delimiters to get individual parts
+  const parts = attribution.split(/,|\s+-\s+/).map(p => p.trim())
+  
   let skinType: string | undefined
-  const skinTypes = [
-    { match: 'acne-prone', display: 'Acne-Prone Skin' },
-    { match: 'combination', display: 'Combination Skin' },
-    { match: 'dry skin', display: 'Dry Skin' },
-    { match: 'sensitive', display: 'Sensitive Skin' },
-    { match: 'oily', display: 'Oily Skin' },
-    { match: 'mature skin', display: 'Mature Skin' },
-    { match: 'normal skin', display: 'Normal Skin' },
-  ]
+  let timeline: string | undefined
   
-  for (const type of skinTypes) {
-    if (lower.includes(type.match)) {
-      skinType = type.display
-      break
-    }
+  // Skin type keywords to look for
+  const skinTypeMap: Record<string, string> = {
+    'acne-prone': 'Acne-Prone Skin',
+    'acne prone': 'Acne-Prone Skin',
+    'combination': 'Combination Skin',
+    'dry': 'Dry Skin',
+    'sensitive': 'Sensitive Skin',
+    'oily': 'Oily Skin',
+    'mature': 'Mature Skin',
+    'normal': 'Normal Skin',
   }
   
-  // Extract timeline - more comprehensive patterns
-  let timeline: string | undefined
-  const timelinePatterns = [
-    /\d+\s*(?:year|yr)s?/i,
-    /\d+\s*(?:month|mo)s?/i,
-    /\d+\s*(?:week|wk)s?/i,
-    /\d+\s*(?:day|d)s?/i,
-    /\d+-(?:month|week|day|year)\s+user/i,
-    /long-term\s+user/i,
-    /regular\s+user/i,
-    /using\s+for\s+[\w\s]+/i,
+  // Timeline keywords to look for
+  const timelineKeywords = [
+    'user', 'using', 'after', 'for', 'week', 'month', 'year', 'day',
+    'long-term', 'regular'
   ]
   
-  for (const pattern of timelinePatterns) {
-    const match = attribution.match(pattern)
-    if (match) {
-      timeline = match[0]
-      break
+  // Process each part
+  for (const part of parts) {
+    const partLower = part.toLowerCase()
+    
+    // Skip "verified buyer" or "verified purchase" - already handled
+    if (partLower.includes('verified')) {
+      continue
+    }
+    
+    // Check if this part contains a skin type
+    if (!skinType) {
+      for (const [keyword, display] of Object.entries(skinTypeMap)) {
+        if (partLower.includes(keyword)) {
+          skinType = display
+          break
+        }
+      }
+    }
+    
+    // Check if this part contains timeline info (numbers + time words, or specific user types)
+    if (!timeline) {
+      const hasTimeKeyword = timelineKeywords.some(kw => partLower.includes(kw))
+      const hasNumber = /\d+/.test(partLower)
+      
+      if (hasTimeKeyword && (hasNumber || partLower.includes('long-term') || partLower.includes('regular'))) {
+        timeline = part
+      }
     }
   }
   
@@ -125,14 +139,21 @@ export default function UserQuoteCard({ quoteText, attribution }: UserQuoteCardP
             height: '40px',
             borderRadius: '50%',
             background: '#E7E7E7',
-            color: '#6b6b6b',
-            fontSize: '20px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             flexShrink: 0,
+            overflow: 'hidden',
           }}>
-          👤
+          <img 
+            src="/images/297566.svg" 
+            alt="User avatar"
+            style={{
+              width: '24px',
+              height: '24px',
+              opacity: 0.6,
+            }}
+          />
         </div>
         
         {/* Attribution Text */}
