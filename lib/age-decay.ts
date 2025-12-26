@@ -13,19 +13,22 @@ export interface AgeDecayResult {
 /**
  * Calculate age decay multiplier based on days trending
  * 
- * Days 0-3: multiplier = 1.0 (full score)
- * Days 4-7: multiplier = 0.8
- * Days 8-14: multiplier = 0.6
- * Days 15-21: multiplier = 0.4
- * Days 22-30: multiplier = 0.2
+ * More aggressive decay curve for dynamic homepage:
+ * Days 0-1: multiplier = 1.0 (full score - "Just detected")
+ * Days 2-3: multiplier = 0.95 (slight decay)
+ * Days 4-7: multiplier = 0.85 (moderate decay)
+ * Days 8-14: multiplier = 0.7 (significant decay)
+ * Days 15-21: multiplier = 0.5 (heavy decay)
+ * Days 22-30: multiplier = 0.3 (very heavy decay)
  * Days 31+: Remove from homepage (multiplier = 0)
  */
 export function getAgeMultiplier(daysTrending: number): number {
-  if (daysTrending <= 3) return 1.0
-  if (daysTrending <= 7) return 0.8
-  if (daysTrending <= 14) return 0.6
-  if (daysTrending <= 21) return 0.4
-  if (daysTrending <= 30) return 0.2
+  if (daysTrending <= 1) return 1.0   // Day 0-1: Full score
+  if (daysTrending <= 3) return 0.95  // Day 2-3: Slight decay
+  if (daysTrending <= 7) return 0.85  // Day 4-7: Moderate decay
+  if (daysTrending <= 14) return 0.7  // Day 8-14: Significant decay
+  if (daysTrending <= 21) return 0.5  // Day 15-21: Heavy decay
+  if (daysTrending <= 30) return 0.3  // Day 22-30: Very heavy decay
   return 0 // Days 31+: Remove from homepage
 }
 
