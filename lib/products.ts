@@ -1,6 +1,30 @@
 import { prisma } from './prisma'
 import { unstable_cache } from 'next/cache'
 
+// Content select that excludes previousSlugs (which may not exist in production yet)
+const contentSelect = {
+  id: true,
+  productId: true,
+  slug: true,
+  hook: true,
+  whyTrending: true,
+  whatItDoes: true,
+  theGood: true,
+  theBad: true,
+  whoShouldTry: true,
+  whoShouldSkip: true,
+  alternatives: true,
+  whatRealUsersSay: true,
+  faq: true,
+  editorNotes: true,
+  redditHotness: true,
+  googleTrendsData: true,
+  editedByHuman: true,
+  generatedAt: true,
+  updatedAt: true,
+  // previousSlugs excluded - will be available after migration
+}
+
 // Define ProductWithRelations type based on Prisma schema
 // Using a flexible type to match Prisma's return type with includes
 type ProductWithRelations = {
@@ -104,7 +128,9 @@ export async function getTrendingProducts(): Promise<ProductWithRelations[]> {
         reviews: {
           take: 10,
         },
-        content: true,
+        content: {
+          select: contentSelect,
+        },
       },
       orderBy: {
         trendScore: 'desc',
@@ -159,7 +185,9 @@ export async function getProductBySlug(slug: string): Promise<ProductWithRelatio
                 date: 'desc',
               },
             },
-            content: true,
+            content: {
+          select: contentSelect,
+        },
           },
         })
         
@@ -200,7 +228,9 @@ export async function getProductBySlug(slug: string): Promise<ProductWithRelatio
                           date: 'desc',
                         },
                       },
-                      content: true,
+                      content: {
+          select: contentSelect,
+        },
                     },
                   })
                   // Mark that this is an old slug for redirect
