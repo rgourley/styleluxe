@@ -63,12 +63,31 @@ export async function getTrendingNowHomepage(limit: number = 8) {
                         { trendScore: { gte: 70 } },
                       ],
                     },
+                    // Fallback: if no scores, include products with content that are PUBLISHED
+                    {
+                      AND: [
+                        { currentScore: null },
+                        { trendScore: null },
+                      ],
+                    },
                   ],
                 },
                 {
                   OR: [
                     { daysTrending: { lte: 7 } },
                     { daysTrending: null },
+                    // Allow products up to 14 days if they have high scores
+                    {
+                      AND: [
+                        { daysTrending: { lte: 14 } },
+                        {
+                          OR: [
+                            { currentScore: { gte: 80 } },
+                            { trendScore: { gte: 80 } },
+                          ],
+                        },
+                      ],
+                    },
                   ],
                 },
                 {
