@@ -567,7 +567,13 @@ export default function EditProductPage() {
               contentLoaded = true
               setContent(checkData.product.content)
               setFaqItems(checkData.product.content.faq || [])
-              setEditorNotes(checkData.product.content.editorNotes || '')
+              // Only update editor notes if not edited
+              if (!hasEditedNotes.current) {
+                setEditorNotes(checkData.product.content.editorNotes || '')
+              }
+              // Update product but preserve edited name
+              setProduct(checkData.product)
+              // Don't update editedProductName if it's been edited
             }
           }
           
