@@ -12,6 +12,7 @@ const getPrisma = async () => {
 const auth = NextAuth({
   // Using JWT strategy, so no adapter needed
   secret: process.env.NEXTAUTH_SECRET || 'fallback-secret-for-dev-only',
+  trustHost: true, // Required for production/Vercel
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || '',
