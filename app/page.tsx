@@ -1,6 +1,6 @@
 import { 
   getTrendingNowHomepage,
-  getAboutToExplodeProducts,
+  getRisingFastProducts,
   getRecentlyHotProducts,
   searchProducts,
 } from '@/lib/trending-products'
@@ -66,11 +66,11 @@ export default async function Home({
   // Fetch all sections in parallel for better performance
   const [
     trendingNow,
-    aboutToExplode,
+    risingFast,
     recentlyHot,
   ] = await Promise.all([
     getTrendingNowHomepage(8), // Show 8 products
-    getAboutToExplodeProducts(8),
+    getRisingFastProducts(8),
     getRecentlyHotProducts(8),
   ])
   
@@ -253,7 +253,7 @@ export default async function Home({
             )}
 
             {/* Section 2: Rising Fast */}
-            {aboutToExplode.length > 0 && (
+            {risingFast.length > 0 && (
               <section className="mb-20">
                 <div className="mb-8 flex items-center justify-between">
                   <div>
@@ -261,10 +261,10 @@ export default async function Home({
                       Rising Fast
                     </h2>
                     <p className="text-sm text-[#6b6b6b] tracking-wide">
-                      Products with rising scores (50-69) or early signals - trending within the last 7 days
+                      Reddit buzz products with strong engagement (40-69 points)
                     </p>
                   </div>
-                  <Link 
+                  <Link
                     href="/trending?filter=rising"
                     className="text-sm font-medium text-[#FF6B6B] hover:text-[#E07856] transition-colors whitespace-nowrap"
                   >
@@ -272,7 +272,7 @@ export default async function Home({
                   </Link>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {aboutToExplode.map((product) => (
+                  {risingFast.map((product) => (
                     <ProductCard key={product.id} product={product} />
                   ))}
                 </div>
@@ -351,7 +351,7 @@ export default async function Home({
         )}
 
         {/* Empty State */}
-        {!searchQuery && trendingNow.length === 0 && aboutToExplode.length === 0 && recentlyHot.length === 0 && (
+        {!searchQuery && trendingNow.length === 0 && risingFast.length === 0 && recentlyHot.length === 0 && (
           <div className="text-center py-20">
             <p className="text-gray-500 text-lg mb-4">No trending products yet.</p>
             <p className="text-gray-400 mb-4">Products will appear here once they're flagged and published.</p>
