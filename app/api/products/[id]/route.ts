@@ -59,12 +59,28 @@ export async function PATCH(
     const { id } = await params
     const body = await request.json()
 
+    // Get current product to preserve Amazon URL
+    const currentProduct = await prisma.product.findUnique({
+      where: { id },
+      select: { amazonUrl: true, name: true },
+    })
+
+    if (!currentProduct) {
+      return NextResponse.json(
+        { success: false, message: 'Product not found' },
+        { status: 404 }
+      )
+    }
+
     const product = await prisma.product.update({
       where: { id },
       data: {
         name: body.name,
         brand: body.brand !== undefined ? body.brand : undefined,
         category: body.category !== undefined ? body.category : undefined,
+        // Preserve Amazon URL - it's the key for matching duplicates
+        // Don't update it unless explicitly provided
+        amazonUrl: body.amazonUrl !== undefined ? body.amazonUrl : currentProduct.amazonUrl,
         // Can add other fields here if needed (price, etc.)
       },
     })

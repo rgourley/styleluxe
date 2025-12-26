@@ -28,6 +28,7 @@ export async function PATCH(
 
     // Update specific fields (allows partial updates)
     const updateData: any = {}
+    if (body.slug !== undefined) updateData.slug = body.slug // Allow slug updates
     if (body.hook !== undefined) updateData.hook = body.hook
     if (body.whyTrending !== undefined) updateData.whyTrending = body.whyTrending
     if (body.whatItDoes !== undefined) updateData.whatItDoes = body.whatItDoes

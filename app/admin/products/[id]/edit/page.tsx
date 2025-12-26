@@ -148,6 +148,11 @@ export default function EditProductPage() {
 
     setSavingName(true)
     try {
+      // Generate slug from the new name
+      const { generateSlug } = await import('@/lib/utils')
+      const newSlug = generateSlug(editedProductName.trim()).substring(0, 100)
+
+      // Update product name
       const response = await fetch(`/api/products/${productId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -157,9 +162,46 @@ export default function EditProductPage() {
       const data = await response.json()
 
       if (data.success) {
-        setProduct({ ...product, name: editedProductName.trim() })
-        hasEditedName.current = false // Reset flag after successful save
-        setMessage('✅ Product name saved!')
+        // Update the product state
+        const updatedProduct = { ...product, name: editedProductName.trim() }
+        setProduct(updatedProduct)
+        
+        // Update slug in content if it exists, or create content with the slug
+        if (content) {
+          // Update existing content slug
+          const contentResponse = await fetch(`/api/products/${productId}/content`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ slug: newSlug }),
+          })
+          
+          if (contentResponse.ok) {
+            const contentData = await contentResponse.json()
+            if (contentData.success) {
+              setContent({ ...content, slug: newSlug })
+            }
+          }
+        } else {
+          // Create content with the new slug
+          const contentResponse = await fetch(`/api/products/${productId}/content`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ slug: newSlug }),
+          })
+          
+          if (contentResponse.ok) {
+            const contentData = await contentResponse.json()
+            if (contentData.success) {
+              setContent(contentData.content)
+            }
+          }
+        }
+        
+        // Keep the flag set so the name doesn't revert if fetchProduct is called later
+        // The flag will only be reset when the user explicitly changes the name again
+        // or when the page is reloaded
+        hasEditedName.current = true // Keep it set so fetchProduct won't overwrite
+        setMessage('✅ Product name and slug saved!')
         setTimeout(() => setMessage(null), 2000)
       } else {
         setMessage(`❌ Failed to save name: ${data.message}`)
@@ -369,8 +411,19 @@ export default function EditProductPage() {
 
       if (data.success) {
         setMessage(`✅ ${data.message}`)
-        // Refresh product data
-        await fetchProduct()
+        // Refresh product data but preserve edited fields
+        // Only fetch if we haven't edited the name
+        if (!hasEditedName.current) {
+          await fetchProduct()
+        } else {
+          // Just update the product state without overwriting edited name
+          const refreshResponse = await fetch(`/api/products/${productId}`)
+          const refreshData = await refreshResponse.json()
+          if (refreshData.success) {
+            setProduct(refreshData.product)
+            // Don't update editedProductName since it's been edited
+          }
+        }
         setTimeout(() => setMessage(null), 3000)
       } else {
         setMessage(`❌ Failed: ${data.message}`)
@@ -401,8 +454,19 @@ export default function EditProductPage() {
         setMessage(`✅ ${section} regenerated!`)
         // Update the content state with the new section
         setContent({ ...content, [section]: data.content })
-        // Refresh to get latest
-        await fetchProduct()
+        // Refresh to get latest but preserve edited fields
+        if (!hasEditedName.current) {
+          await fetchProduct()
+        } else {
+          // Just update content without overwriting edited name
+          const refreshResponse = await fetch(`/api/products/${productId}`)
+          const refreshData = await refreshResponse.json()
+          if (refreshData.success && refreshData.product.content) {
+            setContent(refreshData.product.content)
+            setProduct(refreshData.product)
+            // Don't update editedProductName since it's been edited
+          }
+        }
         setTimeout(() => setMessage(null), 2000)
       } else {
         setMessage(`❌ Failed: ${data.message}`)
