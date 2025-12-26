@@ -50,97 +50,93 @@ async function getFilteredProducts(filter: string, category?: string | null, sea
       }
 
       try {
-        const where: any = {
-          status: 'PUBLISHED',
-          content: {
-            isNot: null, // Must have content to show
+        // Build base where conditions
+        const baseConditions: any[] = [
+          { status: 'PUBLISHED' },
+          { content: { isNot: null } }, // Must have content to show
+          {
+            OR: [
+              { price: { gte: 5 } },
+              { price: null },
+            ],
           },
-          OR: [
-            { price: { gte: 5 } },
-            { price: null },
-          ],
-        }
+        ]
 
         // Add category filter if provided
         if (category) {
-          where.category = category
+          baseConditions.push({ category })
         }
 
         // Add search filter if provided
         if (searchQuery) {
-          where.OR = [
-            { name: { contains: searchQuery, mode: 'insensitive' } },
-            { brand: { contains: searchQuery, mode: 'insensitive' } },
-          ]
+          baseConditions.push({
+            OR: [
+              { name: { contains: searchQuery, mode: 'insensitive' } },
+              { brand: { contains: searchQuery, mode: 'insensitive' } },
+            ],
+          })
         }
 
-        // Apply filter
+        // Apply filter-specific conditions
         switch (filter) {
           case 'hot':
             // currentScore >= 70 OR (currentScore is null AND trendScore >= 70)
-            where.AND = [
-              {
-                OR: [
-                  { currentScore: { gte: 70 } },
-                  {
-                    AND: [
-                      { currentScore: null },
-                      { trendScore: { gte: 70 } },
-                    ],
-                  },
-                ],
-              },
-            ]
+            baseConditions.push({
+              OR: [
+                { currentScore: { gte: 70 } },
+                {
+                  AND: [
+                    { currentScore: null },
+                    { trendScore: { gte: 70 } },
+                  ],
+                },
+              ],
+            })
             break
           case 'rising':
             // currentScore 50-69 OR (currentScore is null AND trendScore 50-69)
-            where.AND = [
-              {
-                OR: [
-                  {
-                    AND: [
-                      { currentScore: { gte: 50, lte: 69 } },
-                    ],
-                  },
-                  {
-                    AND: [
-                      { currentScore: null },
-                      { trendScore: { gte: 50, lte: 69 } },
-                    ],
-                  },
-                ],
-              },
-            ]
+            baseConditions.push({
+              OR: [
+                { currentScore: { gte: 50, lte: 69 } },
+                {
+                  AND: [
+                    { currentScore: null },
+                    { trendScore: { gte: 50, lte: 69 } },
+                  ],
+                },
+              ],
+            })
             break
           case 'recent':
             // daysTrending > 7 OR (daysTrending is null AND createdAt is old enough)
-            // Calculate cutoff date once (server-side, safe for hydration)
             const eightDaysAgo = new Date()
             eightDaysAgo.setDate(eightDaysAgo.getDate() - 8)
             
-            where.AND = [
-              {
-                OR: [
-                  { daysTrending: { gt: 7 } },
-                  {
-                    AND: [
-                      { daysTrending: null },
-                      {
-                        createdAt: {
-                          lte: eightDaysAgo, // Created at least 8 days ago
-                        },
+            baseConditions.push({
+              OR: [
+                { daysTrending: { gt: 7 } },
+                {
+                  AND: [
+                    { daysTrending: null },
+                    {
+                      createdAt: {
+                        lte: eightDaysAgo, // Created at least 8 days ago
                       },
-                    ],
-                  },
-                ],
-              },
-            ]
+                    },
+                  ],
+                },
+              ],
+            })
             break
           case 'all':
           default:
             // Show all published products with content (no score filter)
-            // This will show all products regardless of score
             break
+        }
+
+        // Build final where clause with all conditions in AND
+        const where: any = {
+          AND: baseConditions,
         }
 
         const products = await Promise.race([
