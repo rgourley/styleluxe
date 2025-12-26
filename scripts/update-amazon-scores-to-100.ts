@@ -37,22 +37,29 @@ async function updateAmazonScores() {
         // Set base score to 100 (all M&S products are viral)
         const baseScore = 100
 
-        // Recalculate current score with age decay
+        // IMPORTANT: Recalculate current score with age decay based on firstDetected
+        // This ensures products that have been around for a while get properly decayed
         const result = calculateCurrentScore(baseScore, product.firstDetected)
+
+        // Update peak score - use the higher of current or existing peak
+        const newPeakScore = Math.max(result.currentScore, product.peakScore || 0, baseScore)
 
         await prisma.product.update({
           where: { id: product.id },
           data: {
             trendScore: baseScore, // Update legacy trendScore
             baseScore: baseScore,
-            currentScore: result.currentScore,
-            peakScore: Math.max(result.currentScore, product.peakScore || 0),
+            currentScore: result.currentScore, // Age-decayed score
+            peakScore: newPeakScore,
             daysTrending: result.daysTrending,
             lastUpdated: new Date(),
           },
         })
 
-        console.log(`✅ ${product.name.substring(0, 50)} | Base: 100 → Current: ${result.currentScore} (${result.daysTrending} days)`)
+        const decayInfo = result.currentScore < baseScore 
+          ? ` (decayed from ${baseScore} due to ${result.daysTrending} days)` 
+          : ''
+        console.log(`✅ ${product.name.substring(0, 50)} | Base: 100 → Current: ${result.currentScore}${decayInfo}`)
         updated++
       } catch (error) {
         console.error(`❌ Error updating ${product.name}:`, error)
