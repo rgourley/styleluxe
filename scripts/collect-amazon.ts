@@ -463,8 +463,19 @@ async function processAmazonData() {
     console.log()
   }
 
-  // Track which products are currently on M&S (by Amazon URL)
-  const currentMoversShakersUrls = new Set(products.map(p => p.amazonUrl))
+  // Track which products are currently on M&S (by ASIN for reliable matching)
+  // Extract ASINs from URLs to handle query parameter variations
+  const extractASIN = (url: string | undefined): string | null => {
+    if (!url) return null
+    const match = url.match(/\/dp\/([A-Z0-9]{10})/) || url.match(/\/gp\/product\/([A-Z0-9]{10})/)
+    return match ? match[1] : null
+  }
+  
+  const currentMoversShakersASINs = new Set(
+    products
+      .map(p => extractASIN(p.amazonUrl))
+      .filter((asin): asin is string => asin !== null)
+  )
 
   let stored = 0
   let updated = 0
@@ -744,7 +755,9 @@ async function processAmazonData() {
 
   for (const product of productsOnMS) {
     // If product is not in current M&S list, mark it as dropped off
-    if (!product.amazonUrl || !currentMoversShakersUrls.has(product.amazonUrl)) {
+    // Use ASIN matching instead of exact URL to handle query parameter variations
+    const productASIN = extractASIN(product.amazonUrl || '')
+    if (!productASIN || !currentMoversShakersASINs.has(productASIN)) {
       // Reduce base score by 10-15 points instead of dropping to 50
       // This prevents huge daily swings (100 → 50 in one day)
       // Products will gradually decay to zero over time, but not instantly
