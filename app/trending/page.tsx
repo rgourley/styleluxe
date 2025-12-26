@@ -208,7 +208,7 @@ export default async function TrendingPage({
     { id: 'all', label: 'All', description: 'All products' },
     { id: 'hot', label: 'Hot', description: 'Score 70+' },
     { id: 'rising', label: 'Rising', description: 'Score 50-69' },
-    { id: 'recent', label: 'Recent', description: 'Days trending > 7' },
+    { id: 'recent', label: 'Recent', description: 'Days trending ≤ 7' },
   ]
 
   return (
