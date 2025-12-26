@@ -1,71 +1,61 @@
 import { NextResponse } from 'next/server'
-import { exec } from 'child_process'
-import { promisify } from 'util'
 import { prisma } from '@/lib/prisma'
 
 // Force dynamic rendering to prevent build-time data collection
 export const dynamic = 'force-dynamic'
 
-const execAsync = promisify(exec)
-
 /**
- * Sync database schema using db push (safer for existing databases with drift)
- * This will sync the Prisma schema to the database without creating migration files
- * Also adds the previousSlugs column if it doesn't exist
+ * Sync database schema by adding missing columns
+ * Uses raw SQL since Vercel doesn't allow running npx commands
  */
 export async function POST() {
   try {
-    console.log('Syncing database schema (db push)...')
+    console.log('🚀 Running database schema sync...')
     
-    // First, try to add previousSlugs column directly if it doesn't exist
+    const results = []
+    
+    // Add previousSlugs column to ProductContent if it doesn't exist
     try {
       await prisma.$executeRawUnsafe(`
         ALTER TABLE "ProductContent" ADD COLUMN IF NOT EXISTS "previousSlugs" JSONB;
       `)
+      results.push('✅ previousSlugs column added to ProductContent (or already exists)')
       console.log('✅ previousSlugs column added (or already exists)')
     } catch (error: any) {
-      // Column might already exist or there's another issue - continue with db push
-      console.log('previousSlugs column check:', error.message)
+      // Check if column already exists (non-fatal)
+      if (error.message?.includes('already exists') || error.message?.includes('duplicate')) {
+        results.push('ℹ️ previousSlugs column already exists')
+      } else {
+        results.push(`⚠️ previousSlugs column: ${error.message}`)
+        console.warn('previousSlugs column check:', error.message)
+      }
     }
     
-    // Use db push to sync schema - this is safer for existing databases
-    const { stdout, stderr } = await execAsync('npx prisma db push --accept-data-loss', {
-      cwd: process.cwd(),
-      maxBuffer: 10 * 1024 * 1024, // 10MB buffer
-    })
-    
-    console.log('Schema sync output:', stdout)
-    if (stderr) {
-      console.warn('Schema sync warnings:', stderr)
-    }
-    
-    // Generate Prisma client (critical - must be done after schema sync)
-    console.log('Generating Prisma client...')
-    const { stdout: generateStdout, stderr: generateStderr } = await execAsync('npx prisma generate', {
-      cwd: process.cwd(),
-      maxBuffer: 10 * 1024 * 1024,
-    })
-    
-    console.log('Prisma client generation output:', generateStdout)
-    if (generateStderr) {
-      console.warn('Prisma client generation warnings:', generateStderr)
+    // Verify the column was added by checking if we can query it
+    try {
+      await prisma.$queryRawUnsafe(`
+        SELECT "previousSlugs" FROM "ProductContent" LIMIT 1;
+      `)
+      results.push('✅ previousSlugs column verified and accessible')
+    } catch (error: any) {
+      // This is expected if the column doesn't exist yet, but we tried to add it above
+      results.push(`⚠️ previousSlugs column verification: ${error.message}`)
     }
     
     return NextResponse.json({
       success: true,
-      message: 'Database schema synced successfully and Prisma client regenerated',
-      output: stdout,
-      generateOutput: generateStdout,
-      previousSlugsAdded: true,
+      message: 'Database schema sync completed!',
+      results,
+      note: 'Prisma client will automatically recognize the new column on next deployment or restart',
     })
   } catch (error: any) {
-    console.error('Schema sync error:', error)
+    console.error('❌ Schema sync error:', error)
     
     return NextResponse.json(
       {
         success: false,
         message: error instanceof Error ? error.message : 'Unknown error occurred',
-        error: error.stdout || error.stderr || error.message,
+        error: error.message,
       },
       { status: 500 }
     )
