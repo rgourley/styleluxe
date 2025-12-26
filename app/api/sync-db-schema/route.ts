@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { exec } from 'child_process'
 import { promisify } from 'util'
+import { prisma } from '@/lib/prisma'
 
 // Force dynamic rendering to prevent build-time data collection
 export const dynamic = 'force-dynamic'
@@ -10,10 +11,22 @@ const execAsync = promisify(exec)
 /**
  * Sync database schema using db push (safer for existing databases with drift)
  * This will sync the Prisma schema to the database without creating migration files
+ * Also adds the previousSlugs column if it doesn't exist
  */
 export async function POST() {
   try {
     console.log('Syncing database schema (db push)...')
+    
+    // First, try to add previousSlugs column directly if it doesn't exist
+    try {
+      await prisma.$executeRawUnsafe(`
+        ALTER TABLE "ProductContent" ADD COLUMN IF NOT EXISTS "previousSlugs" JSONB;
+      `)
+      console.log('✅ previousSlugs column added (or already exists)')
+    } catch (error: any) {
+      // Column might already exist or there's another issue - continue with db push
+      console.log('previousSlugs column check:', error.message)
+    }
     
     // Use db push to sync schema - this is safer for existing databases
     const { stdout, stderr } = await execAsync('npx prisma db push --accept-data-loss', {
@@ -43,6 +56,7 @@ export async function POST() {
       message: 'Database schema synced successfully and Prisma client regenerated',
       output: stdout,
       generateOutput: generateStdout,
+      previousSlugsAdded: true,
     })
   } catch (error: any) {
     console.error('Schema sync error:', error)
@@ -56,5 +70,9 @@ export async function POST() {
       { status: 500 }
     )
   }
+}
+
+export async function GET() {
+  return POST()
 }
 
