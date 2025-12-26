@@ -224,7 +224,7 @@ export default async function TrendingPage({
               return (
                 <Link
                   key={filter.id}
-                  href={`/trending?filter=${filter.id}`}
+                  href={`/trending?filter=${filter.id}${category ? `&category=${encodeURIComponent(category)}` : ''}${searchQuery ? `&q=${encodeURIComponent(searchQuery)}` : ''}`}
                   className={`
                     px-4 py-2 text-sm font-medium transition-colors border-b-2
                     ${isActive
