@@ -252,13 +252,13 @@ export default async function Home({
               </section>
             )}
 
-            {/* Section 2: About to Explode */}
+            {/* Section 2: Rising Fast */}
             {aboutToExplode.length > 0 && (
               <section className="mb-20">
                 <div className="mb-8 flex items-center justify-between">
                   <div>
                     <h2 className="text-3xl md:text-4xl font-bold text-[#2D2D2D] mb-3 tracking-tight">
-                      About to Explode
+                      Rising Fast
                     </h2>
                     <p className="text-sm text-[#6b6b6b] tracking-wide">
                       Products with rising scores (50-69) or early signals - trending within the last 7 days
