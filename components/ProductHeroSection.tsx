@@ -237,22 +237,7 @@ export default function ProductHeroSection({
         </div>
       )}
 
-      {/* Price */}
-      {product.price && (
-        <p style={{
-          fontSize: '38px',
-          fontWeight: '700',
-          color: '#2D2D2D',
-          letterSpacing: '-0.02em',
-          fontFamily: 'var(--font-atkinson), sans-serif',
-          marginBottom: '28px',
-        }}>
-          ${product.price.toFixed(2)}
-          {product.currency && product.currency !== 'USD' && ` ${product.currency}`}
-        </p>
-      )}
-
-      {/* CTA Button */}
+      {/* CTA Button with Price */}
       {product.amazonUrl && (
         <a
           href={onAmazonClick}
@@ -283,7 +268,7 @@ export default function ProductHeroSection({
             e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
           }}
         >
-          Buy on Amazon →
+          {product.price ? `$${product.price.toFixed(2)} on Amazon →` : 'Buy on Amazon →'}
         </a>
       )}
 

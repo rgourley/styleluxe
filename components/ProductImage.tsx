@@ -79,10 +79,9 @@ export default function ProductImage({ imageUrl, amazonUrl, productName, categor
         alt={altText}
         style={{
           objectFit: 'contain',
-          maxHeight: '400px',
-          width: 'auto',
-          height: 'auto',
-          maxWidth: '100%',
+          maxHeight: '100%',
+          width: '100%',
+          height: '100%',
         }}
         onError={handleError}
       />

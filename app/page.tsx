@@ -197,18 +197,17 @@ export default async function Home({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
         <div className="text-center mb-16">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-[#2D2D2D] mb-6 tracking-tight leading-tight">
-            Trending Beauty Products<br />Right Now
+            What Beauty Products<br />Are Trending Right Now?
           </h1>
           <p className="text-xl md:text-2xl text-[#2D2D2D] max-w-3xl mx-auto mb-4 leading-relaxed font-light">
-            We track trending beauty products across <strong className="font-semibold text-[#2D2D2D]">TikTok</strong>, <strong className="font-semibold text-[#2D2D2D]">Instagram</strong>, <strong className="font-semibold text-[#2D2D2D]">Reddit</strong>, and <strong className="font-semibold text-[#2D2D2D]">Amazon</strong>. 
-            Discover what's actually going viral before everyone else finds out.
+            We track <strong className="font-semibold text-[#2D2D2D]">Amazon</strong> sales spikes, <strong className="font-semibold text-[#2D2D2D]">Reddit</strong> holy grails, and <strong className="font-semibold text-[#2D2D2D]">TikTok</strong> viral moments daily. Zero sponsored posts, just products that actually work.
           </p>
         </div>
 
         {/* Search Results */}
         {searchQuery ? (
           <div className="mb-16">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+            <h2 className="text-2xl font-bold mb-6" style={{ color: '#2D2D2D' }}>
               Search Results for "{searchQuery}"
               {filteredProducts.length > 0 && (
                 <span className="text-lg font-normal text-gray-500 ml-2">
@@ -235,56 +234,60 @@ export default async function Home({
           </div>
         ) : (
           <>
-            {/* Section 1: Trending Now */}
+            {/* Section 1: Selling Out Fast */}
             {trendingNow.length > 0 && (
               <section className="mb-20">
-                <div className="mb-8 flex items-center justify-between">
+                <div className="mb-8">
                   <div>
                     <h2 className="text-3xl md:text-4xl font-bold text-[#2D2D2D] mb-3 tracking-tight">
-                      Trending Now
+                      Selling Out Fast
                     </h2>
                     <p className="text-sm text-[#6b6b6b] tracking-wide">
-                      The hottest products right now (score 70+) • Amazon sales data • Reddit trending • Updated {currentDate}
+                      These products are exploding on Amazon, Reddit, and TikTok. Sales spiked 1000%+ this week, get them before they're gone. {currentDate}
                     </p>
                   </div>
-                  <Link 
-                    href="/trending?filter=hot"
-                    className="text-sm font-medium text-[#FF6B6B] hover:text-[#E07856] transition-colors whitespace-nowrap"
-                  >
-                    View More →
-                  </Link>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
                   {trendingNow.map((product, index) => (
                     <ProductCard key={product.id} product={product} priority={index < 4} />
                   ))}
                 </div>
-              </section>
-            )}
-
-            {/* Section 2: Rising Fast */}
-            {risingFast.length > 0 && (
-              <section className="mb-20">
-                <div className="mb-8 flex items-center justify-between">
-                  <div>
-                    <h2 className="text-3xl md:text-4xl font-bold text-[#2D2D2D] mb-3 tracking-tight">
-                      Rising Fast
-                    </h2>
-                    <p className="text-sm text-[#6b6b6b] tracking-wide">
-                      Reddit buzz products with strong engagement (40-69 points)
-                    </p>
-                  </div>
-                  <Link
-                    href="/trending?filter=rising"
-                    className="text-sm font-medium text-[#FF6B6B] hover:text-[#E07856] transition-colors whitespace-nowrap"
+                <div className="text-center">
+                  <Link 
+                    href="/trending?filter=hot"
+                    className="text-sm font-medium text-[#FF6B6B] hover:text-[#E07856] transition-colors"
                   >
                     View More →
                   </Link>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              </section>
+            )}
+
+            {/* Section 2: Early Buzz */}
+            {risingFast.length > 0 && (
+              <section className="mb-20">
+                <div className="mb-8">
+                  <div>
+                    <h2 className="text-3xl md:text-4xl font-bold text-[#2D2D2D] mb-3 tracking-tight">
+                      Early Buzz
+                    </h2>
+                    <p className="text-sm text-[#6b6b6b] tracking-wide">
+                      Catching momentum on Reddit and TikTok before they hit Amazon's bestseller list. Get these before everyone else does.
+                    </p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
                   {risingFast.map((product) => (
                     <ProductCard key={product.id} product={product} />
                   ))}
+                </div>
+                <div className="text-center">
+                  <Link
+                    href="/trending?filter=rising"
+                    className="text-sm font-medium text-[#FF6B6B] hover:text-[#E07856] transition-colors"
+                  >
+                    View More →
+                  </Link>
                 </div>
               </section>
             )}
@@ -292,7 +295,7 @@ export default async function Home({
             {/* Section 3: Recently Hot */}
             {recentlyHot.length > 0 && (
               <section className="mb-20">
-                <div className="mb-8 flex items-center justify-between">
+                <div className="mb-8">
                   <div>
                     <h2 className="text-3xl md:text-4xl font-bold text-[#2D2D2D] mb-3 tracking-tight">
                       Recently Hot
@@ -301,17 +304,19 @@ export default async function Home({
                       Products that peaked at 70+ and were trending 8-30 days ago
                     </p>
                   </div>
-                  <Link 
-                    href="/trending?filter=recent"
-                    className="text-sm font-medium text-[#FF6B6B] hover:text-[#E07856] transition-colors whitespace-nowrap"
-                  >
-                    View More →
-                  </Link>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
                   {recentlyHot.map((product) => (
                     <ProductCard key={product.id} product={product} />
                   ))}
+                </div>
+                <div className="text-center">
+                  <Link 
+                    href="/trending?filter=recent"
+                    className="text-sm font-medium text-[#FF6B6B] hover:text-[#E07856] transition-colors"
+                  >
+                    View More →
+                  </Link>
                 </div>
               </section>
             )}

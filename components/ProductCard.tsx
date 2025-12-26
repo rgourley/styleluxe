@@ -22,6 +22,37 @@ export default function ProductCard({ product, priority = false }: { product: an
   const salesSpike = getSalesSpikePercent(trendSignals)
   const slug = product.content?.slug || `product-${product.id}`
   
+  // Get a short user quote from the AI-generated "What Real Users Say" section
+  const getUserQuote = () => {
+    const whatRealUsersSay = product.content?.whatRealUsersSay
+    
+    if (!whatRealUsersSay) return null
+    
+    // Method 1: Extract text before the first dash (user attribution)
+    // This works best for format: 'Quote text' - attribution
+    const beforeDash = whatRealUsersSay.split(' - ')[0]
+    if (beforeDash && beforeDash.length >= 20 && beforeDash.length <= 200) {
+      // Remove leading/trailing quote marks if present
+      const cleaned = beforeDash.replace(/^['""']/, '').replace(/['""']$/, '').trim()
+      if (cleaned.length >= 20 && cleaned.length <= 200) {
+        return cleaned
+      }
+    }
+    
+    // Method 2: Look for text in double quotes, curly quotes, or single quotes
+    const quoteMatch = whatRealUsersSay.match(/"([^"]{20,150})"/) ||  // Double quotes
+                       whatRealUsersSay.match(/"([^"]{20,150})"/) ||  // Curly quotes
+                       whatRealUsersSay.match(/'([^']{20,150})'/)     // Single quotes
+    
+    if (quoteMatch && quoteMatch[1]) {
+      return quoteMatch[1].trim()
+    }
+    
+    return null
+  }
+  
+  const userQuote = getUserQuote()
+  
   const [imageSrc, setImageSrc] = useState(() => {
     if (product.imageUrl && !product.imageUrl.endsWith('.gif') && product.imageUrl.startsWith('http')) {
       return product.imageUrl
@@ -223,8 +254,23 @@ export default function ProductCard({ product, priority = false }: { product: an
           </p>
         )}
 
-        {/* Hook/Description */}
-        {product.content?.hook ? (
+        {/* User Quote or Hook */}
+        {userQuote ? (
+          <p suppressHydrationWarning style={{
+            fontSize: '0.875rem',
+            color: '#2D2D2D',
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+            marginBottom: '1.25rem',
+            lineHeight: '1.75',
+            fontWeight: '300',
+            fontStyle: 'italic',
+          }}>
+            "{userQuote}"
+          </p>
+        ) : product.content?.hook ? (
           <p suppressHydrationWarning style={{
             fontSize: '0.875rem',
             color: '#2D2D2D',

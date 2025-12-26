@@ -126,6 +126,7 @@ function AdminDashboard() {
   const [searchStatus, setSearchStatus] = useState<'idle' | 'searching' | 'success' | 'error'>('idle')
   const [searchResults, setSearchResults] = useState<any>(null)
   const [selectedRedditPosts, setSelectedRedditPosts] = useState<Set<string>>(new Set())
+  const [isOnMoversShakers, setIsOnMoversShakers] = useState(true) // Default to true for M&S products
   const [scrapeStatus, setScrapeStatus] = useState<CollectionStatus>('idle')
   const [migrateStatus, setMigrateStatus] = useState<CollectionStatus>('idle')
   const [syncStatus, setSyncStatus] = useState<CollectionStatus>('idle')
@@ -540,7 +541,7 @@ function AdminDashboard() {
   const handleApproveResult = async () => {
     if (!searchResults) return
 
-    addMessage('Adding product to database...')
+    addMessage(`Adding product to database${isOnMoversShakers ? ' (Movers & Shakers - 100 pts)' : ' (Standard Amazon - 50 pts)'}...`)
 
     try {
       const response = await fetch('/api/approve-search-result', {
@@ -552,6 +553,7 @@ function AdminDashboard() {
             ? searchResults.reddit.filter((post: any) => selectedRedditPosts.has(post.id))
             : [],
           searchTerm: searchResults.searchTerm,
+          isOnMoversShakers: isOnMoversShakers, // Pass the M&S flag
         }),
       })
 
@@ -821,8 +823,28 @@ function AdminDashboard() {
                     </div>
                   </div>
                   
-                  {/* Add Amazon Product Button */}
+                  {/* Movers & Shakers Toggle */}
                   <div className="mt-4 pt-4 border-t border-orange-200">
+                    <label className="flex items-center gap-3 p-3 bg-white rounded-lg border border-orange-200 cursor-pointer hover:bg-orange-50 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={isOnMoversShakers}
+                        onChange={(e) => setIsOnMoversShakers(e.target.checked)}
+                        className="w-5 h-5 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+                      />
+                      <div className="flex-1">
+                        <div className="font-semibold text-gray-900">Currently on Movers & Shakers</div>
+                        <div className="text-xs text-gray-600">
+                          {isOnMoversShakers 
+                            ? '✅ Will get 100 base score and appear in "Trending Now"' 
+                            : '⚠️ Will get 50 base score (standard Amazon product)'}
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+                  
+                  {/* Add Amazon Product Button */}
+                  <div className="mt-4">
                     <button
                       onClick={handleApproveResult}
                       className="w-full px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white font-semibold rounded-lg shadow-sm transition-colors"

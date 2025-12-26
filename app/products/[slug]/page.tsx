@@ -9,6 +9,8 @@ import ProductImage from '@/components/ProductImage'
 import ProductHeroSection from '@/components/ProductHeroSection'
 import StatCard from '@/components/StatCard'
 import Header from '@/components/Header'
+import AlternativeProduct from '@/components/AlternativeProduct'
+import UserQuoteCard from '@/components/UserQuoteCard'
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
@@ -569,7 +571,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         {/* Header */}
         <Header />
 
-      <article style={{ paddingTop: '4rem', paddingBottom: '5rem' }}>
+      <article style={{ paddingTop: '1rem', paddingBottom: '5rem' }}>
         {/* Preview Banner for DRAFT products */}
         {product.status === 'DRAFT' && (
           <div style={{
@@ -598,7 +600,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           marginRight: 'auto',
           paddingLeft: '40px',
           paddingRight: '40px',
-          marginBottom: '2rem',
+          marginBottom: '1.5rem',
         }} aria-label="Breadcrumb">
           <ol className="flex items-center space-x-2 text-sm text-[#6b6b6b] flex-wrap">
             <li>
@@ -637,12 +639,15 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           marginRight: 'auto',
           paddingLeft: '40px',
           paddingRight: '40px',
+          boxSizing: 'border-box',
         }}>
           <div style={{
             display: 'grid',
-            gridTemplateColumns: '45% 55%',
+            gridTemplateColumns: '1fr 1.2fr',
             gap: '60px',
             marginBottom: '3rem',
+            width: '100%',
+            boxSizing: 'border-box',
           }} className="product-hero-grid" suppressHydrationWarning>
             {/* Product Image */}
             <div style={{
@@ -650,11 +655,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               aspectRatio: '1 / 1',
               backgroundColor: '#FFFBF5',
               borderRadius: '16px',
-              padding: '4px',
+              padding: '20px',
               boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              overflow: 'hidden',
             }}>
               <div style={{
                 width: '100%',
@@ -701,7 +707,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           paddingRight: '40px',
           display: 'flex',
           flexDirection: 'column',
-          gap: '5rem',
+          gap: '3rem',
         }}>
           {/* Why It's Trending Right Now */}
           {product.content.whyTrending && (
@@ -777,8 +783,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           <div className="grid md:grid-cols-2 gap-12">
             {product.content.theGood && (
               <section>
-                <h2 className="text-3xl md:text-4xl font-bold text-green-700 mb-6 tracking-tight">The Good</h2>
-                <div className="prose prose-lg max-w-none text-[#2D2D2D] leading-relaxed">
+                <h2 className="text-3xl md:text-4xl font-bold text-[#2D2D2D] mb-6 tracking-tight">The Good</h2>
+                <div className="prose prose-lg max-w-none text-[#2D2D2D] leading-relaxed good-list">
                   <MarkdownContent content={product.content.theGood || ''} />
                 </div>
               </section>
@@ -786,8 +792,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
             {product.content.theBad && (
               <section>
-                <h2 className="text-3xl md:text-4xl font-bold text-red-700 mb-6 tracking-tight">The Bad</h2>
-                <div className="prose prose-lg max-w-none text-[#2D2D2D] leading-relaxed">
+                <h2 className="text-3xl md:text-4xl font-bold text-[#2D2D2D] mb-6 tracking-tight">The Bad</h2>
+                <div className="prose prose-lg max-w-none text-[#2D2D2D] leading-relaxed bad-list">
                   <MarkdownContent content={product.content.theBad || ''} />
                 </div>
               </section>
@@ -797,9 +803,24 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
           {/* What Real Users Are Saying */}
           {product.content.whatRealUsersSay && (
             <section>
-              <h2 className="text-3xl md:text-4xl font-bold text-[#2D2D2D] mb-6 tracking-tight">What Real Users Are Saying</h2>
-              <div className="prose prose-lg max-w-none text-[#2D2D2D] leading-relaxed">
-                <MarkdownContent content={product.content.whatRealUsersSay || ''} />
+              <h2 className="text-3xl md:text-4xl font-bold text-[#2D2D2D] mb-8 tracking-tight">What Real Users Are Saying</h2>
+              <div>
+                {product.content.whatRealUsersSay.split('\n\n').filter(para => para.trim()).map((quote, index) => {
+                  // Extract quote text and attribution
+                  const parts = quote.split(' - ')
+                  const quoteText = parts[0].replace(/^['""']/, '').replace(/['""']$/, '').trim()
+                  const attribution = parts[1] || ''
+                  
+                  if (!quoteText || quoteText.length < 10) return null
+                  
+                  return (
+                    <UserQuoteCard
+                      key={index}
+                      quoteText={quoteText}
+                      attribution={attribution}
+                    />
+                  )
+                })}
               </div>
             </section>
           )}
@@ -830,7 +851,62 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             <section>
               <h2 className="text-3xl md:text-4xl font-bold text-[#2D2D2D] mb-6 tracking-tight">Alternatives Worth Considering</h2>
               <div className="prose prose-lg max-w-none text-[#2D2D2D] leading-relaxed">
-                <MarkdownContent content={product.content.alternatives || ''} />
+                {product.content.alternatives.split('\n\n').filter(para => para.trim()).map((alternative, index) => {
+                  // Check if this is a category header (starts with **)
+                  const categoryMatch = alternative.match(/^\*\*(.+?)\*\*\s+(.+?)\s*\(\$[\d.,]+\):?\s*([\s\S]+)$/)
+                  
+                  if (categoryMatch) {
+                    const category = categoryMatch[1].trim()
+                    const productName = categoryMatch[2].trim()
+                    const description = categoryMatch[3].trim()
+                    const priceMatch = alternative.match(/\$[\d.,]+/)
+                    const price = priceMatch ? priceMatch[0] : ''
+                    
+                    return (
+                      <div key={index} style={{ marginBottom: '32px' }}>
+                        <h3 style={{
+                          fontSize: '18px',
+                          fontWeight: '600',
+                          color: '#2D2D2D',
+                          marginBottom: '12px',
+                        }}>
+                          {category}
+                        </h3>
+                        <AlternativeProduct
+                          productName={productName}
+                          price={price}
+                          description={description}
+                        />
+                      </div>
+                    )
+                  }
+                  
+                  // Try regular format without category
+                  const match = alternative.match(/^(.+?)\s*\(\$[\d.,]+\):?\s*([\s\S]+)$/)
+                  
+                  if (match) {
+                    const productName = match[1].trim()
+                    const description = match[2].trim()
+                    const priceMatch = alternative.match(/\$[\d.,]+/)
+                    const price = priceMatch ? priceMatch[0] : ''
+                    
+                    return (
+                      <AlternativeProduct
+                        key={index}
+                        productName={productName}
+                        price={price}
+                        description={description}
+                      />
+                    )
+                  }
+                  
+                  // Fallback: render as plain markdown if format doesn't match
+                  return (
+                    <div key={index} style={{ marginBottom: '24px' }}>
+                      <MarkdownContent content={alternative} />
+                    </div>
+                  )
+                })}
               </div>
             </section>
           )}

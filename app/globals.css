@@ -2,6 +2,8 @@
 
 body {
   font-family: var(--font-atkinson), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 18px;
+  line-height: 1.7;
   background: #FFFBF5;
   color: #2D2D2D;
   -webkit-font-smoothing: antialiased;
@@ -11,6 +13,17 @@ body {
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-outfit), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   font-weight: 700;
+}
+
+/* Product Hero Grid - Prevent overflow */
+.product-hero-grid {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.product-hero-grid > div {
+  min-width: 0; /* Allow flex/grid items to shrink below content size */
+  box-sizing: border-box;
 }
 
 /* Product Hero Grid - Mobile Responsive */
@@ -139,4 +152,60 @@ h1, h2, h3, h4, h5, h6 {
   margin-top: 1.5rem;
   margin-bottom: 0.75rem;
   color: #2D2D2D;
+}
+
+/* The Good list - green checkmarks instead of bullets */
+.good-list ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.good-list ul li {
+  padding-left: 0;
+  position: relative;
+  margin-bottom: 0.75rem;
+}
+
+.good-list ul li::before {
+  content: '✓';
+  color: #4CAF50;
+  font-size: 1.1em;
+  font-weight: bold;
+  margin-right: 0.75rem;
+}
+
+/* The Bad list - red X marks instead of bullets */
+.bad-list ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.bad-list ul li {
+  padding-left: 0;
+  position: relative;
+  margin-bottom: 0.75rem;
+}
+
+.bad-list ul li::before {
+  content: '✕';
+  color: #FF6B6B;
+  font-size: 1.1em;
+  font-weight: bold;
+  margin-right: 0.75rem;
+}
+
+/* User Quote Cards - Mobile Responsive */
+@media (max-width: 768px) {
+  /* Reduce padding on mobile for quote cards */
+  .user-quote-card {
+    padding: 20px !important;
+  }
+  
+  /* Ensure quote footer stacks nicely on very small screens */
+  @media (max-width: 480px) {
+    .user-quote-footer {
+      flex-direction: column;
+      align-items: flex-start !important;
+    }
+  }
 }

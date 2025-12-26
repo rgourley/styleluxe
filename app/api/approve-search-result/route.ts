@@ -16,7 +16,8 @@ export async function POST(request: Request) {
     const { 
       amazonData, 
       redditPosts, 
-      searchTerm 
+      searchTerm,
+      isOnMoversShakers = true // Default to true for backwards compatibility
     } = await request.json()
 
     if (!amazonData && (!redditPosts || redditPosts.length === 0)) {
@@ -116,17 +117,24 @@ export async function POST(request: Request) {
         where: { productId: product.id },
       })
 
+      // If this is an Amazon product being manually added, check if it's from M&S
       let amazonScore = 0
-      for (const signal of allSignals) {
-        if (signal.source === 'amazon_movers') {
-          const metadata = signal.metadata as any
-          const salesJump = signal.value || metadata?.salesJumpPercent || 0
-          if (salesJump > 0) {
-            amazonScore = Math.min(70, Math.floor(salesJump / 20))
-          } else {
-            amazonScore = 10
+      if (amazonData) {
+        // Use the admin's M&S toggle to determine score
+        amazonScore = isOnMoversShakers ? 100 : 50
+      } else {
+        // Check existing signals
+        for (const signal of allSignals) {
+          if (signal.source === 'amazon_movers') {
+            const metadata = signal.metadata as any
+            const salesJump = signal.value || metadata?.salesJumpPercent || 0
+            if (salesJump > 0) {
+              amazonScore = Math.min(70, Math.floor(salesJump / 20))
+            } else {
+              amazonScore = 10
+            }
+            break
           }
-          break
         }
       }
 
@@ -160,8 +168,16 @@ export async function POST(request: Request) {
           imageUrl: amazonData?.imageUrl || product.imageUrl,
           trendScore: Math.max(product.trendScore, totalScore),
           status: 'FLAGGED', // Set to FLAGGED for review generation
+          onMoversShakers: amazonData ? isOnMoversShakers : product.onMoversShakers, // Use admin's M&S toggle
+          lastSeenOnMoversShakers: amazonData && isOnMoversShakers ? new Date() : product.lastSeenOnMoversShakers, // Update timestamp only if on M&S
         },
       })
+
+      // Update age decay fields if Amazon data is provided
+      if (amazonData) {
+        const { setFirstDetected } = await import('@/lib/trending-products')
+        await setFirstDetected(product.id, totalScore)
+      }
 
       // Scrape and save Amazon reviews if we have an Amazon URL and don't already have reviews
       if (amazonData?.amazonUrl) {
@@ -215,9 +231,10 @@ export async function POST(request: Request) {
       console.log(`Creating new product from search: ${amazonData?.name || searchTerm}`)
 
       // Calculate initial score
+      // Use the admin's M&S toggle to determine score
       let amazonScore = 0
       if (amazonData) {
-        amazonScore = 10 // Base score for manually added Amazon products
+        amazonScore = isOnMoversShakers ? 100 : 50
       }
 
       // Search Reddit if not provided and we have Amazon data
@@ -279,8 +296,14 @@ export async function POST(request: Request) {
           amazonUrl: amazonData?.amazonUrl,
           trendScore: totalScore,
           status: 'FLAGGED',
+          onMoversShakers: amazonData ? isOnMoversShakers : false, // Use admin's M&S toggle
+          lastSeenOnMoversShakers: amazonData && isOnMoversShakers ? new Date() : null, // Set timestamp only if on M&S
         },
       })
+
+      // Initialize age decay fields (set firstDetected, baseScore, currentScore, etc.)
+      const { setFirstDetected } = await import('@/lib/trending-products')
+      await setFirstDetected(newProduct.id, totalScore)
 
       // Add Amazon signal if available
       if (amazonData) {
