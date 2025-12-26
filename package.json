@@ -12,6 +12,7 @@
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "db:push": "prisma db push",
+    "db:migrate:prod": "tsx scripts/run-migration-production.ts",
     "collect:data": "tsx scripts/collect-data.ts",
     "collect:reddit": "tsx scripts/collect-reddit.ts",
     "collect:amazon": "tsx scripts/collect-amazon.ts",
