@@ -21,16 +21,18 @@ function parseAttribution(attribution?: string): ParsedAttribution {
   const lower = attribution.toLowerCase()
   
   // Check for verified
-  const isVerified = lower.includes('verified buyer') || lower.includes('verified purchase')
+  const isVerified = lower.includes('verified buyer') || lower.includes('verified purchase') || lower.includes('verified')
   
-  // Extract skin type
+  // Extract skin type - more comprehensive patterns
   let skinType: string | undefined
   const skinTypes = [
-    { match: 'acne-prone skin', display: 'Acne-Prone Skin' },
-    { match: 'combination skin', display: 'Combination Skin' },
+    { match: 'acne-prone', display: 'Acne-Prone Skin' },
+    { match: 'combination', display: 'Combination Skin' },
     { match: 'dry skin', display: 'Dry Skin' },
-    { match: 'sensitive skin', display: 'Sensitive Skin' },
-    { match: 'oily skin', display: 'Oily Skin' },
+    { match: 'sensitive', display: 'Sensitive Skin' },
+    { match: 'oily', display: 'Oily Skin' },
+    { match: 'mature skin', display: 'Mature Skin' },
+    { match: 'normal skin', display: 'Normal Skin' },
   ]
   
   for (const type of skinTypes) {
@@ -40,13 +42,17 @@ function parseAttribution(attribution?: string): ParsedAttribution {
     }
   }
   
-  // Extract timeline (e.g., "3-month user", "long-term user", "using for 6 weeks")
+  // Extract timeline - more comprehensive patterns
   let timeline: string | undefined
   const timelinePatterns = [
-    /(\d+-(?:month|week|day) user)/i,
-    /long-term user/i,
-    /using for [\w\s]+/i,
-    /(\d+ (?:months?|weeks?|days?))/i,
+    /\d+\s*(?:year|yr)s?/i,
+    /\d+\s*(?:month|mo)s?/i,
+    /\d+\s*(?:week|wk)s?/i,
+    /\d+\s*(?:day|d)s?/i,
+    /\d+-(?:month|week|day|year)\s+user/i,
+    /long-term\s+user/i,
+    /regular\s+user/i,
+    /using\s+for\s+[\w\s]+/i,
   ]
   
   for (const pattern of timelinePatterns) {
@@ -64,10 +70,10 @@ export default function UserQuoteCard({ quoteText, attribution }: UserQuoteCardP
   const [isHovered, setIsHovered] = useState(false)
   const parsed = parseAttribution(attribution)
   
-  // Build user info line (e.g., "✓ Verified • Acne-Prone Skin")
+  // Build user info line (e.g., "✓ Verified buyer • Acne-Prone Skin")
   const userInfoParts: string[] = []
   if (parsed.isVerified) {
-    userInfoParts.push('✓ Verified')
+    userInfoParts.push('✓ Verified buyer')
   }
   if (parsed.skinType) {
     userInfoParts.push(parsed.skinType)
@@ -131,7 +137,7 @@ export default function UserQuoteCard({ quoteText, attribution }: UserQuoteCardP
         
         {/* Attribution Text */}
         <div suppressHydrationWarning style={{ flex: 1 }}>
-          {/* User Info (Verified • Skin Type) */}
+          {/* User Info (Verified buyer • Skin Type) */}
           {userInfoText && (
             <div 
               suppressHydrationWarning
@@ -141,7 +147,7 @@ export default function UserQuoteCard({ quoteText, attribution }: UserQuoteCardP
                 lineHeight: '1.5',
               }}>
               {parsed.isVerified && (
-                <span suppressHydrationWarning style={{ color: '#2A7C7C' }}>✓ Verified</span>
+                <span suppressHydrationWarning style={{ color: '#2A7C7C', fontWeight: '600' }}>✓ Verified buyer</span>
               )}
               {parsed.isVerified && parsed.skinType && (
                 <span suppressHydrationWarning> • </span>

@@ -655,7 +655,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               aspectRatio: '1 / 1',
               backgroundColor: '#FFFBF5',
               borderRadius: '16px',
-              padding: '20px',
+              padding: '0',
               boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
               display: 'flex',
               alignItems: 'center',
@@ -830,7 +830,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             {product.content.whoShouldTry && (
               <section>
                 <h2 className="text-3xl md:text-4xl font-bold text-[#2D2D2D] mb-6 tracking-tight">Who Should Try It</h2>
-                <div className="prose prose-lg max-w-none text-[#2D2D2D] leading-relaxed">
+                <div className="prose prose-lg max-w-none text-[#2D2D2D] leading-relaxed good-list">
                   <MarkdownContent content={product.content.whoShouldTry || ''} />
                 </div>
               </section>
@@ -839,7 +839,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             {product.content.whoShouldSkip && (
               <section>
                 <h2 className="text-3xl md:text-4xl font-bold text-[#2D2D2D] mb-6 tracking-tight">Who Should Skip It</h2>
-                <div className="prose prose-lg max-w-none text-[#2D2D2D] leading-relaxed">
+                <div className="prose prose-lg max-w-none text-[#2D2D2D] leading-relaxed bad-list">
                   <MarkdownContent content={product.content.whoShouldSkip || ''} />
                 </div>
               </section>
@@ -988,19 +988,6 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               </div>
             </section>
           )}
-
-          {/* The Verdict (Optional Footer) */}
-          <section className="mt-20 pt-12 border-t-2 border-[#F0F0F0]">
-            <h2 className="text-3xl md:text-4xl font-bold text-[#2D2D2D] mb-6 tracking-tight">The Verdict</h2>
-            <div className="bg-white rounded-2xl p-8 mb-4 shadow-sm border border-[#F0F0F0]">
-              <p className="text-lg text-[#2D2D2D] leading-relaxed mb-4">
-                {verdict}
-              </p>
-              <p className="text-sm text-[#6b6b6b] tracking-wide">
-                Last updated: {formattedUpdatedDate || formattedPublishedDate}
-              </p>
-            </div>
-          </section>
         </div>
 
         {/* Footer CTA */}
