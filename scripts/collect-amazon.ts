@@ -744,7 +744,7 @@ async function processAmazonData() {
 
   for (const product of productsOnMS) {
     // If product is not in current M&S list, mark it as dropped off
-    if (!currentMoversShakersUrls.has(product.amazonUrl)) {
+    if (!product.amazonUrl || !currentMoversShakersUrls.has(product.amazonUrl)) {
       // Reduce base score from 100 to 50 (Reddit-level score)
       const newBaseScore = 50
       const result = calculateCurrentScore(newBaseScore, product.firstDetected)
