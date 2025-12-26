@@ -195,7 +195,7 @@ export async function getProductBySlug(slug: string): Promise<ProductWithRelatio
               
               if (previousSlugs.includes(slug)) {
                 // Found product with this old slug, return it (caller will handle redirect)
-                product = await prisma.product.findFirst({
+                const foundProduct = await prisma.product.findFirst({
                   where: {
                     id: p.id,
                   },
@@ -214,9 +214,11 @@ export async function getProductBySlug(slug: string): Promise<ProductWithRelatio
                   },
                 })
                 // Mark that this is an old slug for redirect
-                if (product) {
-                  (product as any)._isOldSlug = true
-                  (product as any)._newSlug = p.content?.slug
+                if (foundProduct) {
+                  const productWithRedirect = foundProduct as any
+                  productWithRedirect._isOldSlug = true
+                  productWithRedirect._newSlug = p.content?.slug
+                  product = productWithRedirect
                 }
                 break
               }
