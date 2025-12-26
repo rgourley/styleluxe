@@ -23,8 +23,8 @@ function parseAttribution(attribution?: string): ParsedAttribution {
   // Check for verified (any mention of verified)
   const isVerified = lower.includes('verified')
   
-  // Split by common delimiters to get individual parts
-  const parts = attribution.split(/,|\s+-\s+/).map(p => p.trim())
+  // Split by commas to get individual parts
+  const parts = attribution.split(',').map(p => p.trim())
   
   let skinType: string | undefined
   let timeline: string | undefined
@@ -44,7 +44,7 @@ function parseAttribution(attribution?: string): ParsedAttribution {
   // Timeline keywords to look for
   const timelineKeywords = [
     'user', 'using', 'after', 'for', 'week', 'month', 'year', 'day',
-    'long-term', 'regular'
+    'long-term', 'regular', 'daily'
   ]
   
   // Process each part
@@ -71,7 +71,7 @@ function parseAttribution(attribution?: string): ParsedAttribution {
       const hasTimeKeyword = timelineKeywords.some(kw => partLower.includes(kw))
       const hasNumber = /\d+/.test(partLower)
       
-      if (hasTimeKeyword && (hasNumber || partLower.includes('long-term') || partLower.includes('regular'))) {
+      if (hasTimeKeyword && (hasNumber || partLower.includes('long-term') || partLower.includes('regular') || partLower.includes('daily'))) {
         timeline = part
       }
     }

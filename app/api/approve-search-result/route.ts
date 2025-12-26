@@ -176,7 +176,8 @@ export async function POST(request: Request) {
       // Update age decay fields if Amazon data is provided
       if (amazonData) {
         const { setFirstDetected } = await import('@/lib/trending-products')
-        await setFirstDetected(product.id, totalScore)
+        // Use amazonScore (100 or 50) as the base score, not totalScore
+        await setFirstDetected(product.id, amazonScore)
       }
 
       // Scrape and save Amazon reviews if we have an Amazon URL and don't already have reviews
@@ -303,7 +304,8 @@ export async function POST(request: Request) {
 
       // Initialize age decay fields (set firstDetected, baseScore, currentScore, etc.)
       const { setFirstDetected } = await import('@/lib/trending-products')
-      await setFirstDetected(newProduct.id, totalScore)
+      // Use amazonScore (100 or 50) as the base score, not totalScore
+      await setFirstDetected(newProduct.id, amazonScore)
 
       // Add Amazon signal if available
       if (amazonData) {

@@ -807,9 +807,20 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
               <div>
                 {product.content.whatRealUsersSay.split('\n\n').filter(para => para.trim()).map((quote, index) => {
                   // Extract quote text and attribution
-                  const parts = quote.split(' - ')
-                  const quoteText = parts[0].replace(/^['""']/, '').replace(/['""']$/, '').trim()
-                  const attribution = parts[1] || ''
+                  // Format can be:
+                  // "Quote text" - Attribution
+                  // OR
+                  // "Quote text"
+                  // - Attribution
+                  
+                  // First, normalize by removing newlines within the quote block
+                  const normalized = quote.replace(/\n/g, ' ')
+                  const dashIndex = normalized.lastIndexOf(' - ')
+                  
+                  if (dashIndex === -1) return null
+                  
+                  const quoteText = normalized.substring(0, dashIndex).replace(/^['""']/, '').replace(/['""']$/, '').trim()
+                  const attribution = normalized.substring(dashIndex + 3).replace(/['""']$/, '').trim()
                   
                   if (!quoteText || quoteText.length < 10) return null
                   
