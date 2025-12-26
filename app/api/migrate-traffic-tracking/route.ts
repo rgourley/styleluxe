@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'
  * Run the traffic tracking migration on production
  * Adds pageViews, clicks, and lastViewedAt columns to Product table
  */
-export async function POST() {
+async function runMigration() {
   try {
     console.log('🚀 Running traffic tracking migration...')
 
@@ -82,5 +82,13 @@ export async function POST() {
       { status: 500 }
     )
   }
+}
+
+export async function POST() {
+  return runMigration()
+}
+
+export async function GET() {
+  return runMigration()
 }
 
