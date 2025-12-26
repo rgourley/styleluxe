@@ -317,6 +317,12 @@ export const revalidate = 60
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const product = await getProductBySlug(slug)
+  
+  // Handle redirect if this is an old slug
+  if (product && (product as any)._isOldSlug && (product as any)._newSlug) {
+    const { redirect } = await import('next/navigation')
+    redirect(`/products/${(product as any)._newSlug}`)
+  }
 
   if (!product || !product.content) {
     notFound()

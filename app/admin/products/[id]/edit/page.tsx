@@ -170,8 +170,10 @@ export default function EditProductPage() {
         if (content) {
           // Store old slug in previousSlugs array before updating
           const oldSlug = content.slug
-          const previousSlugs = Array.isArray(content.previousSlugs) 
-            ? [...content.previousSlugs, oldSlug]
+          // @ts-ignore - previousSlugs will be available after Prisma client regeneration
+          const existingPreviousSlugs = (content as any).previousSlugs || null
+          const previousSlugs = Array.isArray(existingPreviousSlugs) 
+            ? [...existingPreviousSlugs, oldSlug]
             : oldSlug ? [oldSlug] : []
           
           // Update existing content slug and add old slug to previousSlugs
