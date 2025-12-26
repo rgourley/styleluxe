@@ -463,6 +463,9 @@ async function processAmazonData() {
     console.log()
   }
 
+  // Track which products are currently on M&S (by Amazon URL)
+  const currentMoversShakersUrls = new Set(products.map(p => p.amazonUrl))
+
   let stored = 0
   let updated = 0
   let skipped = 0
@@ -541,13 +544,15 @@ async function processAmazonData() {
         // Import setFirstDetected function
         const { setFirstDetected } = await import('../lib/trending-products')
 
-        // Update existing product
+        // Update existing product - mark as currently on M&S
         await prisma.product.update({
           where: { id: existing.id },
           data: {
             trendScore: Math.max(existing.trendScore, totalScore),
             price: product.price || existing.price,
             imageUrl: product.imageUrl || existing.imageUrl,
+            onMoversShakers: true, // Mark as currently on M&S
+            lastSeenOnMoversShakers: new Date(), // Update last seen timestamp
           },
         })
 
@@ -680,6 +685,8 @@ async function processAmazonData() {
               category: product.category || 'beauty',
               trendScore: trendScore, // Store calculated score (will be combined with Reddit during enrichment)
               status: trendScore >= 60 ? 'FLAGGED' : 'DRAFT', // Flag if score >= 60, otherwise draft
+              onMoversShakers: true, // Mark as currently on M&S
+              lastSeenOnMoversShakers: new Date(), // Set initial timestamp
             },
           })
 
@@ -715,6 +722,53 @@ async function processAmazonData() {
   console.log(`   - Updated: ${updated} existing products`)
   console.log(`   - Skipped: ${skipped} products (invalid names)`)
   console.log(`   - Products with score > 60 are flagged for review generation`)
+
+  // Mark products that are NO LONGER on Movers & Shakers
+  console.log(`\n🔄 Checking for products that dropped off Movers & Shakers...`)
+  
+  const productsOnMS = await prisma.product.findMany({
+    where: {
+      onMoversShakers: true, // Currently marked as on M&S
+    },
+    select: {
+      id: true,
+      name: true,
+      amazonUrl: true,
+      baseScore: true,
+      firstDetected: true,
+    },
+  })
+
+  let droppedOff = 0
+  const { calculateCurrentScore } = await import('../lib/age-decay')
+
+  for (const product of productsOnMS) {
+    // If product is not in current M&S list, mark it as dropped off
+    if (!currentMoversShakersUrls.has(product.amazonUrl)) {
+      // Reduce base score from 100 to 50 (Reddit-level score)
+      const newBaseScore = 50
+      const result = calculateCurrentScore(newBaseScore, product.firstDetected)
+
+      await prisma.product.update({
+        where: { id: product.id },
+        data: {
+          onMoversShakers: false, // No longer on M&S
+          baseScore: newBaseScore, // Reduce to Reddit-level score
+          currentScore: result.currentScore, // Recalculate with age decay
+          trendScore: newBaseScore, // Update legacy score
+        },
+      })
+
+      console.log(`  ⬇️  ${product.name.substring(0, 50)} dropped off M&S (100 → 50 base score)`)
+      droppedOff++
+    }
+  }
+
+  if (droppedOff > 0) {
+    console.log(`\n📉 ${droppedOff} products dropped off Movers & Shakers (score reduced to 50)`)
+  } else {
+    console.log(`\n✅ All previously tracked M&S products are still on the list`)
+  }
 }
 
 /**

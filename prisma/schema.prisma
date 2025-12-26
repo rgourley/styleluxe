@@ -32,6 +32,10 @@ model Product {
   currentScore  Float?     // Score after age decay applied (0-100)
   peakScore     Float?     // Highest score product ever reached (0-100)
   daysTrending  Int?       // Calculated: days since first_detected
+  
+  // Amazon Movers & Shakers tracking
+  onMoversShakers         Boolean?  // Currently on Amazon M&S list
+  lastSeenOnMoversShakers DateTime? // Last time product was seen on M&S
 
   // Relations
   trendSignals TrendSignal[]
@@ -47,6 +51,7 @@ model Product {
   @@index([peakScore])
   @@index([firstDetected])
   @@index([daysTrending])
+  @@index([onMoversShakers])
 }
 
 enum ProductStatus {
