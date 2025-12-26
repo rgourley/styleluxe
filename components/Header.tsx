@@ -75,17 +75,17 @@ export default function Header() {
           }}>
             <span style={{
               fontFamily: 'var(--font-instrument), sans-serif',
-              fontWeight: '400', // Regular weight for "Style"
+              fontWeight: '400', // Regular weight for "Beauty"
               color: '#2D2D2D',
-            }}>Style</span>
+            }}>Beauty</span>
             <span style={{
               fontFamily: 'var(--font-instrument), sans-serif',
-              fontWeight: '500', // Medium weight for "Luxe"
+              fontWeight: '500', // Medium weight for "Finder"
               background: 'linear-gradient(135deg, #FF6B6B, #E07856)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
-            }}>Luxe</span>
+            }}>Finder</span>
           </Link>
 
           {/* Navigation - Desktop */}

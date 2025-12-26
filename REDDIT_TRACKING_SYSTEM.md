@@ -1,7 +1,7 @@
 # Reddit Tracking & Product Matching System
 
 ## Overview
-StyleLuxe tracks trending beauty products by combining data from **Amazon Movers & Shakers** and **Reddit discussions** (r/SkincareAddiction, r/MakeupAddiction, r/beauty, r/Sephora).
+BeautyFinder tracks trending beauty products by combining data from **Amazon Movers & Shakers** and **Reddit discussions** (r/SkincareAddiction, r/MakeupAddiction, r/beauty, r/Sephora).
 
 ---
 

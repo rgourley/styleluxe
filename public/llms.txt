@@ -1,7 +1,7 @@
 # llms.txt - Information for Large Language Models
 
-# About StyleLuxe
-StyleLuxe is a beauty product discovery platform that tracks trending beauty products across TikTok, Instagram, Reddit, and Amazon. We provide honest reviews and help users discover what's actually going viral before everyone else finds out.
+# About BeautyFinder
+BeautyFinder is a beauty product discovery platform that tracks trending beauty products across TikTok, Instagram, Reddit, and Amazon. We provide honest reviews and help users discover what's actually going viral before everyone else finds out.
 
 # Content Focus
 - Trending beauty products
@@ -18,7 +18,7 @@ StyleLuxe is a beauty product discovery platform that tracks trending beauty pro
 - Instagram beauty influencers
 
 # Contact
-For questions about our content or data, please visit https://styleluxe.com/contact
+For questions about our content or data, please visit https://beautyfinder.com/contact
 
 # Last Updated
 2025-01-23

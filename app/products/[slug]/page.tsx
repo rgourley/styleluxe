@@ -9,8 +9,10 @@ import ProductImage from '@/components/ProductImage'
 import ProductHeroSection from '@/components/ProductHeroSection'
 import StatCard from '@/components/StatCard'
 import Header from '@/components/Header'
+import Footer from '@/components/Footer'
 import AlternativeProduct from '@/components/AlternativeProduct'
 import UserQuoteCard from '@/components/UserQuoteCard'
+import ProductViewTracker from '@/components/ProductViewTracker'
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
@@ -69,7 +71,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   
   // Build title - NO price in meta title, just product name + review question
   const suffix = ` Review: Is This ${trendingSignalText} ${categoryLower} Worth It?`
-  const siteName = ' | StyleLuxe'
+  const siteName = ' | BeautyFinder'
   const maxTitleLength = 60 // Max 60 chars for SEO (excluding site name)
   
   // Calculate available space for product name
@@ -149,7 +151,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       title: ogTitle,
       description,
       url: productUrl,
-      siteName: 'StyleLuxe',
+      siteName: 'BeautyFinder',
       images: [
         {
           url: imageUrl,
@@ -168,7 +170,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       title: ogTitle,
       description: twitterDescription,
       images: [imageUrl],
-      creator: '@styleluxe',
+      creator: '@beautyfinder',
     },
     
     // Additional SEO
@@ -441,12 +443,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     },
     author: {
       '@type': 'Organization',
-      name: 'StyleLuxe',
+      name: 'BeautyFinder',
       url: siteUrl,
     },
     publisher: {
       '@type': 'Organization',
-      name: 'StyleLuxe',
+      name: 'BeautyFinder',
       url: siteUrl,
       logo: {
         '@type': 'ImageObject',
@@ -469,12 +471,12 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     dateModified: product.content?.updatedAt || product.updatedAt,
     author: {
       '@type': 'Organization',
-      name: 'StyleLuxe',
+      name: 'BeautyFinder',
       url: siteUrl,
     },
     publisher: {
       '@type': 'Organization',
-      name: 'StyleLuxe',
+      name: 'BeautyFinder',
       url: siteUrl,
       logo: {
         '@type': 'ImageObject',
@@ -543,6 +545,9 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
   return (
     <>
+      {/* Track page view */}
+      <ProductViewTracker productId={product.id} />
+      
       {/* Structured Data for SEO */}
       <script
         type="application/ld+json"
@@ -682,7 +687,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             {/* Product Info */}
             <div>
               <ProductHeroSection
-                product={product}
+                product={{ ...product, id: product.id }}
                 stats={{
                   salesSpike: stats.salesSpike,
                   redditMentions: stats.redditMentions,
@@ -1013,80 +1018,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         </div>
       </article>
 
-      {/* Footer */}
-      <footer className="border-t border-[#F0F0F0] mt-24 bg-white/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
-            {/* Brand Column */}
-            <div>
-              <Link href="/" className="text-2xl font-bold tracking-tight mb-4 inline-block">
-                <span className="text-[#2D2D2D]">Style</span><span className="text-[#FF6B6B]">Luxe</span>
-              </Link>
-              <p className="text-sm text-[#6b6b6b] leading-relaxed">
-                Tracking trending beauty products from TikTok, Instagram, Reddit, and Amazon.
-              </p>
-            </div>
-
-            {/* Pages Column */}
-            <div>
-              <h3 className="text-sm font-semibold text-[#2D2D2D] mb-4 tracking-wide uppercase">Pages</h3>
-              <ul className="space-y-3">
-                <li>
-                  <Link href="/" className="text-sm text-[#6b6b6b] hover:text-[#2D2D2D] transition-colors">
-                    Trending Products
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/about" className="text-sm text-[#6b6b6b] hover:text-[#2D2D2D] transition-colors">
-                    About Us
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/faq" className="text-sm text-[#6b6b6b] hover:text-[#2D2D2D] transition-colors">
-                    FAQ
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/contact" className="text-sm text-[#6b6b6b] hover:text-[#2D2D2D] transition-colors">
-                    Contact
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            {/* Legal Column */}
-            <div>
-              <h3 className="text-sm font-semibold text-[#2D2D2D] mb-4 tracking-wide uppercase">Legal</h3>
-              <ul className="space-y-3">
-                <li>
-                  <Link href="/privacy" className="text-sm text-[#6b6b6b] hover:text-[#2D2D2D] transition-colors">
-                    Privacy Policy
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/terms" className="text-sm text-[#6b6b6b] hover:text-[#2D2D2D] transition-colors">
-                    Terms of Service
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            {/* Info Column */}
-            <div>
-              <h3 className="text-sm font-semibold text-[#2D2D2D] mb-4 tracking-wide uppercase">Info</h3>
-              <p className="text-sm text-[#6b6b6b] leading-relaxed mb-4">
-                Real data. Honest reviews. No hype.
-              </p>
-            </div>
-          </div>
-
-          <div className="pt-8 border-t border-[#F0F0F0] text-center">
-            <p className="text-xs text-[#8b8b8b] tracking-wider uppercase">
-              © 2025 StyleLuxe. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
       </div>
     </>
   )

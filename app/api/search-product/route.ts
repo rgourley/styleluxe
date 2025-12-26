@@ -65,7 +65,7 @@ async function searchReddit(term: string): Promise<RedditPost[]> {
           
           const response = await fetch(searchUrl, {
             headers: {
-              'User-Agent': 'Mozilla/5.0 (compatible; StyleLuxe/1.0; +https://styleluxe.com)',
+              'User-Agent': 'Mozilla/5.0 (compatible; BeautyFinder/1.0; +https://beautyfinder.com)',
             },
           })
 

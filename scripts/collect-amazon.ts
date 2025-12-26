@@ -745,27 +745,51 @@ async function processAmazonData() {
   for (const product of productsOnMS) {
     // If product is not in current M&S list, mark it as dropped off
     if (!product.amazonUrl || !currentMoversShakersUrls.has(product.amazonUrl)) {
-      // Reduce base score from 100 to 50 (Reddit-level score)
-      const newBaseScore = 50
-      const result = calculateCurrentScore(newBaseScore, product.firstDetected)
+      // Reduce base score by 10-15 points instead of dropping to 50
+      // This prevents huge daily swings (100 → 50 in one day)
+      // Products will gradually decay to zero over time, but not instantly
+      const currentBaseScore = product.baseScore || 100
+      const reduction = Math.min(15, Math.max(10, Math.floor(currentBaseScore * 0.12))) // 10-15 points or 12% of current score
+      const newBaseScore = Math.max(0, currentBaseScore - reduction) // Can go to zero over time, just not instantly
+      
+      // Get current pageViews and clicks for traffic boost calculation
+      const fullProduct = await prisma.product.findUnique({
+        where: { id: product.id },
+        // @ts-ignore - pageViews and clicks will be available after migration
+        select: { pageViews: true, clicks: true },
+      })
+      
+      // Calculate with faster decay since product dropped off M&S
+      const result = calculateCurrentScore(
+        newBaseScore, 
+        product.firstDetected,
+        // @ts-ignore - pageViews and clicks will be available after migration
+        fullProduct?.pageViews,
+        // @ts-ignore
+        fullProduct?.clicks,
+        true // droppedOffMS = true for faster decay
+      )
+      
+      // No minimum score - products can decay to zero over time
+      const finalScore = result.currentScore
 
       await prisma.product.update({
         where: { id: product.id },
         data: {
           onMoversShakers: false, // No longer on M&S
-          baseScore: newBaseScore, // Reduce to Reddit-level score
-          currentScore: result.currentScore, // Recalculate with age decay
-          trendScore: newBaseScore, // Update legacy score
+          baseScore: newBaseScore, // Reduced by 10-15 points
+          currentScore: finalScore, // Recalculate with age decay and traffic boost, min 50
+          trendScore: finalScore, // Update legacy score
         },
       })
 
-      console.log(`  ⬇️  ${product.name.substring(0, 50)} dropped off M&S (100 → 50 base score)`)
+      console.log(`  ⬇️  ${product.name.substring(0, 50)} dropped off M&S (${currentBaseScore} → ${newBaseScore} base score, current: ${finalScore})`)
       droppedOff++
     }
   }
 
   if (droppedOff > 0) {
-    console.log(`\n📉 ${droppedOff} products dropped off Movers & Shakers (score reduced to 50)`)
+    console.log(`\n📉 ${droppedOff} products dropped off Movers & Shakers (score reduced by 10-15 points, will decay gradually to zero)`)
   } else {
     console.log(`\n✅ All previously tracked M&S products are still on the list`)
   }

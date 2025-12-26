@@ -177,7 +177,7 @@ async function fetchSubredditPosts(subreddit: string): Promise<RedditPost[]> {
     const url = `https://www.reddit.com/r/${subreddit}/top.json?t=week&limit=25`
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'StyleLuxe/1.0 (Weekly Reddit Scan)',
+        'User-Agent': 'BeautyFinder/1.0 (Weekly Reddit Scan)',
       },
     })
 

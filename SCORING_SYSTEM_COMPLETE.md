@@ -1,7 +1,7 @@
-# StyleLuxe Complete Scoring & Tracking System
+# BeautyFinder Complete Scoring & Tracking System
 
 ## Overview
-StyleLuxe tracks trending beauty products by combining data from **Amazon Movers & Shakers** and **Reddit discussions**. Products are scored 0-100 points and displayed in different homepage sections based on their score and age.
+BeautyFinder tracks trending beauty products by combining data from **Amazon Movers & Shakers** and **Reddit discussions**. Products are scored 0-100 points and displayed in different homepage sections based on their score and age.
 
 ---
 

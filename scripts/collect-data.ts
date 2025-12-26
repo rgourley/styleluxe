@@ -17,7 +17,7 @@ import { enrichProducts } from './enrich-products'
 
 async function main() {
   console.log('='.repeat(60))
-  console.log('StyleLuxe Data Collection')
+  console.log('BeautyFinder Data Collection')
   console.log('='.repeat(60))
   console.log()
 

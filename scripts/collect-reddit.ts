@@ -58,7 +58,7 @@ async function fetchPostComments(postId: string, subreddit: string): Promise<str
     const url = `https://www.reddit.com/r/${subreddit}/comments/${postId}.json?limit=100`
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'StyleLuxe/1.0 (Data Collection Bot)',
+        'User-Agent': 'BeautyFinder/1.0 (Data Collection Bot)',
       },
     })
 
@@ -121,7 +121,7 @@ async function fetchSubredditPosts(subreddit: string): Promise<RedditPost[]> {
     const url = `https://www.reddit.com/r/${subreddit}/top.json?t=week&limit=15`
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'StyleLuxe/1.0 (Data Collection Bot)',
+        'User-Agent': 'BeautyFinder/1.0 (Data Collection Bot)',
       },
     })
 

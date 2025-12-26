@@ -47,7 +47,7 @@ export default function AdminPage() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
-    if (password === 'StyleLuxe2025!Admin') {
+    if (password === 'BeautyFinder2025!Admin') {
       sessionStorage.setItem('admin_auth', 'true')
       setIsAuthenticated(true)
       setAuthError('')
@@ -719,7 +719,7 @@ function AdminDashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <Link href="/" className="text-2xl font-bold text-gray-900">
-              Style<span className="text-gray-600">Luxe</span>
+              Beauty<span className="text-gray-600">Finder</span>
             </Link>
             <Link href="/" className="text-sm text-gray-600 hover:text-gray-900">
               ← Back to Site

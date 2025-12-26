@@ -1,12 +1,13 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import Header from '@/components/Header'
+import Footer from '@/components/Footer'
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.thestyleluxe.com'
 
 export const metadata: Metadata = {
-  title: 'About Us - StyleLuxe',
-  description: 'Learn about StyleLuxe and how we track trending beauty products across TikTok, Instagram, Reddit, and Amazon to bring you honest, data-driven reviews.',
+  title: 'About Us - BeautyFinder',
+  description: 'Learn about BeautyFinder and how we track trending beauty products across TikTok, Instagram, Reddit, and Amazon to bring you honest, data-driven reviews.',
   alternates: {
     canonical: `${siteUrl}/about`,
   },
@@ -21,7 +22,7 @@ export default function AboutPage() {
       <main className="max-w-[920px] mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
         <div className="mb-12">
           <h1 className="text-5xl md:text-6xl font-bold text-[#2D2D2D] mb-4 tracking-tight">
-            About StyleLuxe
+            About BeautyFinder
           </h1>
           <p className="text-xl text-[#4a4a4a] font-light leading-relaxed">
             We track what's actually trending, not what brands want you to think is trending.
@@ -33,7 +34,7 @@ export default function AboutPage() {
             <h2 className="text-3xl font-bold text-[#2D2D2D] mb-4 tracking-tight">Our Mission</h2>
             <p>
               In a world where beauty marketing is everywhere, it's hard to know what's actually worth your money. 
-              StyleLuxe cuts through the noise by tracking real data from TikTok, Instagram, Reddit, and Amazon 
+              BeautyFinder cuts through the noise by tracking real data from TikTok, Instagram, Reddit, and Amazon 
               to identify products that are genuinely trending—not just heavily promoted.
             </p>
             <p>
@@ -105,80 +106,7 @@ export default function AboutPage() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-[#e5e5e5] mt-24 bg-white/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
-            {/* Brand Column */}
-            <div>
-              <Link href="/" className="text-2xl font-bold tracking-tight mb-4 inline-block">
-                <span className="text-[#2D2D2D]">Style</span><span style={{ color: '#A8D5BA' }}>Luxe</span>
-              </Link>
-              <p className="text-sm text-[#6b6b6b] leading-relaxed">
-                Tracking trending beauty products from TikTok, Instagram, Reddit, and Amazon.
-              </p>
-            </div>
-
-            {/* Pages Column */}
-            <div>
-              <h3 className="text-sm font-semibold text-[#2D2D2D] mb-4 tracking-wide uppercase">Pages</h3>
-              <ul className="space-y-3">
-                <li>
-                  <Link href="/" className="text-sm text-[var(--secondary-link-color)] hover:text-[var(--secondary-link-hover)] transition-colors">
-                    Trending Products
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/about" className="text-sm text-[var(--secondary-link-color)] hover:text-[var(--secondary-link-hover)] transition-colors">
-                    About Us
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/faq" className="text-sm text-[var(--secondary-link-color)] hover:text-[var(--secondary-link-hover)] transition-colors">
-                    FAQ
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/contact" className="text-sm text-[var(--secondary-link-color)] hover:text-[var(--secondary-link-hover)] transition-colors">
-                    Contact
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            {/* Legal Column */}
-            <div>
-              <h3 className="text-sm font-semibold text-[#2D2D2D] mb-4 tracking-wide uppercase">Legal</h3>
-              <ul className="space-y-3">
-                <li>
-                  <Link href="/privacy" className="text-sm text-[var(--secondary-link-color)] hover:text-[var(--secondary-link-hover)] transition-colors">
-                    Privacy Policy
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/terms" className="text-sm text-[var(--secondary-link-color)] hover:text-[var(--secondary-link-hover)] transition-colors">
-                    Terms of Service
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            {/* Info Column */}
-            <div>
-              <h3 className="text-sm font-semibold text-[#2D2D2D] mb-4 tracking-wide uppercase">Info</h3>
-              <p className="text-sm text-[#6b6b6b] leading-relaxed mb-4">
-                Real data. Honest reviews. No hype.
-              </p>
-            </div>
-          </div>
-
-          <div className="pt-8 border-t border-[#e5e5e5] text-center">
-            <p className="text-xs text-[#8b8b8b] tracking-wider uppercase">
-              © {2025} StyleLuxe. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   )
 }

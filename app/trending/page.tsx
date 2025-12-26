@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import ProductCard from '@/components/ProductCard'
 import Header from '@/components/Header'
+import Footer from '@/components/Footer'
 import { unstable_cache } from 'next/cache'
 
 // Revalidate every 60 seconds
@@ -258,72 +259,7 @@ export default async function TrendingPage({
         )}
       </div>
 
-      {/* Footer */}
-      <footer className="border-t border-[#e5e5e5] bg-white mt-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div>
-              <h3 className="font-semibold text-[#2D2D2D] mb-4">Pages</h3>
-              <ul className="space-y-2">
-                <li>
-                  <Link href="/" className="text-sm text-[var(--secondary-link-color)] hover:text-[var(--secondary-link-hover)] transition-colors">
-                    Home
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/trending" className="text-sm text-[var(--secondary-link-color)] hover:text-[var(--secondary-link-hover)] transition-colors">
-                    All Trending
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/about" className="text-sm text-[var(--secondary-link-color)] hover:text-[var(--secondary-link-hover)] transition-colors">
-                    About Us
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold text-[#2D2D2D] mb-4">Legal</h3>
-              <ul className="space-y-2">
-                <li>
-                  <Link href="/privacy" className="text-sm text-[var(--secondary-link-color)] hover:text-[var(--secondary-link-hover)] transition-colors">
-                    Privacy Policy
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/terms" className="text-sm text-[var(--secondary-link-color)] hover:text-[var(--secondary-link-hover)] transition-colors">
-                    Terms of Service
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold text-[#2D2D2D] mb-4">Support</h3>
-              <ul className="space-y-2">
-                <li>
-                  <Link href="/contact" className="text-sm text-[var(--secondary-link-color)] hover:text-[var(--secondary-link-hover)] transition-colors">
-                    Contact
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/faq" className="text-sm text-[var(--secondary-link-color)] hover:text-[var(--secondary-link-hover)] transition-colors">
-                    FAQ
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold text-[#2D2D2D] mb-4">StyleLuxe</h3>
-              <p className="text-sm text-[#6b6b6b]">
-                Track trending beauty products from TikTok, Instagram, Reddit, and Amazon.
-              </p>
-            </div>
-          </div>
-          <div className="mt-12 pt-8 border-t border-[#e5e5e5] text-center text-sm text-[#8b8b8b]">
-            <p>&copy; 2025 StyleLuxe. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   )
 }

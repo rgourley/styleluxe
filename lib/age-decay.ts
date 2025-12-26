@@ -21,8 +21,26 @@ export interface AgeDecayResult {
  * Days 15-21: multiplier = 0.5 (heavy decay)
  * Days 22-30: multiplier = 0.3 (very heavy decay)
  * Days 31+: Remove from homepage (multiplier = 0)
+ * 
+ * For products that dropped off M&S, apply faster decay:
+ * Days 0-1: multiplier = 0.9 (faster initial decay)
+ * Days 2-3: multiplier = 0.8 (faster decay)
+ * Days 4-7: multiplier = 0.65 (much faster decay)
+ * Days 8-14: multiplier = 0.5 (very fast decay)
+ * Days 15+: multiplier = 0.3 (heavy decay, but still visible)
  */
-export function getAgeMultiplier(daysTrending: number): number {
+export function getAgeMultiplier(daysTrending: number, droppedOffMS: boolean = false): number {
+  if (droppedOffMS) {
+    // Faster decay for products that dropped off M&S
+    if (daysTrending <= 1) return 0.9   // Day 0-1: 90% (faster initial decay)
+    if (daysTrending <= 3) return 0.8   // Day 2-3: 80% (faster decay)
+    if (daysTrending <= 7) return 0.65  // Day 4-7: 65% (much faster decay)
+    if (daysTrending <= 14) return 0.5  // Day 8-14: 50% (very fast decay)
+    if (daysTrending <= 30) return 0.3  // Day 15-30: 30% (heavy decay)
+    return 0.2 // Days 31+: 20% (still visible but low)
+  }
+  
+  // Normal decay for products still on M&S or never on M&S
   if (daysTrending <= 1) return 1.0   // Day 0-1: Full score
   if (daysTrending <= 3) return 0.95  // Day 2-3: Slight decay
   if (daysTrending <= 7) return 0.85  // Day 4-7: Moderate decay
@@ -44,17 +62,55 @@ export function calculateDaysTrending(firstDetected: Date | null | undefined): n
 }
 
 /**
- * Calculate current score with age decay applied
+ * Calculate traffic boost from page views and clicks
+ * Reasonable rate: 
+ * - 100 views = +1 point (max +10 points)
+ * - 10 clicks = +1 point (max +5 points)
+ * - Total max boost: +15 points
+ */
+export function calculateTrafficBoost(
+  pageViews: number | null | undefined,
+  clicks: number | null | undefined
+): number {
+  const views = pageViews || 0
+  const clickCount = clicks || 0
+  
+  // View boost: 100 views = +1 point, capped at +10 points (1000 views)
+  const viewBoost = Math.min(10, Math.floor(views / 100))
+  
+  // Click boost: 10 clicks = +1 point, capped at +5 points (50 clicks)
+  const clickBoost = Math.min(5, Math.floor(clickCount / 10))
+  
+  return viewBoost + clickBoost
+}
+
+/**
+ * Calculate current score with age decay and traffic boost applied
+ * 
+ * @param baseScore - Base score before decay
+ * @param firstDetected - When product was first detected
+ * @param pageViews - Optional page views for traffic boost
+ * @param clicks - Optional clicks for traffic boost
+ * @param droppedOffMS - Whether product dropped off Movers & Shakers (faster decay)
  */
 export function calculateCurrentScore(
   baseScore: number | null | undefined,
-  firstDetected: Date | null | undefined
+  firstDetected: Date | null | undefined,
+  pageViews?: number | null | undefined,
+  clicks?: number | null | undefined,
+  droppedOffMS?: boolean
 ): AgeDecayResult {
   const daysTrending = calculateDaysTrending(firstDetected)
-  const ageMultiplier = getAgeMultiplier(daysTrending)
+  const ageMultiplier = getAgeMultiplier(daysTrending, droppedOffMS || false)
   
   const base = baseScore || 0
-  const currentScore = Math.round(base * ageMultiplier)
+  const decayedScore = base * ageMultiplier
+  
+  // Add traffic boost (reasonable rate)
+  const trafficBoost = calculateTrafficBoost(pageViews, clicks)
+  
+  // Final score = decayed score + traffic boost (capped at 100, no minimum - can decay to zero over time)
+  const currentScore = Math.min(100, Math.round(decayedScore + trafficBoost))
   const shouldShowOnHomepage = daysTrending <= 30 && currentScore >= 40
 
   return {

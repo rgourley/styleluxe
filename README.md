@@ -1,4 +1,4 @@
-# StyleLuxe
+# BeautyFinder
 
 A website that automatically tracks trending beauty products and creates review pages for them. Think of it as a "what's hot right now" dashboard for beauty enthusiasts.
 

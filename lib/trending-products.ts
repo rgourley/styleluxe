@@ -654,6 +654,12 @@ export async function recalculateAllScores() {
         baseScore: true,
         firstDetected: true,
         peakScore: true,
+        // @ts-ignore - pageViews and clicks will be available after migration
+        pageViews: true,
+        // @ts-ignore
+        clicks: true,
+        onMoversShakers: true,
+        lastSeenOnMoversShakers: true,
   },
     })
 
@@ -662,7 +668,19 @@ export async function recalculateAllScores() {
 
     for (const product of products) {
   try {
-        const result = calculateCurrentScore(product.baseScore, product.firstDetected)
+        // Check if product dropped off M&S (was on M&S but now off)
+        const droppedOffMS = product.onMoversShakers === false && 
+                             product.lastSeenOnMoversShakers !== null
+        
+        const result = calculateCurrentScore(
+          product.baseScore, 
+          product.firstDetected,
+          // @ts-ignore - pageViews and clicks will be available after migration
+          product.pageViews,
+          // @ts-ignore
+          product.clicks,
+          droppedOffMS
+        )
         const newPeakScore = updatePeakScore(result.currentScore, product.peakScore)
 
         await prisma.product.update({
@@ -1148,12 +1166,34 @@ export async function setFirstDetected(productId: string, baseScore: number) {
   try {
     const product = await prisma.product.findUnique({
       where: { id: productId },
-      select: { firstDetected: true, baseScore: true },
+      select: { 
+        firstDetected: true, 
+        baseScore: true,
+        onMoversShakers: true,
+        lastSeenOnMoversShakers: true,
+      },
     })
+
+    // Get current pageViews and clicks for traffic boost
+    const fullProduct = await prisma.product.findUnique({
+      where: { id: productId },
+      // @ts-ignore - pageViews and clicks will be available after migration
+      select: { pageViews: true, clicks: true },
+    })
+
+    // Check if product dropped off M&S (was on M&S but now off)
+    const droppedOffMS = product?.onMoversShakers === false && 
+                         product?.lastSeenOnMoversShakers !== null
 
     // Only set firstDetected if it's not already set (new product)
     if (!product?.firstDetected) {
-      const result = calculateCurrentScore(baseScore, null)
+      const result = calculateCurrentScore(
+        baseScore, 
+        null,
+        fullProduct?.pageViews,
+        fullProduct?.clicks,
+        false // New products haven't dropped off M&S yet
+      )
       
       await prisma.product.update({
         where: { id: productId },
@@ -1168,7 +1208,13 @@ export async function setFirstDetected(productId: string, baseScore: number) {
   })
     } else {
       // Update existing product's base score and recalculate
-      const result = calculateCurrentScore(baseScore, product.firstDetected)
+      const result = calculateCurrentScore(
+        baseScore, 
+        product.firstDetected,
+        fullProduct?.pageViews,
+        fullProduct?.clicks,
+        droppedOffMS
+      )
       const newPeakScore = updatePeakScore(result.currentScore, product.baseScore || 0)
 
       await prisma.product.update({

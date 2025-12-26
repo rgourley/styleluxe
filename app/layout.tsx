@@ -8,7 +8,7 @@ import GoogleAnalytics from '@/components/GoogleAnalytics'
 const instrumentSans = Instrument_Sans({
   variable: "--font-instrument",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"], // Regular (400) for "Style", Medium (500) for "Luxe"
+  weight: ["400", "500", "600", "700"], // Regular (400) for "Beauty", Medium (500) for "Finder"
   display: 'swap',
   preload: true,
 });

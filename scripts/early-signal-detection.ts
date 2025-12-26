@@ -99,7 +99,7 @@ async function fetchTopPosts(subreddit: string): Promise<RedditPost[]> {
     
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'StyleLuxe/1.0 (Trending Beauty Products Tracker)',
+        'User-Agent': 'BeautyFinder/1.0 (Trending Beauty Products Tracker)',
       },
     })
     

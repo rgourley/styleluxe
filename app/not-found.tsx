@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Header from '@/components/Header'
+import Footer from '@/components/Footer'
 import ProductCard from '@/components/ProductCard'
 
 export default function NotFound() {
@@ -64,31 +65,7 @@ export default function NotFound() {
         )}
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-[#e5e5e5] mt-24 bg-white/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="text-center">
-            <Link href="/" className="text-2xl font-bold tracking-tight inline-block mb-6">
-              <span style={{ 
-                fontFamily: 'var(--font-instrument), sans-serif',
-                fontWeight: '400',
-                color: '#2D2D2D',
-              }}>Style</span>
-              <span style={{
-                fontFamily: 'var(--font-instrument), sans-serif',
-                fontWeight: '500',
-                background: 'linear-gradient(135deg, #FF6B6B, #E07856)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}>Luxe</span>
-            </Link>
-            <p className="text-sm text-[#6b6b6b]">
-              © 2025 StyleLuxe. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   )
 }

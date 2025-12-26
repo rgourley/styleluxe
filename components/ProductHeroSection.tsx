@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react'
 
 interface ProductHeroSectionProps {
   product: {
+    id?: string
     name: string
     brand?: string | null
     price?: number | null
@@ -28,6 +29,7 @@ interface ProductHeroSectionProps {
   amazonStarRating: number | null
   onAmazonClick: string
 }
+
 
 export default function ProductHeroSection({
   product,
@@ -243,6 +245,21 @@ export default function ProductHeroSection({
           href={onAmazonClick}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() => {
+            // Track click if product ID is available
+            if (product.id) {
+              fetch('/api/track-click', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ productId: product.id }),
+              }).catch((error) => {
+                // Silently fail - tracking shouldn't break the link
+                console.error('Failed to track click:', error)
+              })
+            }
+          }}
           style={{
             display: 'block',
             width: '100%',

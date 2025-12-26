@@ -28,14 +28,19 @@ model Product {
   // Age-based trending fields
   firstDetected DateTime? // When product first appeared in trending data
   lastUpdated   DateTime? // Last time trend data was refreshed
-  baseScore     Float?     // Raw score from Amazon/Reddit data (0-100)
-  currentScore  Float?     // Score after age decay applied (0-100)
-  peakScore     Float?     // Highest score product ever reached (0-100)
-  daysTrending  Int?       // Calculated: days since first_detected
-  
+  baseScore     Float? // Raw score from Amazon/Reddit data (0-100)
+  currentScore  Float? // Score after age decay applied (0-100)
+  peakScore     Float? // Highest score product ever reached (0-100)
+  daysTrending  Int? // Calculated: days since first_detected
+
   // Amazon Movers & Shakers tracking
-  onMoversShakers         Boolean?  // Currently on Amazon M&S list
+  onMoversShakers         Boolean? // Currently on Amazon M&S list
   lastSeenOnMoversShakers DateTime? // Last time product was seen on M&S
+
+  // Traffic and engagement tracking
+  pageViews    Int       @default(0) // Total page views
+  clicks       Int       @default(0) // Total clicks (e.g., on Amazon link)
+  lastViewedAt DateTime? // Last time product page was viewed
 
   // Relations
   trendSignals TrendSignal[]
@@ -52,6 +57,8 @@ model Product {
   @@index([firstDetected])
   @@index([daysTrending])
   @@index([onMoversShakers])
+  @@index([pageViews])
+  @@index([clicks])
 }
 
 enum ProductStatus {
@@ -176,7 +183,7 @@ model User {
   name          String?
   email         String?   @unique
   emailVerified DateTime?
-  password      String?   // Hashed password for credentials provider
+  password      String? // Hashed password for credentials provider
   image         String?
   role          String    @default("admin") // "admin" or "editor"
   createdAt     DateTime  @default(now())

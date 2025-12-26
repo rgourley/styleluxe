@@ -1,6 +1,6 @@
 # Performance Optimizations
 
-This document outlines all performance optimizations implemented for the StyleLuxe site.
+This document outlines all performance optimizations implemented for the BeautyFinder site.
 
 ## ✅ Implemented Optimizations
 

@@ -114,7 +114,7 @@ async function fetchPostComments(postId: string, subreddit: string): Promise<Red
     const url = `https://www.reddit.com/r/${subreddit}/comments/${postId}.json?limit=50`
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'StyleLuxe/1.0 (Reddit Quote Search)',
+        'User-Agent': 'BeautyFinder/1.0 (Reddit Quote Search)',
       },
     })
 

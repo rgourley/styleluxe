@@ -103,7 +103,7 @@ async function searchRedditForProduct(productName: string, brand?: string): Prom
         
         const response = await fetch(searchUrl, {
           headers: {
-            'User-Agent': 'StyleLuxe/1.0 (Trending Beauty Products Tracker)',
+            'User-Agent': 'BeautyFinder/1.0 (Trending Beauty Products Tracker)',
           },
         })
         

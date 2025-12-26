@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
@@ -70,6 +70,14 @@ export default function EditProductPage() {
   const [savingTrends, setSavingTrends] = useState(false)
   const [scrapingAmazon, setScrapingAmazon] = useState(false)
   const [regeneratingSection, setRegeneratingSection] = useState<string | null>(null)
+  
+  // Track if fields have been manually edited to prevent overwriting on refetch
+  const hasEditedName = useRef(false)
+  const hasEditedBrand = useRef(false)
+  const hasEditedCategory = useRef(false)
+  const hasEditedNotes = useRef(false)
+  const hasEditedHotness = useRef(false)
+  const hasEditedTrends = useRef(false)
 
   // Load product and content
   useEffect(() => {
@@ -83,20 +91,42 @@ export default function EditProductPage() {
 
       if (data.success && data.product) {
         setProduct(data.product)
-        setEditedProductName(data.product.name) // Initialize with current name
-        setEditedBrand(data.product.brand || '') // Initialize with current brand
-        setEditedCategory(data.product.category || '') // Initialize with current category
+        // Only update fields if they haven't been manually edited
+        if (!hasEditedName.current) {
+          setEditedProductName(data.product.name)
+        }
+        if (!hasEditedBrand.current) {
+          setEditedBrand(data.product.brand || '')
+        }
+        if (!hasEditedCategory.current) {
+          setEditedCategory(data.product.category || '')
+        }
         if (data.product.content) {
           setContent(data.product.content)
           setFaqItems(data.product.content.faq || [])
-          setEditorNotes(data.product.content.editorNotes || '')
-          setRedditHotness(data.product.content.redditHotness || null)
+          if (!hasEditedNotes.current) {
+            setEditorNotes(data.product.content.editorNotes || '')
+          }
+          if (!hasEditedHotness.current) {
+            setRedditHotness(data.product.content.redditHotness || null)
+          }
           // Set Google Trends URL if we have data
           if (data.product.content.googleTrendsData) {
             const trendsData = data.product.content.googleTrendsData
-            if (trendsData.url) {
+            if (trendsData.url && !hasEditedTrends.current) {
               setGoogleTrendsUrl(trendsData.url)
             }
+          }
+        } else {
+          // If no content exists, reset edit flags for content fields
+          if (!hasEditedNotes.current) {
+            setEditorNotes('')
+          }
+          if (!hasEditedHotness.current) {
+            setRedditHotness(null)
+          }
+          if (!hasEditedTrends.current) {
+            setGoogleTrendsUrl('')
           }
         }
       } else {
@@ -128,6 +158,7 @@ export default function EditProductPage() {
 
       if (data.success) {
         setProduct({ ...product, name: editedProductName.trim() })
+        hasEditedName.current = false // Reset flag after successful save
         setMessage('✅ Product name saved!')
         setTimeout(() => setMessage(null), 2000)
       } else {
@@ -158,6 +189,7 @@ export default function EditProductPage() {
 
       if (data.success) {
         setProduct({ ...product, brand: editedBrand.trim() || null })
+        hasEditedBrand.current = false // Reset flag after successful save
         setMessage('✅ Brand saved!')
         setTimeout(() => setMessage(null), 2000)
       } else {
@@ -188,6 +220,7 @@ export default function EditProductPage() {
 
       if (data.success) {
         setProduct({ ...product, category: editedCategory.trim() || null })
+        hasEditedCategory.current = false // Reset flag after successful save
         setMessage('✅ Category saved!')
         setTimeout(() => setMessage(null), 2000)
       } else {
@@ -221,6 +254,7 @@ export default function EditProductPage() {
       if (data.success) {
         if (content) {
           setContent({ ...content, editorNotes: editorNotes.trim() || null })
+          hasEditedNotes.current = false // Reset flag after successful save
         } else {
           // Content was just created, refresh to get it
           await fetchProduct()
@@ -257,6 +291,7 @@ export default function EditProductPage() {
       if (data.success) {
         if (content) {
           setContent({ ...content, redditHotness: level })
+          hasEditedHotness.current = false // Reset flag after successful save
         } else {
           // Content was just created, refresh to get it
           await fetchProduct()
@@ -301,6 +336,7 @@ export default function EditProductPage() {
               ? { url: googleTrendsUrl.trim(), updatedAt: new Date().toISOString() }
               : null 
           })
+          hasEditedTrends.current = false // Reset flag after successful save
         } else {
           // Content was just created, refresh to get it
           await fetchProduct()
@@ -654,7 +690,10 @@ export default function EditProductPage() {
                 <input
                   type="text"
                   value={editedProductName}
-                  onChange={(e) => setEditedProductName(e.target.value)}
+                  onChange={(e) => {
+                    hasEditedName.current = true
+                    setEditedProductName(e.target.value)
+                  }}
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   placeholder="Enter clean product name..."
                 />
@@ -687,7 +726,10 @@ export default function EditProductPage() {
                 <input
                   type="text"
                   value={editedBrand}
-                  onChange={(e) => setEditedBrand(e.target.value)}
+                  onChange={(e) => {
+                    hasEditedBrand.current = true
+                    setEditedBrand(e.target.value)
+                  }}
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   placeholder="Enter brand name..."
                 />
@@ -718,7 +760,10 @@ export default function EditProductPage() {
               </p>
               <textarea
                 value={editorNotes}
-                onChange={(e) => setEditorNotes(e.target.value)}
+                onChange={(e) => {
+                  hasEditedNotes.current = true
+                  setEditorNotes(e.target.value)
+                }}
                 onBlur={handleSaveEditorNotes}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent min-h-[120px]"
                 placeholder="Add notes about why this is trending, who it's for, common complaints, etc..."
@@ -757,7 +802,12 @@ export default function EditProductPage() {
                     <button
                       key={level}
                       type="button"
-                      onClick={() => handleSaveRedditHotness(level)}
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        hasEditedHotness.current = true
+                        handleSaveRedditHotness(level)
+                      }}
                       disabled={savingHotness}
                       className={`px-4 py-2 rounded-lg border-2 font-medium text-sm transition-colors ${
                         isSelected
@@ -787,7 +837,10 @@ export default function EditProductPage() {
                 <input
                   type="text"
                   value={googleTrendsUrl}
-                  onChange={(e) => setGoogleTrendsUrl(e.target.value)}
+                  onChange={(e) => {
+                    hasEditedTrends.current = true
+                    setGoogleTrendsUrl(e.target.value)
+                  }}
                   onBlur={handleSaveGoogleTrends}
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   placeholder="https://trends.google.com/trends/explore?q=Product+Name&hl=en-GB"
@@ -809,7 +862,12 @@ export default function EditProductPage() {
                   Refresh Amazon data (reviews, ratings, price, image) without regenerating content
                 </p>
                 <button
-                  onClick={handleScrapeAmazonData}
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    handleScrapeAmazonData()
+                  }}
                   disabled={scrapingAmazon}
                   className="w-full px-4 py-2 bg-amber-100 hover:bg-amber-200 text-amber-700 font-medium rounded-lg disabled:bg-gray-300 disabled:text-gray-500"
                 >
@@ -822,9 +880,14 @@ export default function EditProductPage() {
               <p className="text-gray-600 mb-6 text-center">Ready to generate content?</p>
               <div className="text-center">
                 <button
-                  onClick={handleGenerateContent}
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    handleGenerateContent()
+                  }}
                   disabled={generating || savingName || scrapingAmazon}
-                  className="px-6 py-3 bg-[var(--button-primary-bg)] hover:bg-[var(--button-primary-hover)] text-white font-semibold rounded-lg disabled:bg-gray-400"
+                  className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors shadow-md hover:shadow-lg"
                 >
                   {generating ? 'Generating...' : '✨ Generate Detail Page with Claude AI'}
                 </button>
@@ -857,7 +920,10 @@ export default function EditProductPage() {
                 <input
                   type="text"
                   value={editedProductName}
-                  onChange={(e) => setEditedProductName(e.target.value)}
+                  onChange={(e) => {
+                    hasEditedName.current = true
+                    setEditedProductName(e.target.value)
+                  }}
                   className="text-xl font-bold text-gray-900 bg-transparent border-b-2 border-transparent hover:border-gray-300 focus:border-purple-500 focus:outline-none px-1"
                   onBlur={handleSaveProductName}
                 />
@@ -915,7 +981,10 @@ export default function EditProductPage() {
               </label>
               <select
                 value={editedCategory}
-                onChange={(e) => setEditedCategory(e.target.value)}
+                onChange={(e) => {
+                  hasEditedCategory.current = true
+                  setEditedCategory(e.target.value)
+                }}
                 onBlur={handleSaveCategory}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
               >
@@ -954,7 +1023,12 @@ export default function EditProductPage() {
                     <button
                       key={level}
                       type="button"
-                      onClick={() => handleSaveRedditHotness(level)}
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        hasEditedHotness.current = true
+                        handleSaveRedditHotness(level)
+                      }}
                       disabled={savingHotness}
                       className={`px-3 py-1.5 rounded-lg border-2 font-medium text-xs transition-colors ${
                         isSelected
@@ -978,7 +1052,10 @@ export default function EditProductPage() {
               <input
                 type="text"
                 value={googleTrendsUrl}
-                onChange={(e) => setGoogleTrendsUrl(e.target.value)}
+                onChange={(e) => {
+                  hasEditedTrends.current = true
+                  setGoogleTrendsUrl(e.target.value)
+                }}
                 onBlur={handleSaveGoogleTrends}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
                 placeholder="https://trends.google.com/trends/explore?q=..."
@@ -995,7 +1072,12 @@ export default function EditProductPage() {
                   Amazon Data
                 </label>
                 <button
-                  onClick={handleScrapeAmazonData}
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    handleScrapeAmazonData()
+                  }}
                   disabled={scrapingAmazon}
                   className="w-full px-4 py-2 bg-amber-100 hover:bg-amber-200 text-amber-700 font-medium rounded-lg disabled:bg-gray-300 disabled:text-gray-500 text-sm"
                 >
