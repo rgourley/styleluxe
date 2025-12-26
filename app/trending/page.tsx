@@ -5,6 +5,30 @@ import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import { unstable_cache } from 'next/cache'
 
+// Content select that excludes previousSlugs (which may not exist in production yet)
+const contentSelect = {
+  id: true,
+  productId: true,
+  slug: true,
+  hook: true,
+  whyTrending: true,
+  whatItDoes: true,
+  theGood: true,
+  theBad: true,
+  whoShouldTry: true,
+  whoShouldSkip: true,
+  alternatives: true,
+  whatRealUsersSay: true,
+  faq: true,
+  editorNotes: true,
+  redditHotness: true,
+  googleTrendsData: true,
+  editedByHuman: true,
+  generatedAt: true,
+  updatedAt: true,
+  // previousSlugs excluded - will be available after migration
+}
+
 // Revalidate every 60 seconds
 export const revalidate = 60
 
@@ -132,7 +156,9 @@ async function getFilteredProducts(filter: string, category?: string | null, sea
               reviews: {
                 take: 5,
               },
-              content: true,
+              content: {
+                select: contentSelect,
+              },
             },
             orderBy: filter === 'recent' 
               ? [
