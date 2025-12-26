@@ -33,42 +33,8 @@ export default function AdminPage() {
   const [password, setPassword] = useState('')
   const [authError, setAuthError] = useState('')
   const [isLoading, setIsLoading] = useState(true)
-  const [collectionStatus, setCollectionStatus] = useState<CollectionStatus>('idle')
-  const [enrichStatus, setEnrichStatus] = useState<CollectionStatus>('idle')
-  const [generateStatus, setGenerateStatus] = useState<CollectionStatus>('idle')
-  const [messages, setMessages] = useState<string[]>([])
-  
-  // Product management state
-  const [products, setProducts] = useState<Product[]>([])
-  const [loadingProducts, setLoadingProducts] = useState(false)
-  const [filterStatus, setFilterStatus] = useState<'FLAGGED' | 'DRAFT' | 'PUBLISHED' | 'ALL'>('ALL')
-  const [filterSource, setFilterSource] = useState<'COMBINED' | 'AMAZON_ONLY' | 'REDDIT_ONLY' | 'ALL'>('ALL')
-  const [generatingProductId, setGeneratingProductId] = useState<string | null>(null)
-  
-  // Search state
-  const [searchTerm, setSearchTerm] = useState('')
-  const [searchStatus, setSearchStatus] = useState<'idle' | 'searching' | 'success' | 'error'>('idle')
-  const [searchResults, setSearchResults] = useState<any>(null)
-  const [selectedRedditPosts, setSelectedRedditPosts] = useState<Set<string>>(new Set())
-  const [scrapeStatus, setScrapeStatus] = useState<CollectionStatus>('idle')
-  const [migrateStatus, setMigrateStatus] = useState<CollectionStatus>('idle')
-  const [syncStatus, setSyncStatus] = useState<CollectionStatus>('idle')
-  const [dailyUpdateStatus, setDailyUpdateStatus] = useState<CollectionStatus>('idle')
-  const [backfillStatus, setBackfillStatus] = useState<CollectionStatus>('idle')
-  const [recalculateScoresStatus, setRecalculateScoresStatus] = useState<CollectionStatus>('idle')
-  
-  // Delete confirmation state
-  const [deleteConfirm, setDeleteConfirm] = useState<{ productId: string; productName: string } | null>(null)
-  const [deletingProductId, setDeletingProductId] = useState<string | null>(null)
-  
-  // Merge/duplicate state
-  const [mergeModal, setMergeModal] = useState<{ duplicateId: string; duplicateName: string } | null>(null)
-  const [mergeSearchTerm, setMergeSearchTerm] = useState('')
-  const [mergeSearchResults, setMergeSearchResults] = useState<Product[]>([])
-  const [mergingProductId, setMergingProductId] = useState<string | null>(null)
-  const [selectedTargetProduct, setSelectedTargetProduct] = useState<string | null>(null)
 
-  // Auth check
+  // Auth check - MUST be before any conditional returns
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const auth = sessionStorage.getItem('admin_auth')
@@ -136,6 +102,47 @@ export default function AdminPage() {
       </div>
     )
   }
+
+  // Render the full dashboard
+  return <AdminDashboard />
+}
+
+// Separate component for the dashboard to avoid hook ordering issues
+function AdminDashboard() {
+  const [collectionStatus, setCollectionStatus] = useState<CollectionStatus>('idle')
+  const [enrichStatus, setEnrichStatus] = useState<CollectionStatus>('idle')
+  const [generateStatus, setGenerateStatus] = useState<CollectionStatus>('idle')
+  const [messages, setMessages] = useState<string[]>([])
+  
+  // Product management state
+  const [products, setProducts] = useState<Product[]>([])
+  const [loadingProducts, setLoadingProducts] = useState(false)
+  const [filterStatus, setFilterStatus] = useState<'FLAGGED' | 'DRAFT' | 'PUBLISHED' | 'ALL'>('ALL')
+  const [filterSource, setFilterSource] = useState<'COMBINED' | 'AMAZON_ONLY' | 'REDDIT_ONLY' | 'ALL'>('ALL')
+  const [generatingProductId, setGeneratingProductId] = useState<string | null>(null)
+  
+  // Search state
+  const [searchTerm, setSearchTerm] = useState('')
+  const [searchStatus, setSearchStatus] = useState<'idle' | 'searching' | 'success' | 'error'>('idle')
+  const [searchResults, setSearchResults] = useState<any>(null)
+  const [selectedRedditPosts, setSelectedRedditPosts] = useState<Set<string>>(new Set())
+  const [scrapeStatus, setScrapeStatus] = useState<CollectionStatus>('idle')
+  const [migrateStatus, setMigrateStatus] = useState<CollectionStatus>('idle')
+  const [syncStatus, setSyncStatus] = useState<CollectionStatus>('idle')
+  const [dailyUpdateStatus, setDailyUpdateStatus] = useState<CollectionStatus>('idle')
+  const [backfillStatus, setBackfillStatus] = useState<CollectionStatus>('idle')
+  const [recalculateScoresStatus, setRecalculateScoresStatus] = useState<CollectionStatus>('idle')
+  
+  // Delete confirmation state
+  const [deleteConfirm, setDeleteConfirm] = useState<{ productId: string; productName: string } | null>(null)
+  const [deletingProductId, setDeletingProductId] = useState<string | null>(null)
+  
+  // Merge/duplicate state
+  const [mergeModal, setMergeModal] = useState<{ duplicateId: string; duplicateName: string } | null>(null)
+  const [mergeSearchTerm, setMergeSearchTerm] = useState('')
+  const [mergeSearchResults, setMergeSearchResults] = useState<Product[]>([])
+  const [mergingProductId, setMergingProductId] = useState<string | null>(null)
+  const [selectedTargetProduct, setSelectedTargetProduct] = useState<string | null>(null)
 
   const addMessage = (message: string) => {
     setMessages(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`])
