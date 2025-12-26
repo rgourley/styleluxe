@@ -176,9 +176,15 @@ async function getFilteredProducts(filter: string, category?: string | null, sea
           )
         ])
 
+        console.log(`✅ Found ${products.length} products for filter "${filter}"`)
         return products
       } catch (error) {
-        console.error('❌ Database error in getFilteredProducts:', error)
+        console.error(`❌ Database error in getFilteredProducts (filter: ${filter}):`, error)
+        // Log the error details for debugging
+        if (error instanceof Error) {
+          console.error('Error message:', error.message)
+          console.error('Error stack:', error.stack)
+        }
         return []
       }
     },
