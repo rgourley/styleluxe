@@ -7,6 +7,7 @@ import {
 import Link from 'next/link'
 import ProductCard from '@/components/ProductCard'
 import Header from '@/components/Header'
+import Script from 'next/script'
 
 // Fixed header for consistency (no date dependency to avoid hydration issues)
 const headerText = "Trending Beauty Products Right Now"
@@ -170,18 +171,27 @@ export default async function Home({
   }
 
   return (
-    <div className="min-h-screen bg-[#FFFBF5]">
-      {/* Structured Data for SEO */}
-      <script
+    <>
+      {/* Structured Data for SEO - Using Next.js Script component */}
+      <Script
+        id="website-structured-data"
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteStructuredData) }}
       />
-      <script
+      <Script
+        id="collection-page-structured-data"
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionPageStructuredData) }}
       />
+      <Script
+        id="faq-structured-data"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqStructuredData) }}
+      />
+
+      <div className="min-h-screen bg-[#FFFBF5]">
         {/* Header */}
-      <Header />
+        <Header />
 
       {/* Hero Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
@@ -441,6 +451,7 @@ export default async function Home({
           </div>
         </div>
       </footer>
-    </div>
+      </div>
+    </>
   )
 }
