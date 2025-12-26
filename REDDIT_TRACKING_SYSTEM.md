@@ -72,17 +72,24 @@ StyleLuxe tracks trending beauty products by combining data from **Amazon Movers
    - Check if key product words match
    - Requires both brand AND product type to match
 
-**Score Hierarchy:**
+**Score Hierarchy (Dynamic):**
 ```
-Amazon Movers & Shakers products: 100 points (base)
+CURRENTLY on Amazon Movers & Shakers: 100 points (base)
   → With age decay, stay in "Trending Now" (70+) for 5-7 days
-  → Gradually decay to lower sections
+  → Tracked daily - if product drops off M&S, score reduces to 50
+
+DROPPED OFF Amazon Movers & Shakers: 50 points (base)
+  → Moves to "Rising Fast" section (40-69 points range)
+  → If product returns to M&S, score goes back up to 100
 
 Reddit-only products: 0-50 points (based on engagement)
   → Appear in "Rising Fast" section (40-69 points)
-  → Can be promoted to "Trending Now" if they hit Amazon M&S
+  → Can be promoted to 100 if they hit Amazon M&S
 
-Combined (Amazon M&S + Reddit): 100 points + Reddit bonus (rare)
+System checks M&S status daily:
+  - Products ON M&S = 100 base score
+  - Products OFF M&S = 50 base score
+  - Dynamic adjustment ensures fresh, accurate rankings
 ```
 
 ---
