@@ -189,7 +189,7 @@ export default function EditProductPage() {
           if (contentResponse.ok) {
             const contentData = await contentResponse.json()
             if (contentData.success) {
-              setContent({ ...content, slug: newSlug, previousSlugs: previousSlugs })
+              setContent({ ...content, slug: newSlug, previousSlugs: previousSlugs } as any)
             }
           }
         } else {
