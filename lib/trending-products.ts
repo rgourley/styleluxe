@@ -1164,6 +1164,17 @@ export async function searchProducts(query: string, limit: number = 20) {
 /**
  * Set first_detected for a new product (when it first appears in trending data)
  */
+/**
+ * Add small random variation to score to avoid all products having identical scores
+ * Adds 1-5 points variation (can be negative)
+ */
+function addScoreVariation(score: number): number {
+  const variation = Math.floor(Math.random() * 5) - 2 // -2 to +2 (5 possible values: -2, -1, 0, 1, 2)
+  const adjusted = score + variation
+  // Clamp to valid range (0-100)
+  return Math.max(0, Math.min(100, adjusted))
+}
+
 export async function setFirstDetected(productId: string, baseScore: number) {
   if (!process.env.DATABASE_URL) {
     return
@@ -1191,8 +1202,11 @@ export async function setFirstDetected(productId: string, baseScore: number) {
 
     // Only set firstDetected if it's not already set (new product)
     if (!product?.firstDetected) {
+      // Add small random variation to baseScore for new products (1-5 points variation)
+      const variedBaseScore = addScoreVariation(baseScore)
+      
       const result = calculateCurrentScore(
-        baseScore, 
+        variedBaseScore, 
         null,
         pageViews,
         clicks,
@@ -1203,13 +1217,13 @@ export async function setFirstDetected(productId: string, baseScore: number) {
         where: { id: productId },
         data: {
           firstDetected: new Date(),
-          baseScore: baseScore,
+          baseScore: variedBaseScore,
           currentScore: result.currentScore,
           daysTrending: 0,
-          peakScore: baseScore,
+          peakScore: variedBaseScore,
           lastUpdated: new Date(),
         },
-  })
+      })
     } else {
       // Update existing product's base score and recalculate
       const result = calculateCurrentScore(
