@@ -555,48 +555,81 @@ export default function EditProductPage() {
       const data = await response.json()
 
       if (data.success) {
-        setMessage('✅ Content generated! Refreshing...')
-        // Wait longer for database to be fully updated and retry fetching
-        let retries = 3
+        setMessage('✅ Content generated! Loading content...')
+        
+        // Immediately fetch the updated product with content
+        // Retry logic with exponential backoff
+        let retries = 5
         let contentLoaded = false
+        let delay = 1000 // Start with 1 second
         
         while (retries > 0 && !contentLoaded) {
-          await new Promise(resolve => setTimeout(resolve, 2000)) // Wait 2 seconds between retries
+          await new Promise(resolve => setTimeout(resolve, delay))
           
-          // Check if content was actually loaded (don't call fetchProduct to preserve edited name)
-          const response = await fetch(`/api/products/${productId}`)
-          const checkData = await response.json()
-          
-          if (checkData.success && checkData.product?.content) {
-            // Check if content has actual fields (not just empty content)
-            const hasContent = checkData.product.content.hook || 
-                              checkData.product.content.whyTrending ||
-                              checkData.product.content.whatItDoes
-            if (hasContent) {
-              contentLoaded = true
-              setContent(checkData.product.content)
-              setFaqItems(checkData.product.content.faq || [])
-              // Only update editor notes if not edited
-              if (!hasEditedNotes.current) {
-                setEditorNotes(checkData.product.content.editorNotes || '')
+          try {
+            const refreshResponse = await fetch(`/api/products/${productId}`, {
+              cache: 'no-store', // Force fresh data
+            })
+            const refreshData = await refreshResponse.json()
+            
+            if (refreshData.success && refreshData.product?.content) {
+              // Check if content has actual fields (not just empty content)
+              const hasContent = refreshData.product.content.hook || 
+                                refreshData.product.content.whyTrending ||
+                                refreshData.product.content.whatItDoes ||
+                                refreshData.product.content.theGood ||
+                                refreshData.product.content.theBad
+              
+              if (hasContent) {
+                contentLoaded = true
+                // Update content state immediately
+                setContent(refreshData.product.content)
+                setFaqItems(refreshData.product.content.faq || [])
+                
+                // Only update editor notes if not edited
+                if (!hasEditedNotes.current) {
+                  setEditorNotes(refreshData.product.content.editorNotes || '')
+                }
+                
+                // Update product but preserve edited fields
+                setProduct(refreshData.product)
+                
+                // Only update editedProductName if it hasn't been manually edited
+                if (!hasEditedName.current) {
+                  setEditedProductName(refreshData.product.name)
+                }
+                if (!hasEditedBrand.current) {
+                  setEditedBrand(refreshData.product.brand || '')
+                }
+                if (!hasEditedCategory.current) {
+                  setEditedCategory(refreshData.product.category || '')
+                }
+                
+                setMessage('✅ Content generated and loaded!')
+                setTimeout(() => setMessage(null), 3000)
+                
+                // Force router refresh to ensure cache is cleared
+                router.refresh()
+                break
               }
-              // Update product but preserve edited name
-              setProduct(checkData.product)
-              // Don't update editedProductName if it's been edited
             }
+          } catch (error) {
+            console.error('Error fetching generated content:', error)
           }
           
           retries--
+          delay = Math.min(delay * 1.5, 3000) // Exponential backoff, max 3 seconds
         }
         
-        if (contentLoaded) {
-          setMessage('✅ Content generated! You can now view the page or publish it.')
-          // Force a router refresh to ensure all data is up to date
+        if (!contentLoaded) {
+          setMessage('⚠️ Content generated but not yet available. Please refresh the page in a few seconds.')
+          // Still try to refresh
           router.refresh()
-        } else {
-          setMessage('✅ Content generated! If content doesn\'t appear, please refresh the page.')
-          // Still refresh the router in case it helps
-          router.refresh()
+          // Auto-refresh after 3 seconds
+          setTimeout(async () => {
+            await fetchProduct()
+            setMessage(null)
+          }, 3000)
         }
       } else {
         setMessage(`❌ Failed: ${data.message}`)
