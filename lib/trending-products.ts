@@ -441,33 +441,25 @@ export async function getRecentlyHotProducts(limit: number = 6) {
               AND: [
                 {
                   OR: [
-                    { peakScore: { gte: 70 } },
+                    { peakScore: { gte: 60 } }, // Lowered from 70 to 60
+                    { currentScore: { gte: 60 } }, // Lowered from 70 to 60
                     {
                       AND: [
                         { peakScore: null },
-                        {
-                          OR: [
-                            { currentScore: { gte: 70 } },
-                            {
-                              AND: [
-                                { currentScore: null },
-                                { trendScore: { gte: 70 } },
-                              ],
-                            },
-                          ],
-                        },
+                        { currentScore: null },
+                        { trendScore: { gte: 60 } }, // Lowered from 70 to 60
                       ],
                     },
                   ],
                 },
-                // Products that are older (8-30 days) - not currently trending
+                // Products that are older (7-45 days) - not currently trending
                 // Also include products with daysTrending null (fallback)
                 {
                   OR: [
                     {
                       daysTrending: {
-                        gte: 8,
-                        lte: 30,
+                        gte: 7, // Lowered from 8 to 7
+                        lte: 45, // Extended from 30 to 45
                       },
                     },
                     {
@@ -475,7 +467,7 @@ export async function getRecentlyHotProducts(limit: number = 6) {
                         { daysTrending: null },
                         {
                           createdAt: {
-                            lte: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000), // Created at least 8 days ago
+                            lte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // Created at least 7 days ago
                           },
                         },
                       ],
