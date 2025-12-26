@@ -2,30 +2,6 @@ import { prisma } from './prisma'
 import { calculateCurrentScore, calculateDaysTrending, updatePeakScore } from './age-decay'
 import { unstable_cache } from 'next/cache'
 
-// Content select that excludes previousSlugs (which may not exist in production yet)
-const contentSelect = {
-  id: true,
-  productId: true,
-  slug: true,
-  hook: true,
-  whyTrending: true,
-  whatItDoes: true,
-  theGood: true,
-  theBad: true,
-  whoShouldTry: true,
-  whoShouldSkip: true,
-  alternatives: true,
-  whatRealUsersSay: true,
-  faq: true,
-  editorNotes: true,
-  redditHotness: true,
-  googleTrendsData: true,
-  editedByHuman: true,
-  generatedAt: true,
-  updatedAt: true,
-  // previousSlugs excluded - will be available after migration
-}
-
 /**
  * NEW HOMEPAGE SECTIONS
  */
@@ -105,9 +81,7 @@ export async function getTrendingNowHomepage(limit: number = 8) {
               reviews: {
                 take: 5,
               },
-              content: {
-                select: contentSelect,
-              },
+              content: true,
             },
             orderBy: [
               {
@@ -222,9 +196,7 @@ export async function getAboutToExplodeProducts(limit: number = 6) {
               reviews: {
                 take: 5,
               },
-              content: {
-                select: contentSelect,
-              },
+              content: true,
             },
             orderBy: {
               currentScore: 'desc',
@@ -291,9 +263,7 @@ export async function getAboutToExplodeProducts(limit: number = 6) {
               reviews: {
                 take: 5,
               },
-              content: {
-                select: contentSelect,
-              },
+              content: true,
             },
             orderBy: {
               currentScore: 'desc',
@@ -369,9 +339,7 @@ export async function getAboutToExplodeProducts(limit: number = 6) {
               reviews: {
                 take: 5,
               },
-              content: {
-                select: contentSelect,
-              },
+              content: true,
             },
             // Sort by currentScore desc (nulls will be last)
             orderBy: {
@@ -492,9 +460,7 @@ export async function getRecentlyHotProducts(limit: number = 6) {
               reviews: {
                 take: 5,
               },
-              content: {
-                select: contentSelect,
-              },
+              content: true,
             },
             orderBy: [
               {
@@ -574,9 +540,7 @@ export async function getTrendingNowProducts(limit: number = 10) {
               reviews: {
                 take: 10,
               },
-              content: {
-                select: contentSelect,
-              },
+              content: true,
             },
             orderBy: {
               currentScore: 'desc',
@@ -647,9 +611,7 @@ export async function getRecentTrendsProducts(limit: number = 12) {
               reviews: {
                 take: 10,
               },
-              content: {
-                select: contentSelect,
-              },
+              content: true,
             },
             orderBy: {
               peakScore: 'desc',
@@ -789,9 +751,7 @@ export async function getPeakViralProducts(limit: number = 8) {
               reviews: {
                 take: 10,
               },
-              content: {
-                select: contentSelect,
-              },
+              content: true,
             },
             orderBy: {
               currentScore: 'desc',
@@ -861,9 +821,7 @@ export async function getNewThisWeekProducts(limit: number = 8) {
               reviews: {
                 take: 10,
               },
-              content: {
-                select: contentSelect,
-              },
+              content: true,
             },
             orderBy: {
               createdAt: 'desc', // Most recently added first
@@ -952,9 +910,7 @@ export async function getRisingFastProducts(limit: number = 8) {
               reviews: {
                 take: 10,
               },
-              content: {
-                select: contentSelect,
-              },
+              content: true,
             },
             orderBy: [
               {
@@ -1105,9 +1061,7 @@ export async function getWarmingUpProducts(limit: number = 8) {
               reviews: {
                 take: 10,
               },
-              content: {
-                select: contentSelect,
-              },
+              content: true,
             },
             orderBy: [
               {
