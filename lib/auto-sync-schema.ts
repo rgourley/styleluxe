@@ -19,6 +19,11 @@ export async function ensureSchemaSynced(): Promise<void> {
       // Lazy load prisma to avoid build-time issues
       const { prisma } = await import('./prisma')
       
+      // Only run if DATABASE_URL is configured
+      if (!process.env.DATABASE_URL) {
+        return
+      }
+      
       // List of schema changes that need to be applied (must match sync-db-schema route)
       const schemaChanges = [
         {
