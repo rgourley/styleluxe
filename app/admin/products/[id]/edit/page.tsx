@@ -1383,7 +1383,7 @@ export default function EditProductPage() {
                         className="w-full h-32 object-cover"
                         onError={(e) => {
                           console.error('Image failed to load:', imageUrl.substring(0, 50))
-                          (e.target as HTMLImageElement).style.display = 'none'
+                          ;(e.target as HTMLImageElement).style.display = 'none'
                         }}
                         onLoad={() => {
                           console.log('Image loaded successfully')
