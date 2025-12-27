@@ -1,5 +1,6 @@
 import { prisma } from './prisma'
 import { unstable_cache } from 'next/cache'
+import { ensureSchemaSynced } from './auto-sync-schema'
 
 // Define ProductWithRelations type based on Prisma schema
 // Using a flexible type to match Prisma's return type with includes
@@ -87,6 +88,11 @@ export async function getTrendingProducts(): Promise<ProductWithRelations[]> {
     return []
   }
 
+  // Ensure schema is synced before querying
+  await ensureSchemaSynced().catch(() => {
+    // Non-critical, continue even if sync fails
+  })
+
   try {
     // Query with timeout to prevent hanging
     return await Promise.race([
@@ -141,6 +147,11 @@ export async function getProductBySlug(slug: string): Promise<ProductWithRelatio
         console.warn('⚠️  DATABASE_URL not configured. Cannot fetch product.')
         return null
       }
+
+      // Ensure schema is synced before querying
+      await ensureSchemaSynced().catch(() => {
+        // Non-critical, continue even if sync fails
+      })
 
       try {
         // Allow PUBLISHED and DRAFT products (DRAFT for preview before publishing)

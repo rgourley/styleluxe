@@ -1,6 +1,7 @@
 import { prisma } from './prisma'
 import { calculateCurrentScore, calculateDaysTrending, updatePeakScore } from './age-decay'
 import { unstable_cache } from 'next/cache'
+import { ensureSchemaSynced } from './auto-sync-schema'
 
 /**
  * NEW HOMEPAGE SECTIONS
@@ -18,6 +19,11 @@ export async function getTrendingNowHomepage(limit: number = 8) {
       if (!process.env.DATABASE_URL) {
         return []
       }
+
+      // Ensure schema is synced before querying
+      await ensureSchemaSynced().catch(() => {
+        // Non-critical, continue even if sync fails
+      })
 
       try {
         // Get products with currentScore >= 70 OR (currentScore is null AND trendScore >= 70)
