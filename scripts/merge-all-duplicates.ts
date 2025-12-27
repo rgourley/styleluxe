@@ -175,7 +175,7 @@ async function mergeAllDuplicates() {
         name: bestName,
         status: bestStatus,
         onMoversShakers: maxOnMS,
-        lastSeenOnMoversShakers: maxLastSeen,
+        lastSeenOnMoversShakers: maxLastSeen || undefined,
       },
     })
     
@@ -190,10 +190,13 @@ async function mergeAllDuplicates() {
     })
     
     if (updated) {
-      await prisma.product.update({
-        where: { id: primary.id },
-        data: { trendScore: updated.currentScore || updated.baseScore },
-      })
+      const trendScoreValue = updated.currentScore ?? updated.baseScore ?? undefined
+      if (trendScoreValue !== undefined) {
+        await prisma.product.update({
+          where: { id: primary.id },
+          data: { trendScore: trendScoreValue },
+        })
+      }
     }
     
     totalMerged++

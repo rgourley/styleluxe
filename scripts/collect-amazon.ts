@@ -30,6 +30,17 @@ interface AmazonProduct {
  * Note: Amazon's HTML structure may change, so this may need updates
  */
 async function fetchAmazonMoversAndShakers(): Promise<AmazonProduct[]> {
+  // Define invalid patterns once at function scope
+  const invalidPatterns = [
+    /^green\s+up\s+arrow/i,
+    /^increased\s*\d*\s*%?$/i,
+    /^up\s+\d+\s*%?$/i,
+    /^sales\s+rank/i,
+    /^#\d+$/,
+    /^moved\s+up/i,
+    /^arrow/i,
+  ]
+
   try {
     const url = 'https://www.amazon.com/gp/movers-and-shakers/beauty'
     
@@ -120,25 +131,18 @@ async function fetchAmazonMoversAndShakers(): Promise<AmazonProduct[]> {
 
       // Extract product name - try multiple selectors
       // Avoid UI elements like "Green up arrow, increased" or "increased X%"
-      let name = $el.find('h2 a span, h2 span.a-text-normal').first().text().trim() ||
+      let name: string | null = $el.find('h2 a span, h2 span.a-text-normal').first().text().trim() ||
                  $el.find('.a-text-normal').first().text().trim() ||
                  $el.find('h2 a').first().text().trim() ||
-                 $el.find('a.a-link-normal span').first().text().trim()
-      
-      // Filter out common UI text that's not product names
-      const invalidPatterns = [
-        /^green\s+up\s+arrow/i,
-        /^increased\s*\d*\s*%?$/i,
-        /^up\s+\d+\s*%?$/i,
-        /^sales\s+rank/i,
-        /^#\d+$/,
-        /^moved\s+up/i,
-        /^arrow/i,
-      ]
+                 $el.find('a.a-link-normal span').first().text().trim() ||
+                 null
       
       // Check if name matches invalid patterns
-      if (name && invalidPatterns.some(pattern => pattern.test(name))) {
-        name = null // Reset to try other methods
+      if (name) {
+        const matchesInvalid = invalidPatterns.some(pattern => pattern.test(name!))
+        if (matchesInvalid) {
+          name = null // Reset to try other methods
+        }
       }
       
       // If name looks like a price range, it's wrong - try to get from URL
@@ -161,8 +165,11 @@ async function fetchAmazonMoversAndShakers(): Promise<AmazonProduct[]> {
       }
       
       // Final validation: reject names that are clearly UI elements
-      if (name && invalidPatterns.some(pattern => pattern.test(name))) {
-        name = null
+      if (name) {
+        const matchesInvalid = invalidPatterns.some(pattern => pattern.test(name!))
+        if (matchesInvalid) {
+          name = null
+        }
       }
       
       // Extract price - look for price elements, not in the name
@@ -205,7 +212,7 @@ async function fetchAmazonMoversAndShakers(): Promise<AmazonProduct[]> {
       }
 
       // Extract brand (often in the product name or separate field)
-      const brandMatch = name.match(/^([A-Z][a-zA-Z\s&]+?)\s+/)
+      const brandMatch = name ? name.match(/^([A-Z][a-zA-Z\s&]+?)\s+/) : null
       const brand = brandMatch ? brandMatch[1].trim() : undefined
 
       // Extract sales jump percentage
@@ -268,22 +275,11 @@ async function fetchAmazonMoversAndShakers(): Promise<AmazonProduct[]> {
       // Give a base score even without specific percentage
       // We'll handle this in the scoring function
 
-      // Final validation before adding product
-      const invalidPatterns = [
-        /^green\s+up\s+arrow/i,
-        /^increased\s*\d*\s*%?$/i,
-        /^up\s+\d+\s*%?$/i,
-        /^sales\s+rank/i,
-        /^#\d+$/,
-        /^moved\s+up/i,
-        /^arrow/i,
-      ]
-      
       // Skip if name is invalid, too short, or matches UI patterns
       if (name && 
           name.length > 3 && 
           !name.match(/^[\$0-9.,\s-]+$/) &&
-          !invalidPatterns.some(pattern => pattern.test(name))) {
+          !invalidPatterns.some(pattern => pattern.test(name!))) {
         products.push({
           name: name.substring(0, 200), // Limit length
           brand,
@@ -319,24 +315,18 @@ async function fetchAmazonMoversAndShakers(): Promise<AmazonProduct[]> {
         // Use the same extraction logic as Method 1 (copy from above)
         // Extract product name
         // Avoid UI elements like "Green up arrow, increased" or "increased X%"
-        const invalidPatterns = [
-          /^green\s+up\s+arrow/i,
-          /^increased\s*\d*\s*%?$/i,
-          /^up\s+\d+\s*%?$/i,
-          /^sales\s+rank/i,
-          /^#\d+$/,
-          /^moved\s+up/i,
-          /^arrow/i,
-        ]
-        
-        let name = $el.find('h2 a span, h2 span.a-text-normal').first().text().trim() ||
+        let name: string | null = $el.find('h2 a span, h2 span.a-text-normal').first().text().trim() ||
                    $el.find('.a-text-normal').first().text().trim() ||
                    $el.find('h2 a').first().text().trim() ||
-                   $el.find('a.a-link-normal span').first().text().trim()
+                   $el.find('a.a-link-normal span').first().text().trim() ||
+                   null
         
         // Filter out common UI text that's not product names
-        if (name && invalidPatterns.some(pattern => pattern.test(name))) {
-          name = null
+        if (name) {
+          const matchesInvalid = invalidPatterns.some(pattern => pattern.test(name!))
+          if (matchesInvalid) {
+            name = null
+          }
         }
         
         if (!name || name.match(/^\$[\d.,\s-]+$/)) {
@@ -353,8 +343,11 @@ async function fetchAmazonMoversAndShakers(): Promise<AmazonProduct[]> {
         }
         
         // Final validation: reject names that are clearly UI elements
-        if (name && invalidPatterns.some(pattern => pattern.test(name))) {
-          name = null
+        if (name) {
+          const matchesInvalid = invalidPatterns.some(pattern => pattern.test(name!))
+          if (matchesInvalid) {
+            name = null
+          }
         }
         
         // Extract price
@@ -375,7 +368,7 @@ async function fetchAmazonMoversAndShakers(): Promise<AmazonProduct[]> {
           : `https://www.amazon.com/dp/${asin}`
         
         // Extract brand
-        const brandMatch = name.match(/^([A-Z][a-zA-Z\s&]+?)\s+/)
+        const brandMatch = name ? name.match(/^([A-Z][a-zA-Z\s&]+?)\s+/) : null
         const brand = brandMatch ? brandMatch[1].trim() : undefined
         
         // Extract sales jump percentage
@@ -398,22 +391,11 @@ async function fetchAmazonMoversAndShakers(): Promise<AmazonProduct[]> {
           }
         }
         
-        // Final validation before adding product
-        const invalidPatterns = [
-          /^green\s+up\s+arrow/i,
-          /^increased\s*\d*\s*%?$/i,
-          /^up\s+\d+\s*%?$/i,
-          /^sales\s+rank/i,
-          /^#\d+$/,
-          /^moved\s+up/i,
-          /^arrow/i,
-        ]
-        
         // Skip if name is invalid, too short, or matches UI patterns
         if (name && 
             name.length > 3 && 
             !name.match(/^[\$0-9.,\s-]+$/) &&
-            !invalidPatterns.some(pattern => pattern.test(name))) {
+            !invalidPatterns.some(pattern => pattern.test(name!))) {
           products.push({
             name: name.substring(0, 200),
             brand,
