@@ -42,6 +42,7 @@ export async function PATCH(
     if (body.editorNotes !== undefined) updateData.editorNotes = body.editorNotes
     if (body.redditHotness !== undefined) updateData.redditHotness = body.redditHotness
     if (body.googleTrendsData !== undefined) updateData.googleTrendsData = body.googleTrendsData
+    if (body.images !== undefined) updateData.images = body.images // Array of image URLs
     if (body.faq !== undefined) updateData.faq = body.faq
     if (body.editedByHuman !== undefined) updateData.editedByHuman = body.editedByHuman
 
@@ -68,6 +69,7 @@ export async function PATCH(
         editorNotes: body.editorNotes || null,
         redditHotness: body.redditHotness || null,
         googleTrendsData: body.googleTrendsData || null,
+        images: body.images || null,
         faq: body.faq || [],
         editedByHuman: body.editedByHuman || false,
       },
@@ -138,6 +140,7 @@ export async function PUT(
         editorNotes: body.editorNotes,
         redditHotness: body.redditHotness !== undefined ? body.redditHotness : undefined,
         googleTrendsData: body.googleTrendsData !== undefined ? body.googleTrendsData : undefined,
+        images: body.images !== undefined ? body.images : undefined,
         faq: body.faq || [],
         editedByHuman: body.editedByHuman || false,
         updatedAt: new Date(),
@@ -157,6 +160,7 @@ export async function PUT(
         editorNotes: body.editorNotes,
         redditHotness: body.redditHotness || null,
         googleTrendsData: body.googleTrendsData || null,
+        images: body.images || null,
         faq: body.faq || [],
         editedByHuman: body.editedByHuman || false,
       },

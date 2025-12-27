@@ -107,9 +107,9 @@ enum ReviewSource {
 }
 
 model ProductContent {
-  id        String @id @default(cuid())
-  productId String @unique
-  slug      String @unique // URL slug like "medicube-collagen-mask"
+  id            String @id @default(cuid())
+  productId     String @unique
+  slug          String @unique // URL slug like "medicube-collagen-mask"
   previousSlugs Json? // Array of old slugs for redirects when slug changes
 
   // Generated content sections
@@ -126,6 +126,7 @@ model ProductContent {
   editorNotes      String? // Editor notes/context to guide content generation
   redditHotness    Int? // Manual Reddit trending rating: 1=low, 2=growing, 3=strong, 4=trending, 5=breakout
   googleTrendsData Json? // Google Trends data (trend level, interest over time, etc.)
+  images           Json? // Array of image URLs for product gallery
 
   // Metadata
   generatedAt   DateTime @default(now())

@@ -28,6 +28,7 @@ interface ProductContent {
   editorNotes: string | null
   redditHotness: number | null
   googleTrendsData: any | null
+  images: string[] | null
   faq: Array<{ question: string; answer: string }> | null
   editedByHuman: boolean
 }
@@ -71,6 +72,16 @@ export default function EditProductPage() {
   const [scrapingAmazon, setScrapingAmazon] = useState(false)
   const [regeneratingSection, setRegeneratingSection] = useState<string | null>(null)
   
+  // Amazon details manual editing
+  const [editedAmazonUrl, setEditedAmazonUrl] = useState<string>('')
+  const [savingAmazonUrl, setSavingAmazonUrl] = useState(false)
+  const [editedPrice, setEditedPrice] = useState<string>('')
+  const [savingPrice, setSavingPrice] = useState(false)
+  const [editedImageUrl, setEditedImageUrl] = useState<string>('')
+  const [savingImageUrl, setSavingImageUrl] = useState(false)
+  const [productImages, setProductImages] = useState<string[]>([]) // Array of image URLs
+  const [uploadingImage, setUploadingImage] = useState(false)
+  
   // Track if fields have been manually edited to prevent overwriting on refetch
   const hasEditedName = useRef(false)
   const hasEditedBrand = useRef(false)
@@ -78,6 +89,9 @@ export default function EditProductPage() {
   const hasEditedNotes = useRef(false)
   const hasEditedHotness = useRef(false)
   const hasEditedTrends = useRef(false)
+  const hasEditedAmazonUrl = useRef(false)
+  const hasEditedPrice = useRef(false)
+  const hasEditedImageUrl = useRef(false)
 
   // Load product and content
   useEffect(() => {
@@ -104,6 +118,16 @@ export default function EditProductPage() {
         if (data.product.content) {
           setContent(data.product.content)
           setFaqItems(data.product.content.faq || [])
+          // Load product images from content if available
+          const imagesData = (data.product.content as any)?.images
+          if (imagesData && Array.isArray(imagesData) && imagesData.length > 0) {
+            setProductImages(imagesData)
+          } else if (data.product.imageUrl) {
+            // If no images array, use the primary imageUrl
+            setProductImages([data.product.imageUrl])
+          } else {
+            setProductImages([])
+          }
           if (!hasEditedNotes.current) {
             setEditorNotes(data.product.content.editorNotes || '')
           }
@@ -118,6 +142,12 @@ export default function EditProductPage() {
             }
           }
         } else {
+          // If no content exists, load images from product.imageUrl
+          if (data.product.imageUrl) {
+            setProductImages([data.product.imageUrl])
+          } else {
+            setProductImages([])
+          }
           // If no content exists, reset edit flags for content fields
           if (!hasEditedNotes.current) {
             setEditorNotes('')
@@ -401,6 +431,247 @@ export default function EditProductPage() {
       console.error('Error saving Google Trends URL:', error)
     } finally {
       setSavingTrends(false)
+    }
+  }
+
+  const handleSaveAmazonUrl = async () => {
+    if (!product) return
+
+    setSavingAmazonUrl(true)
+    try {
+      const response = await fetch(`/api/products/${productId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amazonUrl: editedAmazonUrl.trim() || null }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setProduct({ ...product, amazonUrl: editedAmazonUrl.trim() || null })
+        hasEditedAmazonUrl.current = false
+        setMessage('✅ Amazon URL saved!')
+        setTimeout(() => setMessage(null), 2000)
+      } else {
+        setMessage(`❌ Failed to save Amazon URL: ${data.message}`)
+      }
+    } catch (error) {
+      setMessage(`❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setSavingAmazonUrl(false)
+    }
+  }
+
+  const handleSavePrice = async () => {
+    if (!product) return
+
+    setSavingPrice(true)
+    try {
+      const priceValue = editedPrice.trim() ? parseFloat(editedPrice.trim()) : null
+      if (editedPrice.trim() && (isNaN(priceValue!) || priceValue! < 0)) {
+        setMessage('❌ Price must be a valid positive number')
+        setSavingPrice(false)
+        return
+      }
+
+      const response = await fetch(`/api/products/${productId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ price: priceValue }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setProduct({ ...product, price: priceValue })
+        hasEditedPrice.current = false
+        setMessage('✅ Price saved!')
+        setTimeout(() => setMessage(null), 2000)
+      } else {
+        setMessage(`❌ Failed to save price: ${data.message}`)
+      }
+    } catch (error) {
+      setMessage(`❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setSavingPrice(false)
+    }
+  }
+
+  const handleSaveImageUrl = async () => {
+    if (!product) return
+
+    setSavingImageUrl(true)
+    try {
+      const response = await fetch(`/api/products/${productId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageUrl: editedImageUrl.trim() || null }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setProduct({ ...product, imageUrl: editedImageUrl.trim() || null })
+        // Update productImages array if this is the primary image
+        if (editedImageUrl.trim() && productImages.length === 0) {
+          setProductImages([editedImageUrl.trim()])
+        } else if (editedImageUrl.trim() && productImages[0] !== editedImageUrl.trim()) {
+          setProductImages([editedImageUrl.trim(), ...productImages.slice(1)])
+        }
+        hasEditedImageUrl.current = false
+        setMessage('✅ Image URL saved!')
+        setTimeout(() => setMessage(null), 2000)
+      } else {
+        setMessage(`❌ Failed to save image URL: ${data.message}`)
+      }
+    } catch (error) {
+      setMessage(`❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setSavingImageUrl(false)
+    }
+  }
+
+  const handleUploadProductImage = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    setUploadingImage(true)
+    const formData = new FormData()
+    formData.append('file', file)
+
+    try {
+      const response = await fetch('/api/upload-image', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        // Add to productImages array
+        const newImages = [...productImages, data.url]
+        setProductImages(newImages)
+        
+        // Save images array to content
+        const method = content ? 'PATCH' : 'PUT'
+        const slug = content?.slug || (product?.name.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').substring(0, 100) || 'product')
+        
+        const saveResponse = await fetch(`/api/products/${productId}/content`, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...(content ? {} : { slug }),
+            images: newImages,
+          }),
+        })
+
+        const saveData = await saveResponse.json()
+        if (saveData.success) {
+          setMessage(`✅ Image uploaded! (${newImages.length} total)`)
+          // Update primary imageUrl if this is the first image
+          if (newImages.length === 1 && !product.imageUrl) {
+            await fetch(`/api/products/${productId}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ imageUrl: data.url }),
+            })
+            setProduct({ ...product, imageUrl: data.url })
+          }
+        } else {
+          setMessage(`✅ Image uploaded but failed to save to product: ${saveData.message}`)
+        }
+        setTimeout(() => setMessage(null), 3000)
+      } else {
+        setMessage(`❌ Upload failed: ${data.message}`)
+      }
+    } catch (error) {
+      setMessage(`❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setUploadingImage(false)
+      // Reset file input
+      event.target.value = ''
+    }
+  }
+
+  const handleRemoveImage = async (index: number) => {
+    if (!product) return
+
+    const newImages = productImages.filter((_, i) => i !== index)
+    setProductImages(newImages)
+
+    // Save updated images array
+    const method = content ? 'PATCH' : 'PUT'
+    const slug = content?.slug || (product.name.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').substring(0, 100) || 'product')
+    
+    try {
+      const response = await fetch(`/api/products/${productId}/content`, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...(content ? {} : { slug }),
+          images: newImages,
+        }),
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        // If we removed the primary image, update imageUrl
+        if (index === 0 && newImages.length > 0) {
+          await fetch(`/api/products/${productId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ imageUrl: newImages[0] }),
+          })
+          setProduct({ ...product, imageUrl: newImages[0] })
+        } else if (newImages.length === 0) {
+          // No images left, clear imageUrl
+          await fetch(`/api/products/${productId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ imageUrl: null }),
+          })
+          setProduct({ ...product, imageUrl: null })
+        }
+        setMessage('✅ Image removed!')
+        setTimeout(() => setMessage(null), 2000)
+      }
+    } catch (error) {
+      setMessage(`❌ Error removing image: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+  }
+
+  const handleSetPrimaryImage = async (index: number) => {
+    if (!product || index === 0) return
+
+    const newImages = [productImages[index], ...productImages.filter((_, i) => i !== index)]
+    setProductImages(newImages)
+
+    // Update primary imageUrl
+    try {
+      await fetch(`/api/products/${productId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageUrl: newImages[0] }),
+      })
+      setProduct({ ...product, imageUrl: newImages[0] })
+
+      // Save updated images array
+      const method = content ? 'PATCH' : 'PUT'
+      const slug = content?.slug || (product.name.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').substring(0, 100) || 'product')
+      
+      await fetch(`/api/products/${productId}/content`, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...(content ? {} : { slug }),
+          images: newImages,
+        }),
+      })
+
+      setMessage('✅ Primary image updated!')
+      setTimeout(() => setMessage(null), 2000)
+    } catch (error) {
+      setMessage(`❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 
@@ -966,27 +1237,184 @@ export default function EditProductPage() {
               </p>
             </div>
 
-            {/* Update Stats Section */}
-            {product.amazonUrl && (
-              <div className="border-t border-gray-200 pt-6 mt-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Update Product Stats</h3>
-                <p className="text-sm text-gray-600 mb-4">
-                  Refresh Amazon data (reviews, ratings, price, image) without regenerating content
-                </p>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault()
-                    e.stopPropagation()
-                    handleScrapeAmazonData()
-                  }}
-                  disabled={scrapingAmazon}
-                  className="w-full px-4 py-2 bg-amber-100 hover:bg-amber-200 text-amber-700 font-medium rounded-lg disabled:bg-gray-300 disabled:text-gray-500"
-                >
-                  {scrapingAmazon ? 'Scraping Amazon Data...' : '📥 Refresh Amazon Data (Reviews, Ratings, Price)'}
-                </button>
+            {/* Amazon Details - Manual Editing */}
+            <div className="border-t border-gray-200 pt-6 mt-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Amazon Product Details</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Manually edit Amazon details if scraping fails or to override scraped data
+              </p>
+              
+              {/* Amazon URL */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Amazon URL
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    value={editedAmazonUrl}
+                    onChange={(e) => {
+                      hasEditedAmazonUrl.current = true
+                      setEditedAmazonUrl(e.target.value)
+                    }}
+                    onBlur={handleSaveAmazonUrl}
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    placeholder="https://www.amazon.com/dp/..."
+                  />
+                  {savingAmazonUrl && (
+                    <span className="text-xs text-gray-500 self-center">Saving...</span>
+                  )}
+                </div>
               </div>
-            )}
+
+              {/* Price */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Price (USD)
+                </label>
+                <div className="flex gap-2">
+                  <div className="flex items-center gap-2 flex-1">
+                    <span className="text-gray-500">$</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={editedPrice}
+                      onChange={(e) => {
+                        hasEditedPrice.current = true
+                        setEditedPrice(e.target.value)
+                      }}
+                      onBlur={handleSavePrice}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  {savingPrice && (
+                    <span className="text-xs text-gray-500 self-center">Saving...</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Primary Image URL */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Primary Image URL
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    value={editedImageUrl}
+                    onChange={(e) => {
+                      hasEditedImageUrl.current = true
+                      setEditedImageUrl(e.target.value)
+                    }}
+                    onBlur={handleSaveImageUrl}
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    placeholder="https://..."
+                  />
+                  {savingImageUrl && (
+                    <span className="text-xs text-gray-500 self-center">Saving...</span>
+                  )}
+                </div>
+                {editedImageUrl && (
+                  <img 
+                    src={editedImageUrl} 
+                    alt="Preview" 
+                    className="mt-2 max-w-xs h-auto rounded border border-gray-200"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none'
+                    }}
+                  />
+                )}
+              </div>
+
+              {/* Scrape Amazon Button */}
+              {product.amazonUrl && (
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      handleScrapeAmazonData()
+                    }}
+                    disabled={scrapingAmazon}
+                    className="w-full px-4 py-2 bg-amber-100 hover:bg-amber-200 text-amber-700 font-medium rounded-lg disabled:bg-gray-300 disabled:text-gray-500"
+                  >
+                    {scrapingAmazon ? 'Scraping Amazon Data...' : '📥 Refresh Amazon Data (Reviews, Ratings, Price)'}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Product Images Gallery */}
+            <div className="border-t border-gray-200 pt-6 mt-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Product Images</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Upload multiple images for the product. The first image is used as the primary image.
+              </p>
+
+              {/* Image Upload */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Upload Image
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleUploadProductImage}
+                  disabled={uploadingImage}
+                  className="text-sm text-gray-600 disabled:opacity-50"
+                />
+                {uploadingImage && (
+                  <span className="text-xs text-gray-500 ml-2">Uploading...</span>
+                )}
+              </div>
+
+              {/* Image Gallery */}
+              {productImages.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-4">
+                  {productImages.map((imageUrl, index) => (
+                    <div key={index} className="relative group border border-gray-200 rounded-lg overflow-hidden">
+                      <img
+                        src={imageUrl}
+                        alt={`Product image ${index + 1}`}
+                        className="w-full h-32 object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none'
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity flex items-center justify-center gap-2">
+                        {index === 0 && (
+                          <span className="text-xs bg-green-500 text-white px-2 py-1 rounded absolute top-2 left-2">
+                            Primary
+                          </span>
+                        )}
+                        <button
+                          onClick={() => handleSetPrimaryImage(index)}
+                          disabled={index === 0}
+                          className="text-white bg-blue-500 hover:bg-blue-600 px-2 py-1 rounded text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Set as primary"
+                        >
+                          ⭐
+                        </button>
+                        <button
+                          onClick={() => handleRemoveImage(index)}
+                          className="text-white bg-red-500 hover:bg-red-600 px-2 py-1 rounded text-xs"
+                          title="Remove image"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {productImages.length === 0 && (
+                <p className="text-sm text-gray-500 italic">No images uploaded yet</p>
+              )}
+            </div>
 
             <div className="border-t border-gray-200 pt-6 mt-6">
               <p className="text-gray-600 mb-6 text-center">Ready to generate content?</p>
@@ -1177,33 +1605,185 @@ export default function EditProductPage() {
               )}
             </div>
 
-            {/* Refresh Amazon Data */}
-            {product.amazonUrl && (
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Amazon Data
+            {/* Amazon Details - Manual Editing */}
+            <div className="border-t border-gray-200 pt-4 mt-4">
+              <h4 className="text-sm font-semibold text-gray-900 mb-3">Amazon Details</h4>
+              
+              {/* Amazon URL */}
+              <div className="mb-3">
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Amazon URL
                 </label>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault()
-                    e.stopPropagation()
-                    handleScrapeAmazonData()
-                  }}
-                  disabled={scrapingAmazon}
-                  className="w-full px-4 py-2 bg-amber-100 hover:bg-amber-200 text-amber-700 font-medium rounded-lg disabled:bg-gray-300 disabled:text-gray-500 text-sm"
-                >
-                  {scrapingAmazon ? 'Scraping...' : '📥 Refresh Reviews & Ratings'}
-                </button>
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    value={editedAmazonUrl}
+                    onChange={(e) => {
+                      hasEditedAmazonUrl.current = true
+                      setEditedAmazonUrl(e.target.value)
+                    }}
+                    onBlur={handleSaveAmazonUrl}
+                    className="flex-1 px-2 py-1.5 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-purple-500 focus:border-transparent"
+                    placeholder="https://..."
+                  />
+                  {savingAmazonUrl && (
+                    <span className="text-xs text-gray-500 self-center">Saving...</span>
+                  )}
+                </div>
               </div>
-            )}
+
+              {/* Price */}
+              <div className="mb-3">
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Price (USD)
+                </label>
+                <div className="flex gap-2">
+                  <div className="flex items-center gap-1 flex-1">
+                    <span className="text-gray-500 text-xs">$</span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={editedPrice}
+                      onChange={(e) => {
+                        hasEditedPrice.current = true
+                        setEditedPrice(e.target.value)
+                      }}
+                      onBlur={handleSavePrice}
+                      className="flex-1 px-2 py-1.5 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-purple-500 focus:border-transparent"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  {savingPrice && (
+                    <span className="text-xs text-gray-500 self-center">Saving...</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Primary Image URL */}
+              <div className="mb-3">
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Primary Image URL
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    value={editedImageUrl}
+                    onChange={(e) => {
+                      hasEditedImageUrl.current = true
+                      setEditedImageUrl(e.target.value)
+                    }}
+                    onBlur={handleSaveImageUrl}
+                    className="flex-1 px-2 py-1.5 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-purple-500 focus:border-transparent"
+                    placeholder="https://..."
+                  />
+                  {savingImageUrl && (
+                    <span className="text-xs text-gray-500 self-center">Saving...</span>
+                  )}
+                </div>
+                {editedImageUrl && (
+                  <img 
+                    src={editedImageUrl} 
+                    alt="Preview" 
+                    className="mt-2 max-w-full h-20 object-contain rounded border border-gray-200"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none'
+                    }}
+                  />
+                )}
+              </div>
+
+              {/* Refresh Amazon Data */}
+              {product.amazonUrl && (
+                <div className="border-t border-gray-200 pt-3 mt-3">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      handleScrapeAmazonData()
+                    }}
+                    disabled={scrapingAmazon}
+                    className="w-full px-3 py-2 bg-amber-100 hover:bg-amber-200 text-amber-700 rounded-lg text-sm disabled:bg-gray-300 disabled:text-gray-500"
+                  >
+                    {scrapingAmazon ? 'Scraping...' : '📥 Refresh Reviews & Ratings'}
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Image Upload */}
+        {/* Product Images Gallery */}
+        <div className="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <h3 className="text-sm font-semibold text-gray-900 mb-3">Product Images</h3>
+          <p className="text-xs text-gray-600 mb-3">
+            Upload multiple images for the product. The first image is used as the primary image.
+          </p>
+
+          {/* Image Upload */}
+          <div className="mb-3">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleUploadProductImage}
+              disabled={uploadingImage}
+              className="text-xs text-gray-600 disabled:opacity-50"
+            />
+            {uploadingImage && (
+              <span className="text-xs text-gray-500 ml-2">Uploading...</span>
+            )}
+          </div>
+
+          {/* Image Gallery */}
+          {productImages.length > 0 && (
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3 mt-3">
+              {productImages.map((imageUrl, index) => (
+                <div key={index} className="relative group border border-gray-200 rounded overflow-hidden">
+                  <img
+                    src={imageUrl}
+                    alt={`Product image ${index + 1}`}
+                    className="w-full h-24 object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none'
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity flex items-center justify-center gap-1">
+                    {index === 0 && (
+                      <span className="text-xs bg-green-500 text-white px-1 py-0.5 rounded absolute top-1 left-1">
+                        Primary
+                      </span>
+                    )}
+                    <button
+                      onClick={() => handleSetPrimaryImage(index)}
+                      disabled={index === 0}
+                      className="text-white bg-blue-500 hover:bg-blue-600 px-1.5 py-0.5 rounded text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Set as primary"
+                    >
+                      ⭐
+                    </button>
+                    <button
+                      onClick={() => handleRemoveImage(index)}
+                      className="text-white bg-red-500 hover:bg-red-600 px-1.5 py-0.5 rounded text-xs"
+                      title="Remove image"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {productImages.length === 0 && (
+            <p className="text-xs text-gray-500 italic">No images uploaded yet</p>
+          )}
+        </div>
+
+        {/* Markdown Image Upload (for content) */}
         <div className="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Upload Image
+            Upload Image for Markdown Content
           </label>
           <input
             type="file"
