@@ -23,6 +23,11 @@ export async function POST() {
         sql: `ALTER TABLE "ProductContent" ADD COLUMN IF NOT EXISTS "previousSlugs" JSONB;`,
         verify: `SELECT "previousSlugs" FROM "ProductContent" LIMIT 1;`,
       },
+      {
+        name: 'images column in ProductContent',
+        sql: `ALTER TABLE "ProductContent" ADD COLUMN IF NOT EXISTS "images" JSONB;`,
+        verify: `SELECT "images" FROM "ProductContent" LIMIT 1;`,
+      },
       // Add any other missing columns here as schema evolves
     ]
     
@@ -72,6 +77,13 @@ export async function POST() {
         results.push('✅ previousSlugs column confirmed in database')
       } else {
         errors.push('❌ previousSlugs column NOT found in database - migration may have failed')
+      }
+      
+      // Check if images exists
+      if (columnNames.includes('images')) {
+        results.push('✅ images column confirmed in database')
+      } else {
+        errors.push('❌ images column NOT found in database - migration may have failed')
       }
     } catch (error: any) {
       errors.push(`⚠️ Could not verify schema state: ${error.message}`)
