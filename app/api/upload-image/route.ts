@@ -1,11 +1,9 @@
 import { NextResponse } from 'next/server'
-import { writeFile } from 'fs/promises'
-import { join } from 'path'
-import { existsSync, mkdirSync } from 'fs'
 
 /**
- * Simple image upload handler
- * Saves images to public/uploads directory
+ * Image upload handler for serverless environments
+ * Converts images to base64 data URLs for storage in database
+ * Works in Vercel and other serverless platforms where filesystem is read-only
  */
 export async function POST(request: Request) {
   try {
@@ -27,40 +25,27 @@ export async function POST(request: Request) {
       )
     }
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
+    // Validate file size (max 2MB for base64 to keep database reasonable)
+    if (file.size > 2 * 1024 * 1024) {
       return NextResponse.json(
-        { success: false, message: 'File size must be less than 5MB' },
+        { success: false, message: 'File size must be less than 2MB' },
         { status: 400 }
       )
     }
 
+    // Convert file to base64 data URL
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
+    const base64 = buffer.toString('base64')
+    const dataUrl = `data:${file.type};base64,${base64}`
 
-    // Generate unique filename
-    const timestamp = Date.now()
-    const randomStr = Math.random().toString(36).substring(2, 8)
-    const extension = file.name.split('.').pop()
-    const filename = `${timestamp}-${randomStr}.${extension}`
-
-    // Ensure uploads directory exists
-    const uploadsDir = join(process.cwd(), 'public', 'uploads')
-    if (!existsSync(uploadsDir)) {
-      mkdirSync(uploadsDir, { recursive: true })
-    }
-
-    // Save file
-    const filepath = join(uploadsDir, filename)
-    await writeFile(filepath, buffer)
-
-    // Return public URL
-    const url = `/uploads/${filename}`
-
+    // Return data URL (can be stored directly in database)
     return NextResponse.json({
       success: true,
-      url,
-      filename,
+      url: dataUrl,
+      filename: file.name,
+      type: file.type,
+      size: file.size,
     })
   } catch (error) {
     console.error('Image upload error:', error)
