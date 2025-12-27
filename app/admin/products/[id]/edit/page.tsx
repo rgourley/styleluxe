@@ -569,7 +569,7 @@ export default function EditProductPage() {
         if (saveData.success) {
           setMessage(`✅ Image uploaded! (${newImages.length} total)`)
           // Update primary imageUrl if this is the first image
-          if (newImages.length === 1 && !product.imageUrl) {
+          if (newImages.length === 1 && product && !product.imageUrl) {
             await fetch(`/api/products/${productId}`, {
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
