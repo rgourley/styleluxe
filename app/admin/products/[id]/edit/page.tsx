@@ -547,8 +547,8 @@ export default function EditProductPage() {
 
       const data = await response.json()
 
-      if (data.success) {
-        // Add to productImages array
+      if (data.success && data.url) {
+        // Add to productImages array (data.url is a base64 data URL)
         const newImages = [...productImages, data.url]
         setProductImages(newImages)
         
@@ -568,7 +568,7 @@ export default function EditProductPage() {
         const saveData = await saveResponse.json()
         if (saveData.success) {
           setMessage(`✅ Image uploaded! (${newImages.length} total)`)
-          // Update primary imageUrl if this is the first image
+          // Update primary imageUrl if this is the first image (use data URL directly)
           if (newImages.length === 1 && product && !product.imageUrl) {
             await fetch(`/api/products/${productId}`, {
               method: 'PATCH',
@@ -576,13 +576,14 @@ export default function EditProductPage() {
               body: JSON.stringify({ imageUrl: data.url }),
             })
             setProduct({ ...product, imageUrl: data.url })
+            setEditedImageUrl(data.url)
           }
         } else {
           setMessage(`✅ Image uploaded but failed to save to product: ${saveData.message}`)
         }
         setTimeout(() => setMessage(null), 3000)
       } else {
-        setMessage(`❌ Upload failed: ${data.message}`)
+        setMessage(`❌ Upload failed: ${data.message || 'Unknown error'}`)
       }
     } catch (error) {
       setMessage(`❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
@@ -1381,7 +1382,11 @@ export default function EditProductPage() {
                         alt={`Product image ${index + 1}`}
                         className="w-full h-32 object-cover"
                         onError={(e) => {
+                          console.error('Image failed to load:', imageUrl.substring(0, 50))
                           (e.target as HTMLImageElement).style.display = 'none'
+                        }}
+                        onLoad={() => {
+                          console.log('Image loaded successfully')
                         }}
                       />
                       <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity flex items-center justify-center gap-2">
