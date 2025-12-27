@@ -5,11 +5,11 @@ export default function Footer() {
 
   return (
     <footer className="border-t border-[#F0F0F0] mt-24 bg-white/50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 md:py-16">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 sm:gap-12 mb-8 sm:mb-12">
           {/* Brand Column */}
-          <div>
-            <Link href="/" className="text-2xl font-bold tracking-tight mb-4 inline-block">
+          <div className="mb-6 sm:mb-0">
+            <Link href="/" className="text-xl sm:text-2xl font-bold tracking-tight mb-3 sm:mb-4 inline-block">
               <span className="text-[#2D2D2D]">Beauty</span><span className="text-[#FF6B6B]">Finder</span>
             </Link>
             <p className="text-sm text-[#6b6b6b] leading-relaxed">
@@ -18,9 +18,9 @@ export default function Footer() {
           </div>
 
           {/* Pages Column */}
-          <div>
-            <h3 className="text-sm font-semibold text-[#2D2D2D] mb-4 tracking-wide uppercase">Pages</h3>
-            <ul className="space-y-3">
+          <div className="mb-6 sm:mb-0">
+            <h3 className="text-sm font-semibold text-[#2D2D2D] mb-3 sm:mb-4 tracking-wide uppercase">Pages</h3>
+            <ul className="space-y-2 sm:space-y-3">
               <li>
                 <Link href="/" className="text-sm text-[#6b6b6b] hover:text-[#E07856] transition-colors">
                   Trending Products
@@ -45,9 +45,9 @@ export default function Footer() {
           </div>
 
           {/* Legal Column */}
-          <div>
-            <h3 className="text-sm font-semibold text-[#2D2D2D] mb-4 tracking-wide uppercase">Legal</h3>
-            <ul className="space-y-3">
+          <div className="mb-6 sm:mb-0">
+            <h3 className="text-sm font-semibold text-[#2D2D2D] mb-3 sm:mb-4 tracking-wide uppercase">Legal</h3>
+            <ul className="space-y-2 sm:space-y-3">
               <li>
                 <Link href="/privacy" className="text-sm text-[#6b6b6b] hover:text-[#E07856] transition-colors">
                   Privacy Policy
@@ -62,16 +62,16 @@ export default function Footer() {
           </div>
 
           {/* Info Column */}
-          <div>
-            <h3 className="text-sm font-semibold text-[#2D2D2D] mb-4 tracking-wide uppercase">Info</h3>
-            <p className="text-sm text-[#6b6b6b] leading-relaxed mb-4">
+          <div className="mb-6 sm:mb-0">
+            <h3 className="text-sm font-semibold text-[#2D2D2D] mb-3 sm:mb-4 tracking-wide uppercase">Info</h3>
+            <p className="text-sm text-[#6b6b6b] leading-relaxed">
               Real data. Honest reviews. No hype.
             </p>
           </div>
         </div>
 
-        <div className="pt-8 border-t border-[#F0F0F0] text-center space-y-2">
-          <p className="text-xs text-[#8b8b8b] leading-relaxed max-w-2xl mx-auto">
+        <div className="pt-6 sm:pt-8 border-t border-[#F0F0F0] text-center space-y-2">
+          <p className="text-xs text-[#8b8b8b] leading-relaxed max-w-2xl mx-auto px-4">
             We may earn affiliate commissions when you purchase products through our Amazon links. This never influences which products we feature or how we review them.
           </p>
           <p className="text-xs text-[#8b8b8b] tracking-wider uppercase">

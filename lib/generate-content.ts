@@ -388,6 +388,8 @@ ${amazonReviewContext}${hasRedditData ? redditQuotesText : '\n**Note:** No Reddi
   * ❌ "hitting that sweet spot" (overused)
   * ❌ "makes sense" (overused)
   * ❌ "all week" (overused pattern)
+  * ❌ "What's interesting is the timing" (overused - find a different way to introduce timing/trends)
+  * ❌ "What's interesting is..." (overused pattern - vary your transitions)
 - **VARY YOUR OPENING HOOKS - Use different styles for each product:**
   * Start with a specific observation: "The reviews for ${product.name} are interesting - people either love it or hate it, and there's a pattern."
   * Start with context: "Aluminum-free deodorants are having a moment, and ${product.name} is one of the ones people keep asking about."
@@ -435,10 +437,10 @@ ${amazonReviewContext}${hasRedditData ? redditQuotesText : '\n**Note:** No Reddi
 - Start with context: "Natural deodorants are having a moment, and ${product.name} is one of the products people keep coming back to. Here's why."
 - Start with comparison: "Compared to other products in this category, ${product.name} is getting attention for a specific reason: [use actual data from reviews/trends]."
 - Start with user behavior: "People are buying ${product.name} right now, and after analyzing the reviews, there's a clear pattern emerging."
-- Start with a specific detail: "The ${product.name} has ${starRating ? `${starRating} stars` : 'strong ratings'} from ${totalReviewCount ? totalReviewCount.toLocaleString() : 'thousands of'} reviews, but what's interesting is what the verified buyers are saying."
+- Start with a specific detail: "The ${product.name} has ${starRating ? `${starRating} stars` : 'strong ratings'} from ${totalReviewCount ? totalReviewCount.toLocaleString() : 'thousands of'} reviews, but the verified buyers are revealing something important."
 - Start with timing: "Right now, ${product.name} is trending because [specific reason based on the data provided - Reddit discussions, Amazon sales patterns, review themes, etc.]."
 
-**CRITICAL: Create a unique opening for each product. Don't reuse the same phrases. Avoid: "all week", "makes sense", "sweet spot", "getting questions". Write each review as if it's the first time you're writing about this product.**
+**CRITICAL: Create a unique opening for each product. Don't reuse the same phrases. Avoid: "all week", "makes sense", "sweet spot", "getting questions", "What's interesting is the timing", "What's interesting is...". Write each review as if it's the first time you're writing about this product. Vary your transitions and avoid starting multiple sentences with "What's interesting is..." - find different ways to introduce observations.**
 
 Return ONLY valid JSON, no markdown formatting, no code blocks.`
 

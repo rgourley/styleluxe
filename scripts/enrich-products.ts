@@ -396,7 +396,7 @@ async function enrichProducts() {
           })
         }
 
-        // Delete duplicate
+        // Delete duplicate (ONLY during intentional merging - products are never deleted for low scores)
         await prisma.product.delete({ where: { id: dup.id } })
         merged++
       }

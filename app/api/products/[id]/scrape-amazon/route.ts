@@ -48,7 +48,10 @@ export async function POST(
 
     if (!productData) {
       return NextResponse.json(
-        { success: false, message: 'Failed to scrape product page' },
+        { 
+          success: false, 
+          message: 'Failed to scrape product page. Amazon may be blocking the request. This can happen if: 1) Too many requests were made recently, 2) Amazon detected automated scraping, 3) The product URL is invalid or the product is no longer available. Try again later or check the product URL manually.' 
+        },
         { status: 500 }
       )
     }

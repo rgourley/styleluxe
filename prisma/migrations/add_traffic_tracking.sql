@@ -7,3 +7,4 @@ ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "lastViewedAt" TIMESTAMP(3);
 CREATE INDEX IF NOT EXISTS "Product_pageViews_idx" ON "Product"("pageViews");
 CREATE INDEX IF NOT EXISTS "Product_clicks_idx" ON "Product"("clicks");
 
+

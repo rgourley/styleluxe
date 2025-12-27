@@ -238,8 +238,9 @@ async function scrapeProductData() {
       updated++
       console.log(`  ✅ Successfully scraped and stored data\n`)
 
-      // Rate limiting
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      // Rate limiting - increased delay to avoid Amazon blocking (3-5 seconds)
+      const delay = 3000 + Math.floor(Math.random() * 2000) // 3-5 seconds with randomization
+      await new Promise(resolve => setTimeout(resolve, delay))
     } catch (error) {
       console.error(`  ❌ Error:`, error)
       errors++

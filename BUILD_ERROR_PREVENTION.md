@@ -58,3 +58,4 @@ npm run build             # Full build check
 ### Issue: Database connection during build
 **Fix:** Lazy load prisma: `const { prisma } = await import('../lib/prisma')`
 
+

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
@@ -19,6 +19,7 @@ export default function Header() {
   const router = useRouter()
   const [searchValue, setSearchValue] = useState('')
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   const handleSearch = (e: React.FormEvent) => {
@@ -47,6 +48,29 @@ export default function Header() {
     }, 300) // 300ms delay before closing
   }
 
+  // Close mobile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement
+      if (isMobileMenuOpen && !target.closest('header')) {
+        setIsMobileMenuOpen(false)
+      }
+    }
+
+    if (isMobileMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      // Prevent body scroll when menu is open
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.body.style.overflow = ''
+    }
+  }, [isMobileMenuOpen])
+
   return (
     <header style={{
       backgroundColor: '#FFFFFF',
@@ -62,7 +86,7 @@ export default function Header() {
           justifyContent: 'space-between',
           alignItems: 'center',
           height: '72px',
-          gap: '32px',
+          gap: '16px',
         }}>
           {/* Logo */}
           <Link href="/" style={{
@@ -227,17 +251,164 @@ export default function Header() {
           </nav>
 
           {/* Mobile Menu Icon */}
-          <button style={{
-            display: 'none',
-            fontSize: '24px',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: '8px',
-          }} className="block md:hidden">
-            ☰
+          <button 
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '24px',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '8px',
+              color: '#2D2D2D',
+              width: '40px',
+              height: '40px',
+            }} 
+            className="block md:hidden"
+            aria-label="Toggle menu"
+          >
+            {isMobileMenuOpen ? '✕' : '☰'}
           </button>
         </div>
+
+        {/* Mobile Menu */}
+        {isMobileMenuOpen && (
+          <div style={{
+            display: 'block',
+            padding: '20px 0',
+            borderTop: '1px solid #F0F0F0',
+            marginTop: '8px',
+            animation: 'slideDown 0.2s ease-out',
+          }} className="block md:hidden">
+            {/* Mobile Search */}
+            <form onSubmit={handleSearch} style={{
+              position: 'relative',
+              width: '100%',
+              marginBottom: '20px',
+            }}>
+              <span style={{
+                position: 'absolute',
+                left: '16px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                fontSize: '16px',
+              }}>🔍</span>
+              <input
+                type="text"
+                placeholder="Search trending products..."
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
+                style={{
+                  width: '100%',
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid #F0F0F0',
+                  borderRadius: '24px',
+                  padding: '12px 20px 12px 44px',
+                  fontSize: '14px',
+                  color: '#2D2D2D',
+                  outline: 'none',
+                }}
+                onFocus={(e) => e.currentTarget.style.borderColor = '#FF6B6B'}
+                onBlur={(e) => e.currentTarget.style.borderColor = '#F0F0F0'}
+              />
+            </form>
+
+            {/* Mobile Navigation Links */}
+            <nav style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+            }}>
+              <Link 
+                href="/trending" 
+                onClick={() => setIsMobileMenuOpen(false)}
+                style={{
+                  fontSize: '16px',
+                  fontWeight: '500',
+                  color: '#2D2D2D',
+                  textDecoration: 'none',
+                  padding: '12px 0',
+                  borderBottom: '1px solid #F0F0F0',
+                }}
+              >
+                All Trending
+              </Link>
+
+              {/* Mobile Categories */}
+              <div style={{ marginTop: '8px' }}>
+                <button 
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  style={{
+                    width: '100%',
+                    textAlign: 'left',
+                    fontSize: '16px',
+                    fontWeight: '500',
+                    color: '#2D2D2D',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '12px 0',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}
+                >
+                  Categories <span style={{ fontSize: '12px' }}>{isDropdownOpen ? '▲' : '▼'}</span>
+                </button>
+                
+                {isDropdownOpen && (
+                  <div style={{
+                    paddingLeft: '16px',
+                    marginTop: '8px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                  }}>
+                    {categories.map((category) => (
+                      <button
+                        key={category}
+                        onClick={() => {
+                          handleCategoryClick(category)
+                          setIsMobileMenuOpen(false)
+                        }}
+                        style={{
+                          textAlign: 'left',
+                          padding: '10px 0',
+                          fontSize: '14px',
+                          color: '#6b6b6b',
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {category}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <Link 
+                href="/about" 
+                onClick={() => setIsMobileMenuOpen(false)}
+                style={{
+                  fontSize: '16px',
+                  fontWeight: '500',
+                  color: '#2D2D2D',
+                  textDecoration: 'none',
+                  padding: '12px 0',
+                  borderTop: '1px solid #F0F0F0',
+                  marginTop: '8px',
+                  paddingTop: '20px',
+                }}
+              >
+                About
+              </Link>
+            </nav>
+          </div>
+        )}
       </div>
     </header>
   )

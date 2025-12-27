@@ -88,3 +88,4 @@ If build fails, check:
 
 The constant build errors were caused by **eager PrismaClient initialization**. The solution is **lazy initialization via Proxy**, which ensures the client is only created when actually needed, not during build analysis.
 
+

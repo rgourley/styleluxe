@@ -29,3 +29,4 @@ Colors (badges, buttons, links, logo) are not showing consistently across the si
 - Example: `bg-[#fafafa]` instead of using `--background` variable
 - Mix of Tailwind utility classes and inline hex colors
 
+

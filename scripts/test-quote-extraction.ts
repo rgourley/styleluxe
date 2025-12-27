@@ -19,3 +19,4 @@ console.log('\nBefore dash:', beforeDash)
 console.log('Length:', beforeDash.length)
 console.log('Cleaned:', beforeDash.replace(/^['"]/, '').replace(/['"]$/, '').trim())
 
+

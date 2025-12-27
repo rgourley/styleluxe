@@ -34,3 +34,4 @@ echo "3. Or use Google OAuth by logging in at /admin/login"
 echo ""
 echo "✅ Setup complete! See AUTH_SETUP.md for detailed instructions."
 
+

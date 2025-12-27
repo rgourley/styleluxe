@@ -119,10 +119,27 @@ async function fetchAmazonMoversAndShakers(): Promise<AmazonProduct[]> {
       position = extractedPosition || position + 1
 
       // Extract product name - try multiple selectors
+      // Avoid UI elements like "Green up arrow, increased" or "increased X%"
       let name = $el.find('h2 a span, h2 span.a-text-normal').first().text().trim() ||
                  $el.find('.a-text-normal').first().text().trim() ||
                  $el.find('h2 a').first().text().trim() ||
                  $el.find('a.a-link-normal span').first().text().trim()
+      
+      // Filter out common UI text that's not product names
+      const invalidPatterns = [
+        /^green\s+up\s+arrow/i,
+        /^increased\s*\d*\s*%?$/i,
+        /^up\s+\d+\s*%?$/i,
+        /^sales\s+rank/i,
+        /^#\d+$/,
+        /^moved\s+up/i,
+        /^arrow/i,
+      ]
+      
+      // Check if name matches invalid patterns
+      if (name && invalidPatterns.some(pattern => pattern.test(name))) {
+        name = null // Reset to try other methods
+      }
       
       // If name looks like a price range, it's wrong - try to get from URL
       if (!name || name.match(/^\$[\d.,\s-]+$/)) {
@@ -141,6 +158,11 @@ async function fetchAmazonMoversAndShakers(): Promise<AmazonProduct[]> {
         if (nameParts[0].trim().length > 3) {
           name = nameParts[0].trim()
         }
+      }
+      
+      // Final validation: reject names that are clearly UI elements
+      if (name && invalidPatterns.some(pattern => pattern.test(name))) {
+        name = null
       }
       
       // Extract price - look for price elements, not in the name
@@ -246,8 +268,22 @@ async function fetchAmazonMoversAndShakers(): Promise<AmazonProduct[]> {
       // Give a base score even without specific percentage
       // We'll handle this in the scoring function
 
-      // Skip if name is just a price or too short
-      if (name && name.length > 3 && !name.match(/^[\$0-9.,\s-]+$/)) {
+      // Final validation before adding product
+      const invalidPatterns = [
+        /^green\s+up\s+arrow/i,
+        /^increased\s*\d*\s*%?$/i,
+        /^up\s+\d+\s*%?$/i,
+        /^sales\s+rank/i,
+        /^#\d+$/,
+        /^moved\s+up/i,
+        /^arrow/i,
+      ]
+      
+      // Skip if name is invalid, too short, or matches UI patterns
+      if (name && 
+          name.length > 3 && 
+          !name.match(/^[\$0-9.,\s-]+$/) &&
+          !invalidPatterns.some(pattern => pattern.test(name))) {
         products.push({
           name: name.substring(0, 200), // Limit length
           brand,
@@ -282,10 +318,26 @@ async function fetchAmazonMoversAndShakers(): Promise<AmazonProduct[]> {
         
         // Use the same extraction logic as Method 1 (copy from above)
         // Extract product name
+        // Avoid UI elements like "Green up arrow, increased" or "increased X%"
+        const invalidPatterns = [
+          /^green\s+up\s+arrow/i,
+          /^increased\s*\d*\s*%?$/i,
+          /^up\s+\d+\s*%?$/i,
+          /^sales\s+rank/i,
+          /^#\d+$/,
+          /^moved\s+up/i,
+          /^arrow/i,
+        ]
+        
         let name = $el.find('h2 a span, h2 span.a-text-normal').first().text().trim() ||
                    $el.find('.a-text-normal').first().text().trim() ||
                    $el.find('h2 a').first().text().trim() ||
                    $el.find('a.a-link-normal span').first().text().trim()
+        
+        // Filter out common UI text that's not product names
+        if (name && invalidPatterns.some(pattern => pattern.test(name))) {
+          name = null
+        }
         
         if (!name || name.match(/^\$[\d.,\s-]+$/)) {
           name = $el.find('h2 a, a.a-link-normal').first().attr('title') || 
@@ -298,6 +350,11 @@ async function fetchAmazonMoversAndShakers(): Promise<AmazonProduct[]> {
           if (nameParts[0].trim().length > 3) {
             name = nameParts[0].trim()
           }
+        }
+        
+        // Final validation: reject names that are clearly UI elements
+        if (name && invalidPatterns.some(pattern => pattern.test(name))) {
+          name = null
         }
         
         // Extract price
@@ -341,8 +398,22 @@ async function fetchAmazonMoversAndShakers(): Promise<AmazonProduct[]> {
           }
         }
         
-        // Skip if name is just a price or too short
-        if (name && name.length > 3 && !name.match(/^[\$0-9.,\s-]+$/)) {
+        // Final validation before adding product
+        const invalidPatterns = [
+          /^green\s+up\s+arrow/i,
+          /^increased\s*\d*\s*%?$/i,
+          /^up\s+\d+\s*%?$/i,
+          /^sales\s+rank/i,
+          /^#\d+$/,
+          /^moved\s+up/i,
+          /^arrow/i,
+        ]
+        
+        // Skip if name is invalid, too short, or matches UI patterns
+        if (name && 
+            name.length > 3 && 
+            !name.match(/^[\$0-9.,\s-]+$/) &&
+            !invalidPatterns.some(pattern => pattern.test(name))) {
           products.push({
             name: name.substring(0, 200),
             brand,
@@ -373,7 +444,22 @@ async function fetchAmazonMoversAndShakers(): Promise<AmazonProduct[]> {
         const asinMatch = fullUrl.match(/\/dp\/([A-Z0-9]{10})/)
         if (asinMatch) {
           const name = $el.text().trim() || $el.find('span').first().text().trim()
-          if (name && name.length > 3 && !name.match(/^[\$0-9.,\s-]+$/)) {
+          
+          // Final validation - reject UI elements
+          const invalidPatterns = [
+            /^green\s+up\s+arrow/i,
+            /^increased\s*\d*\s*%?$/i,
+            /^up\s+\d+\s*%?$/i,
+            /^sales\s+rank/i,
+            /^#\d+$/,
+            /^moved\s+up/i,
+            /^arrow/i,
+          ]
+          
+          if (name && 
+              name.length > 3 && 
+              !name.match(/^[\$0-9.,\s-]+$/) &&
+              !invalidPatterns.some(pattern => pattern.test(name))) {
             position++
             products.push({
               name,
@@ -493,12 +579,81 @@ async function processAmazonData() {
     const trendScore = calculateAmazonTrendScore(product.salesJumpPercent)
 
     try {
-      // Check if product exists by Amazon URL
-      const existing = await prisma.product.findFirst({
-        where: {
-          amazonUrl: product.amazonUrl,
-        },
-      })
+      // Extract ASIN from product URL for reliable matching
+      const productASIN = extractASIN(product.amazonUrl)
+      
+      // Check if product exists by ASIN (handles query parameter variations)
+      let existing = null
+      if (productASIN) {
+        // Find all products with this ASIN
+        const productsWithASIN = await prisma.product.findMany({
+          where: {
+            amazonUrl: { contains: productASIN },
+          },
+        })
+        
+        // If multiple found, prefer PUBLISHED, then on M&S, then first one
+        if (productsWithASIN.length > 0) {
+          const published = productsWithASIN.find(p => p.status === 'PUBLISHED')
+          const onMS = productsWithASIN.find(p => p.onMoversShakers === true)
+          existing = published || onMS || productsWithASIN[0]
+          
+          // If we found multiple, merge the others into this one
+          if (productsWithASIN.length > 1) {
+            const duplicates = productsWithASIN.filter(p => p.id !== existing!.id)
+            for (const dup of duplicates) {
+              // Transfer signals
+              await prisma.trendSignal.updateMany({
+                where: { productId: dup.id },
+                data: { productId: existing!.id },
+              })
+              
+              // Transfer reviews
+              await prisma.review.updateMany({
+                where: { productId: dup.id },
+                data: { productId: existing!.id },
+              })
+              
+              // Transfer content if existing doesn't have it
+              const dupContent = await prisma.productContent.findUnique({
+                where: { productId: dup.id },
+              })
+              const existingContent = await prisma.productContent.findUnique({
+                where: { productId: existing!.id },
+              })
+              
+              if (dupContent && !existingContent) {
+                await prisma.productContent.update({
+                  where: { id: dupContent.id },
+                  data: { productId: existing!.id },
+                })
+              } else if (dupContent && existingContent && dupContent.slug && dupContent.slug !== existingContent.slug) {
+                // Merge slugs into previousSlugs
+                const previousSlugs = (existingContent.previousSlugs as string[]) || []
+                if (!previousSlugs.includes(dupContent.slug)) {
+                  previousSlugs.push(dupContent.slug)
+                  await prisma.productContent.update({
+                    where: { id: existingContent.id },
+                    data: { previousSlugs },
+                  })
+                }
+              }
+              
+              // Delete duplicate
+              await prisma.product.delete({ where: { id: dup.id } })
+            }
+          }
+        }
+      }
+      
+      // Fallback: if ASIN matching didn't work, try exact URL match
+      if (!existing) {
+        existing = await prisma.product.findFirst({
+          where: {
+            amazonUrl: product.amazonUrl,
+          },
+        })
+      }
 
       if (existing) {
         // Recalculate total score (Amazon + Reddit)
@@ -625,7 +780,31 @@ async function processAmazonData() {
       } else {
         // Before creating, check if we have a Reddit product with similar name
         // This enriches Amazon products with Reddit data even if we didn't search Reddit
-        const redditMatch = await findMatchingRedditProduct(product.name, product.brand)
+        // But first, check if the Reddit product already has an Amazon URL with the same ASIN
+        let redditMatch = null
+        if (productASIN) {
+          const redditWithASIN = await prisma.product.findFirst({
+            where: {
+              amazonUrl: { contains: productASIN },
+              trendSignals: {
+                some: {
+                  source: 'reddit_skincare',
+                },
+              },
+            },
+            include: {
+              trendSignals: true,
+            },
+          })
+          if (redditWithASIN) {
+            redditMatch = redditWithASIN
+          }
+        }
+        
+        // If no ASIN match, try name/brand matching
+        if (!redditMatch) {
+          redditMatch = await findMatchingRedditProduct(product.name, product.brand)
+        }
         
         if (redditMatch) {
           // Recalculate total score (Amazon + Reddit)

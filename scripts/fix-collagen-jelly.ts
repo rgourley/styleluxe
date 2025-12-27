@@ -50,3 +50,4 @@ async function fixProduct() {
 
 fixProduct().catch(console.error)
 
+

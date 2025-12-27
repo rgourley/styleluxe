@@ -26,3 +26,4 @@ export default function ProductViewTracker({ productId }: { productId: string })
   return null // This component doesn't render anything
 }
 
+

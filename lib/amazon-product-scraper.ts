@@ -51,8 +51,46 @@ export interface AmazonQuestion {
 
 /**
  * Scrape detailed product information from Amazon product page
+ * Includes retry logic with exponential backoff for temporary failures
  */
-export async function scrapeAmazonProductPage(amazonUrl: string): Promise<AmazonProductDetails | null> {
+export async function scrapeAmazonProductPage(amazonUrl: string, retries = 2): Promise<AmazonProductDetails | null> {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      if (attempt > 0) {
+        // Exponential backoff: 2s, 4s, 8s
+        const delay = Math.pow(2, attempt) * 1000
+        console.log(`Retrying Amazon scrape (attempt ${attempt + 1}/${retries + 1}) after ${delay}ms delay...`)
+        await new Promise(resolve => setTimeout(resolve, delay))
+      }
+      
+      const result = await attemptScrape(amazonUrl)
+      if (result) {
+        return result
+      }
+      
+      // If result is null and we have retries left, continue to next attempt
+      if (attempt < retries) {
+        console.log(`Scrape attempt ${attempt + 1} failed, will retry...`)
+        continue
+      }
+    } catch (error) {
+      // If it's the last attempt, throw the error
+      if (attempt === retries) {
+        throw error
+      }
+      // Otherwise, log and retry
+      console.log(`Scrape attempt ${attempt + 1} errored, will retry:`, error instanceof Error ? error.message : error)
+      continue
+    }
+  }
+  
+  return null
+}
+
+/**
+ * Single attempt to scrape Amazon product page
+ */
+async function attemptScrape(amazonUrl: string): Promise<AmazonProductDetails | null> {
   try {
     // Extract ASIN from URL if possible
     const asinMatch = amazonUrl.match(/\/dp\/([A-Z0-9]{10})|ASIN[=:]([A-Z0-9]{10})|product\/([A-Z0-9]{10})/i)
@@ -88,22 +126,47 @@ export async function scrapeAmazonProductPage(amazonUrl: string): Promise<Amazon
 
     console.log(`Scraping Amazon URL: ${productUrl}${asin ? ` (ASIN: ${asin})` : ' (no ASIN found)'}`)
 
+    // Add a small random delay to avoid rate limiting (100-500ms)
+    const randomDelay = Math.floor(Math.random() * 400) + 100
+    await new Promise(resolve => setTimeout(resolve, randomDelay))
+
     const response = await fetch(productUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Accept-Encoding': 'gzip, deflate, br',
         'Referer': 'https://www.amazon.com/',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'same-origin',
+        'Cache-Control': 'max-age=0',
       },
       redirect: 'follow',
     })
 
     if (!response.ok) {
       console.error(`Failed to fetch Amazon page: ${response.status} ${response.statusText}`)
+      if (response.status === 403 || response.status === 429) {
+        console.error('Amazon is blocking the request (403/429). This may be due to rate limiting or bot detection.')
+      }
       return null
     }
 
     const html = await response.text()
+    
+    // Check if Amazon blocked the request (common indicators)
+    if (html.includes('captcha') || 
+        html.includes('robot') || 
+        html.includes('unusual traffic') || 
+        html.includes('Sorry, we just need to make sure you') ||
+        html.length < 1000 ||
+        !html.includes('productTitle') && !html.includes('product-title')) {
+      console.error('Amazon may have blocked the request - page contains captcha indicators or is too short')
+      console.error(`HTML length: ${html.length}, contains productTitle: ${html.includes('productTitle')}`)
+      return null
+    }
+    
     const $ = cheerio.load(html)
 
     // Try to extract ASIN from the page if we don't have it yet
@@ -119,13 +182,21 @@ export async function scrapeAmazonProductPage(amazonUrl: string): Promise<Amazon
       }
     }
 
-    // Extract product name
+    // Extract product name - try multiple selectors
     const name = $('#productTitle').text().trim() || 
                  $('h1.a-size-large').text().trim() ||
-                 $('span#productTitle').text().trim()
+                 $('span#productTitle').text().trim() ||
+                 $('h1[data-automation-id="title"]').text().trim() ||
+                 $('.product-title').text().trim() ||
+                 $('[data-automation-id="title"]').text().trim()
 
     if (!name || name.length < 3) {
-      console.error('Could not extract product name')
+      console.error('Could not extract product name from page')
+      console.error('Page might be blocked, redirected, or HTML structure changed')
+      // Log a snippet of the HTML to help debug
+      const pageTitle = $('title').text()
+      console.error(`Page title: ${pageTitle}`)
+      console.error(`HTML length: ${html.length}`)
       return null
     }
 
@@ -220,7 +291,13 @@ export async function scrapeAmazonProductPage(amazonUrl: string): Promise<Amazon
       questions,
     }
   } catch (error) {
-    console.error(`Error scraping Amazon product page:`, error)
+    console.error(`Error in scrape attempt:`, error)
+    if (error instanceof Error) {
+      console.error(`Error message: ${error.message}`)
+      if (error.message.includes('fetch failed') || error.message.includes('ECONNREFUSED')) {
+        console.error('Network error - Amazon may be blocking requests or server is unreachable')
+      }
+    }
     return null
   }
 }

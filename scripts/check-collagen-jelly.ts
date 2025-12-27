@@ -33,3 +33,4 @@ async function checkProduct() {
 
 checkProduct().catch(console.error)
 
+
