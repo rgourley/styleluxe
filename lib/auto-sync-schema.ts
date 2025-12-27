@@ -13,30 +13,36 @@ export async function ensureSchemaSynced(): Promise<void> {
 
   schemaSyncAttempted = true
 
-  // Run schema sync in background (don't block)
+  // Run schema sync directly using Prisma (don't make HTTP request)
   schemaSyncPromise = (async () => {
     try {
-      // Only run in production/serverless environments
-      if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
-        const baseUrl = process.env.VERCEL_URL 
-          ? `https://${process.env.VERCEL_URL}`
-          : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
-        
-        // Call sync-db-schema endpoint
-        const response = await fetch(`${baseUrl}/api/sync-db-schema`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-        })
-
-        if (response.ok) {
-          const data = await response.json()
-          if (data.success) {
-            console.log('✅ Database schema auto-synced successfully')
+      // Lazy load prisma to avoid build-time issues
+      const { prisma } = await import('./prisma')
+      
+      // List of schema changes that need to be applied (must match sync-db-schema route)
+      const schemaChanges = [
+        {
+          name: 'previousSlugs column in ProductContent',
+          sql: `ALTER TABLE "ProductContent" ADD COLUMN IF NOT EXISTS "previousSlugs" JSONB;`,
+        },
+        {
+          name: 'images column in ProductContent',
+          sql: `ALTER TABLE "ProductContent" ADD COLUMN IF NOT EXISTS "images" JSONB;`,
+        },
+      ]
+      
+      // Apply each schema change
+      for (const change of schemaChanges) {
+        try {
+          await prisma.$executeRawUnsafe(change.sql)
+          console.log(`✅ ${change.name} auto-synced (or already exists)`)
+        } catch (error: any) {
+          // Check if column already exists (non-fatal)
+          if (error.message?.includes('already exists') || error.message?.includes('duplicate')) {
+            // Column already exists, that's fine
           } else {
-            console.warn('⚠️ Schema sync completed with warnings:', data.errors)
+            console.warn(`⚠️ ${change.name} auto-sync warning:`, error.message)
           }
-        } else {
-          console.warn('⚠️ Schema sync request failed:', response.statusText)
         }
       }
     } catch (error) {
