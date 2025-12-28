@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { revalidatePath, revalidateTag } from 'next/cache'
+import { revalidatePath } from 'next/cache'
 
 // Force dynamic rendering to prevent build-time data collection
 export const dynamic = 'force-dynamic'
@@ -106,14 +106,8 @@ export async function PATCH(
 
     // Invalidate cache when product is updated
     // This ensures homepage and product pages show updated data
-    revalidateTag('products')
-    revalidateTag('trending')
-    revalidateTag('rising')
-    revalidateTag('recent')
-    revalidatePath('/')
-    revalidatePath('/trending')
-    revalidatePath('/') // Homepage
-    revalidatePath('/trending') // Trending page
+    revalidatePath('/', 'layout')
+    revalidatePath('/trending', 'page')
     
     // Invalidate product page if it has content
     if (product.content?.slug) {
