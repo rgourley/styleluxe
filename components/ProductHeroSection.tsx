@@ -85,7 +85,7 @@ export default function ProductHeroSection({
       </h1>
 
       {/* Unified Badges Section */}
-      {(amazonStarRating || stats.salesSpike || stats.redditMentions) && (
+      {((amazonStarRating && amazonStarRating > 0) || (stats.salesSpike && stats.salesSpike > 0) || (stats.redditMentions && stats.redditMentions > 0)) && (
         <div style={{
           display: 'flex',
           gap: '8px',
@@ -94,7 +94,7 @@ export default function ProductHeroSection({
           marginBottom: '28px',
         }}>
           {/* Badge 1 - Amazon Rating */}
-          {amazonStarRating && (
+          {amazonStarRating && amazonStarRating > 0 && (
             <div style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -144,7 +144,7 @@ export default function ProductHeroSection({
           )}
 
           {/* Badge 2 - Sales Spike */}
-          {stats.salesSpike && (
+          {stats.salesSpike && stats.salesSpike > 0 && (
             <div style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -168,7 +168,7 @@ export default function ProductHeroSection({
           )}
 
           {/* Badge 3 - Reddit Status */}
-          {(stats.redditMentions || stats.redditHotnessLabel || stats.redditScale) && (() => {
+          {((stats.redditMentions && stats.redditMentions > 0) || stats.redditHotnessLabel || stats.redditScale) && (() => {
             // Determine Reddit status and emoji
             let emoji = '💬'
             let statusText = 'Trending'

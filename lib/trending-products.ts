@@ -859,6 +859,101 @@ export async function getMostRecentTrendingProducts(limit: number = 4) {
 }
 
 /**
+ * Get products popular on Reddit
+ * Shows products with high redditHotness (>= 3) OR multiple Reddit mentions
+ * Ordered by redditHotness (desc) and then by number of Reddit signals
+ */
+export async function getRedditPopularProducts(limit: number = 4) {
+  return unstable_cache(
+    async () => {
+      if (!process.env.DATABASE_URL) {
+        return []
+      }
+
+      await ensureSchemaSynced().catch(() => {})
+
+      try {
+        // First, get all published products with content
+        const allProducts = await Promise.race([
+          prisma.product.findMany({
+            where: {
+              status: 'PUBLISHED',
+              content: {
+                isNot: null, // Must have content
+              },
+              OR: [
+                { price: { gte: 5 } },
+                { price: null },
+              ],
+            },
+            include: {
+              trendSignals: {
+                where: {
+                  source: 'reddit_skincare', // Only count Reddit signals
+                },
+                orderBy: {
+                  detectedAt: 'desc',
+                },
+              },
+              reviews: {
+                take: 5,
+              },
+              content: true,
+            },
+          }),
+          new Promise<any[]>((resolve) => 
+            setTimeout(() => {
+              console.warn('⚠️  Database query timeout - returning empty array')
+              resolve([])
+            }, 5000)
+          )
+        ])
+
+        // Filter and score products based on Reddit popularity
+        const scoredProducts = allProducts
+          .map(product => {
+            const redditHotness = (product.content?.redditHotness as number) || 0
+            const redditSignalCount = product.trendSignals?.length || 0
+            
+            // Include products with:
+            // 1. High redditHotness (>= 3), OR
+            // 2. Multiple Reddit mentions (>= 2 signals)
+            if (redditHotness >= 3 || redditSignalCount >= 2) {
+              return {
+                product,
+                score: redditHotness * 10 + redditSignalCount, // Prioritize redditHotness, then signal count
+                redditHotness,
+                redditSignalCount,
+              }
+            }
+            return null
+          })
+          .filter((item): item is { product: any; score: number; redditHotness: number; redditSignalCount: number } => item !== null)
+          .sort((a, b) => {
+            // Sort by redditHotness first (desc), then by signal count (desc)
+            if (b.redditHotness !== a.redditHotness) {
+              return b.redditHotness - a.redditHotness
+            }
+            return b.redditSignalCount - a.redditSignalCount
+          })
+          .slice(0, limit)
+          .map(item => item.product)
+
+        return scoredProducts
+      } catch (error) {
+        console.error('❌ Database error in getRedditPopularProducts:', error)
+        return []
+      }
+    },
+    ['reddit-popular-products-v1'],
+    {
+      revalidate: 10, // 10 seconds for faster updates
+      tags: ['products', 'reddit', 'trending'],
+    }
+  )()
+}
+
+/**
  * Get "New This Week" products - simply the most recently added products
  * Ordered by creation date, regardless of trending status
  * Cached for 60 seconds

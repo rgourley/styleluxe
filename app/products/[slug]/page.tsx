@@ -266,11 +266,11 @@ function getTrendStats(product: any) {
   }
   
   return {
-    redditMentions: Math.round(redditMentions),
+    redditMentions: redditMentions > 0 ? Math.round(redditMentions) : null,
     redditScale,
     redditHotnessLabel,
     redditHotness: product.content?.redditHotness || null,
-    salesSpike: salesSpike ? Math.round(salesSpike) : null,
+    salesSpike: salesSpike && salesSpike > 0 ? Math.round(salesSpike) : null,
     amazonReviewCount,
     trendDuration: formatTrendDuration(product.trendSignals || []),
     googleTrendsUrl,
@@ -336,8 +336,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const daysTrending = product.daysTrending ?? null
   const timelineText = daysTrending !== null ? getTimelineText(daysTrending) : 'Just detected'
   
-  // Get Amazon star rating
-  const amazonStarRating = product.metadata?.starRating || null
+  // Get Amazon star rating (only use if > 0, otherwise null)
+  const amazonStarRating = (product.metadata?.starRating && product.metadata.starRating > 0) ? product.metadata.starRating : null
   
   // One-sentence verdict (from hook or generate from content)
   const verdict = product.content.hook || `${product.name} is ${product.trendScore >= 70 ? 'worth the hype' : 'trending but proceed with caution'}.`

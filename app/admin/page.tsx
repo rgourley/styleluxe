@@ -129,6 +129,15 @@ function AdminDashboard() {
   const [searchResults, setSearchResults] = useState<any>(null)
   const [selectedRedditPosts, setSelectedRedditPosts] = useState<Set<string>>(new Set())
   const [isOnMoversShakers, setIsOnMoversShakers] = useState(true) // Default to true for M&S products
+  
+  // Reddit thread analysis state
+  const [redditThreadUrl, setRedditThreadUrl] = useState('')
+  const [redditThreadStatus, setRedditThreadStatus] = useState<CollectionStatus>('idle')
+  const [redditThreadResults, setRedditThreadResults] = useState<any>(null)
+  const [selectedThreadProducts, setSelectedThreadProducts] = useState<Set<number>>(new Set())
+  const [analysisProgress, setAnalysisProgress] = useState<{ current: number; total: number; currentProduct: string; elapsed: number } | null>(null)
+  const [analysisStartTime, setAnalysisStartTime] = useState<number | null>(null)
+  const [searchingAmazon, setSearchingAmazon] = useState(false)
   const [scrapeStatus, setScrapeStatus] = useState<CollectionStatus>('idle')
   const [migrateStatus, setMigrateStatus] = useState<CollectionStatus>('idle')
   const [syncStatus, setSyncStatus] = useState<CollectionStatus>('idle')
@@ -589,6 +598,152 @@ function AdminDashboard() {
     setSelectedRedditPosts(newSet)
   }
 
+  // Analyze Reddit thread
+  const handleAnalyzeRedditThread = async () => {
+    if (!redditThreadUrl.trim()) {
+      addMessage('❌ Please enter a Reddit thread URL')
+      return
+    }
+
+    setRedditThreadStatus('running')
+    setRedditThreadResults(null)
+    setSelectedThreadProducts(new Set())
+    setAnalysisProgress(null)
+    const startTime = Date.now()
+    setAnalysisStartTime(startTime)
+    addMessage(`🔍 Analyzing Reddit thread: ${redditThreadUrl}`)
+
+    // Start progress tracking
+    const progressInterval = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - startTime) / 1000)
+      setAnalysisProgress(prev => prev ? { ...prev, elapsed } : { current: 0, total: 0, currentProduct: '', elapsed })
+    }, 1000)
+
+    try {
+      const response = await fetch('/api/admin/analyze-reddit-thread', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ redditUrl: redditThreadUrl }),
+      })
+
+      clearInterval(progressInterval)
+      setAnalysisProgress(null)
+      setAnalysisStartTime(null)
+
+      const data = await response.json()
+
+      if (data.success) {
+        setRedditThreadStatus('success')
+        setRedditThreadResults(data)
+        const elapsed = analysisStartTime ? Math.floor((Date.now() - analysisStartTime) / 1000) : 0
+        addMessage(`✅ Found ${data.matches.length} product mentions (completed in ${elapsed}s)`)
+      } else {
+        setRedditThreadStatus('error')
+        addMessage(`❌ ${data.message}`)
+      }
+    } catch (error) {
+      clearInterval(progressInterval)
+      setAnalysisProgress(null)
+      setAnalysisStartTime(null)
+      setRedditThreadStatus('error')
+      addMessage(`❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+
+    setTimeout(() => setRedditThreadStatus('idle'), 3000)
+  }
+
+  // Toggle product selection in thread results
+  const toggleThreadProduct = (index: number) => {
+    const newSet = new Set(selectedThreadProducts)
+    if (newSet.has(index)) {
+      newSet.delete(index)
+    } else {
+      newSet.add(index)
+    }
+    setSelectedThreadProducts(newSet)
+  }
+
+  // Add selected products from thread to database
+  const handleAddThreadProducts = async () => {
+    if (selectedThreadProducts.size === 0 || !redditThreadResults) {
+      addMessage('❌ Please select at least one product to add')
+      return
+    }
+
+    addMessage(`📦 Adding ${selectedThreadProducts.size} products...`)
+
+    try {
+      const productsToAdd = redditThreadResults.matches
+        .filter((_: any, index: number) => selectedThreadProducts.has(index))
+        .map((match: any) => ({
+          productMention: match.productMention,
+          amazonMatch: match.amazonMatch,
+          existingProduct: match.existingProduct,
+        }))
+
+      let added = 0
+      let skipped = 0
+      let errors = 0
+
+      for (const product of productsToAdd) {
+        try {
+          // Skip if product already exists
+          if (product.existingProduct) {
+            addMessage(`⏭️  Skipping "${product.productMention.productName}" - already exists`)
+            skipped++
+            continue
+          }
+
+          // Skip if no Amazon match
+          if (!product.amazonMatch) {
+            addMessage(`⚠️  Skipping "${product.productMention.productName}" - no Amazon match found`)
+            skipped++
+            continue
+          }
+
+          // Create product
+          const response = await fetch('/api/search-product', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              amazonUrl: product.amazonMatch.amazonUrl,
+              searchTerm: product.productMention.productName,
+              isOnMoversShakers: false, // Thread products aren't on M&S
+            }),
+          })
+
+          const data = await response.json()
+
+          if (data.success) {
+            added++
+            addMessage(`✅ Added: ${product.productMention.productName}`)
+          } else {
+            errors++
+            addMessage(`❌ Failed to add: ${product.productMention.productName} - ${data.message}`)
+          }
+
+          // Small delay between adds
+          await new Promise(resolve => setTimeout(resolve, 1000))
+        } catch (error) {
+          errors++
+          addMessage(`❌ Error adding product: ${error instanceof Error ? error.message : 'Unknown error'}`)
+        }
+      }
+
+      addMessage(`✅ Complete: ${added} added, ${skipped} skipped, ${errors} errors`)
+      
+      // Refresh products list
+      setTimeout(() => {
+        fetchProducts(filterStatus === 'ALL' ? undefined : filterStatus)
+      }, 2000)
+
+      // Clear selection
+      setSelectedThreadProducts(new Set())
+    } catch (error) {
+      addMessage(`❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+  }
+
   const handleDeleteClick = (productId: string, productName: string) => {
     setDeleteConfirm({ productId, productName })
   }
@@ -743,6 +898,220 @@ function AdminDashboard() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
           <p className="text-gray-600">Manage data collection and review generation</p>
+        </div>
+
+        {/* Reddit Thread Analysis Section */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Analyze Reddit Thread</h2>
+          <p className="text-gray-600 mb-4">
+            Paste a Reddit thread URL to extract product mentions and match them to Amazon products. Then select which products to add to your list.
+          </p>
+          
+          <div className="flex gap-2 mb-4">
+            <input
+              type="text"
+              value={redditThreadUrl}
+              onChange={(e) => setRedditThreadUrl(e.target.value)}
+              placeholder="https://www.reddit.com/r/30PlusSkinCare/comments/..."
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <button
+              onClick={handleAnalyzeRedditThread}
+              disabled={redditThreadStatus === 'running' || !redditThreadUrl.trim()}
+              className={`px-6 py-2 rounded-lg font-medium ${
+                redditThreadStatus === 'running'
+                  ? 'bg-gray-300 cursor-not-allowed'
+                  : redditThreadStatus === 'success'
+                  ? 'bg-green-600 hover:bg-green-700'
+                  : redditThreadStatus === 'error'
+                  ? 'bg-red-600 hover:bg-red-700'
+                  : 'bg-blue-600 hover:bg-blue-700'
+              } text-white`}
+            >
+              {redditThreadStatus === 'running'
+                ? 'Analyzing...'
+                : redditThreadStatus === 'success'
+                ? '✅ Analyzed'
+                : redditThreadStatus === 'error'
+                ? '❌ Error'
+                : '🔍 Analyze Thread'}
+            </button>
+          </div>
+
+          {/* Progress Indicator */}
+          {redditThreadStatus === 'running' && (
+            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                <span className="text-sm font-medium text-blue-900">Analyzing thread...</span>
+              </div>
+              {analysisStartTime && (
+                <div className="text-xs text-blue-700 space-y-1">
+                  <div>⏱️ Elapsed time: <strong>{Math.floor((Date.now() - analysisStartTime) / 1000)}s</strong></div>
+                  <div className="text-blue-600">
+                    📊 Processing products and matching to Amazon (this may take 1-3 minutes)
+                  </div>
+                </div>
+              )}
+              <div className="mt-3 p-3 bg-blue-100 rounded border border-blue-300">
+                <p className="text-xs font-semibold text-blue-900 mb-1">💡 To see detailed progress:</p>
+                <p className="text-xs text-blue-700 mb-2">
+                  <strong>Option 1:</strong> Check the <strong>terminal where you ran `npm run dev`</strong> - you'll see logs like:
+                </p>
+                <code className="block text-xs bg-blue-200 px-2 py-1 rounded mb-2">
+                  [1/10] Processing: "Product Name"<br/>
+                  → Searching Amazon for "Product Name"...
+                </code>
+                <p className="text-xs text-blue-700">
+                  <strong>Option 2:</strong> Open browser console (F12) → Network tab → find the request → check response
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Thread Results */}
+          {redditThreadResults && (
+            <div className="mt-6 space-y-4">
+              {/* Thread Info */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  {redditThreadResults.thread.title}
+                </h3>
+                <div className="flex items-center gap-4 text-sm text-gray-600">
+                  <span>r/{redditThreadResults.thread.subreddit}</span>
+                  <span>{redditThreadResults.thread.score} upvotes</span>
+                  <span>{redditThreadResults.thread.num_comments} comments</span>
+                  <a
+                    href={redditThreadResults.thread.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline"
+                  >
+                    View Thread →
+                  </a>
+                </div>
+              </div>
+
+              {/* Product Matches */}
+              {redditThreadResults.matches && redditThreadResults.matches.length > 0 && (
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Product Mentions ({redditThreadResults.matches.length} found)
+                    </h3>
+                    {selectedThreadProducts.size > 0 && (
+                      <button
+                        onClick={handleAddThreadProducts}
+                        className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg"
+                      >
+                        ✅ Add {selectedThreadProducts.size} Selected Products
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="space-y-3">
+                    {redditThreadResults.matches.map((match: any, index: number) => (
+                      <div
+                        key={index}
+                        className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+                          selectedThreadProducts.has(index)
+                            ? 'border-green-500 bg-green-50'
+                            : 'border-gray-200 bg-white hover:border-gray-300'
+                        }`}
+                        onClick={() => toggleThreadProduct(index)}
+                      >
+                        <div className="flex items-start gap-3">
+                          <input
+                            type="checkbox"
+                            checked={selectedThreadProducts.has(index)}
+                            onChange={() => toggleThreadProduct(index)}
+                            className="mt-1"
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h4 className="font-semibold text-gray-900">
+                                  {match.productMention.productName}
+                                </h4>
+                                {match.productMention.mentionCount && match.productMention.mentionCount > 1 && (
+                                  <span className="text-xs px-2 py-1 rounded bg-blue-100 text-blue-700 font-medium">
+                                    Mentioned {match.productMention.mentionCount} times
+                                  </span>
+                                )}
+                                <span className={`text-xs px-2 py-1 rounded ${
+                                  match.confidence === 'high'
+                                    ? 'bg-green-100 text-green-700'
+                                    : match.confidence === 'medium'
+                                    ? 'bg-yellow-100 text-yellow-700'
+                                    : match.confidence === 'low'
+                                    ? 'bg-orange-100 text-orange-700'
+                                    : 'bg-gray-100 text-gray-700'
+                                }`}>
+                                  {match.confidence} confidence
+                                </span>
+                              </div>
+                              {match.existingProduct && (
+                                <span className="text-xs px-2 py-1 rounded bg-blue-100 text-blue-700">
+                                  Already exists ({match.existingProduct.status})
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Context */}
+                            <p className="text-sm text-gray-600 mb-2 italic">
+                              "{match.productMention.context.substring(0, 200)}..."
+                            </p>
+
+                            {/* Amazon Match */}
+                            {match.amazonMatch ? (
+                              <div className="bg-gray-50 rounded p-3 mt-2">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="text-xs font-medium text-gray-500">Amazon Match:</span>
+                                  <span className="text-sm font-semibold text-gray-900">
+                                    {match.amazonMatch.name}
+                                  </span>
+                                  {match.amazonMatch.brand && (
+                                    <span className="text-xs text-gray-500">by {match.amazonMatch.brand}</span>
+                                  )}
+                                </div>
+                                {match.amazonMatch.price && (
+                                  <div className="text-sm text-gray-700">
+                                    ${match.amazonMatch.price.toFixed(2)}
+                                  </div>
+                                )}
+                                <a
+                                  href={match.amazonMatch.amazonUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs text-blue-600 hover:underline"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  View on Amazon →
+                                </a>
+                              </div>
+                            ) : (
+                              <div className="bg-gray-50 rounded p-3 mt-2">
+                                <p className="text-sm text-gray-600">
+                                  ℹ️ Select this product and click "Search Amazon" to find matches
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {(!redditThreadResults.matches || redditThreadResults.matches.length === 0) && (
+                <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                  <p className="text-gray-600">{redditThreadResults.message}</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Product Search Section */}
