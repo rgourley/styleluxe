@@ -113,12 +113,7 @@ export default function Header() {
           </Link>
 
           {/* Navigation - Desktop */}
-          <nav className="hidden md:flex items-center gap-8 flex-grow justify-end">
-            <style jsx>{`
-              nav {
-                gap: 32px;
-              }
-            `}</style>
+          <nav className="hidden md:flex items-center flex-grow justify-end" style={{ gap: '32px' }}>
             {/* Search Bar */}
             <form onSubmit={handleSearch} style={{
               position: 'relative',
