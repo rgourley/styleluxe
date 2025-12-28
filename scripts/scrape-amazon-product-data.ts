@@ -70,13 +70,32 @@ async function scrapeProductData() {
       console.log(`    Reviews: ${productData.totalReviewCount || 'N/A'}`)
       console.log(`    Availability: ${productData.availability || 'N/A'}`)
 
+      // Store image in R2 if we have one and it's from Amazon
+      let finalImageUrl = productData.imageUrl || product.imageUrl
+      if (productData.imageUrl && (productData.imageUrl.includes('amazon.com') || productData.imageUrl.includes('media-amazon'))) {
+        try {
+          const { storeAmazonImageInR2, extractASINFromUrl } = await import('../lib/image-storage')
+          const asin = productData.asin || extractASINFromUrl(product.amazonUrl || '')
+          const r2ImageUrl = await storeAmazonImageInR2(productData.imageUrl, product.id, asin || undefined)
+          if (r2ImageUrl) {
+            finalImageUrl = r2ImageUrl
+            console.log(`    ✓ Stored image in R2: ${r2ImageUrl}`)
+          } else {
+            console.log(`    ⚠️ Failed to store image in R2, using original URL`)
+          }
+        } catch (error) {
+          console.error(`    ⚠️ Error storing image in R2:`, error)
+          // Continue with original URL if R2 upload fails
+        }
+      }
+
       // Update product with latest price and image if available
-      if (productData.price || productData.imageUrl) {
+      if (productData.price || finalImageUrl) {
         await prisma.product.update({
           where: { id: product.id },
           data: {
             price: productData.price || product.price,
-            imageUrl: productData.imageUrl || product.imageUrl,
+            imageUrl: finalImageUrl || product.imageUrl,
           },
         })
       }

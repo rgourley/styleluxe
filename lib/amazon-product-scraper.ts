@@ -126,8 +126,10 @@ async function attemptScrape(amazonUrl: string): Promise<AmazonProductDetails | 
 
     console.log(`Scraping Amazon URL: ${productUrl}${asin ? ` (ASIN: ${asin})` : ' (no ASIN found)'}`)
 
-    // Add a small random delay to avoid rate limiting (100-500ms)
-    const randomDelay = Math.floor(Math.random() * 400) + 100
+    // Add delay to avoid rate limiting
+    // For individual requests: 1-2 seconds (enough spacing for manual admin requests)
+    // This helps prevent IP blocking when scraping multiple products
+    const randomDelay = 1000 + Math.floor(Math.random() * 1000) // 1-2 seconds
     await new Promise(resolve => setTimeout(resolve, randomDelay))
 
     const response = await fetch(productUrl, {
@@ -155,13 +157,19 @@ async function attemptScrape(amazonUrl: string): Promise<AmazonProductDetails | 
 
     const html = await response.text()
     
-    // Check if Amazon blocked the request (common indicators)
-    if (html.includes('captcha') || 
-        html.includes('robot') || 
-        html.includes('unusual traffic') || 
-        html.includes('Sorry, we just need to make sure you') ||
-        html.length < 1000 ||
-        !html.includes('productTitle') && !html.includes('product-title')) {
+    // Check if Amazon blocked the request - be more specific to avoid false positives
+    // Normal Amazon pages contain "robot" in JavaScript, so check for actual captcha pages
+    const isCaptchaPage = html.includes('captcha') && (
+      html.includes('Type the characters you see') ||
+      html.includes('Enter the characters') ||
+      html.includes('Robot Check')
+    )
+    const isBlockedPage = html.includes('Sorry, we just need to make sure you') ||
+                          html.includes('unusual traffic') ||
+                          html.length < 1000 ||
+                          (!html.includes('productTitle') && !html.includes('product-title') && !html.includes('product-details'))
+    
+    if (isCaptchaPage || isBlockedPage) {
       console.error('Amazon may have blocked the request - page contains captcha indicators or is too short')
       console.error(`HTML length: ${html.length}, contains productTitle: ${html.includes('productTitle')}`)
       return null
@@ -205,11 +213,35 @@ async function attemptScrape(amazonUrl: string): Promise<AmazonProductDetails | 
                  $('a#brand').text().trim() ||
                  name.split(' ')[0] // Fallback to first word
 
-    // Extract price
-    const priceText = $('.a-price .a-offscreen').first().text() ||
-                     $('.a-price-whole').first().text() ||
-                     $('#priceblock_ourprice').text() ||
-                     $('#priceblock_dealprice').text()
+    // Extract price - try multiple selectors (Amazon has various price formats)
+    let priceText = $('.a-price .a-offscreen').first().text() ||
+                    $('.a-price.a-text-price .a-offscreen').first().text() ||
+                    $('.a-price.a-text-price.a-size-medium.apexPriceToPay span.a-offscreen').first().text() ||
+                    $('.a-price-whole').first().text() ||
+                    $('#priceblock_ourprice').text() ||
+                    $('#priceblock_dealprice').text() ||
+                    $('#priceblock_saleprice').text() ||
+                    $('span.a-price-symbol').parent().text() ||
+                    $('[data-a-color="price"] .a-offscreen').first().text() ||
+                    $('.a-price span.a-offscreen').first().text()
+    
+    // If no price found with selectors, try regex patterns in the HTML
+    if (!priceText || !priceText.trim()) {
+      // Look for price patterns in common price-related elements
+      const priceElements = $('[class*="price"], [id*="price"], [data-a-color="price"]')
+      priceElements.each((_, el) => {
+        const text = $(el).text()
+        const match = text.match(/\$?\s*([\d,]+\.\d{2})/)
+        if (match) {
+          const potentialPrice = parseFloat(match[1].replace(/,/g, ''))
+          if (potentialPrice >= 1 && potentialPrice <= 10000) {
+            priceText = `$${potentialPrice.toFixed(2)}`
+            return false // Break the loop
+          }
+        }
+      })
+    }
+    
     const priceMatch = priceText?.match(/\$?([\d,]+\.?\d*)/)
     const price = priceMatch ? parseFloat(priceMatch[1].replace(/,/g, '')) : undefined
 

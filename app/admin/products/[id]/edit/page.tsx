@@ -115,6 +115,15 @@ export default function EditProductPage() {
         if (!hasEditedCategory.current) {
           setEditedCategory(data.product.category || '')
         }
+        if (!hasEditedPrice.current) {
+          setEditedPrice(data.product.price ? data.product.price.toFixed(2) : '')
+        }
+        if (!hasEditedAmazonUrl.current) {
+          setEditedAmazonUrl(data.product.amazonUrl || '')
+        }
+        if (!hasEditedImageUrl.current) {
+          setEditedImageUrl(data.product.imageUrl || '')
+        }
         if (data.product.content) {
           setContent(data.product.content)
           setFaqItems(data.product.content.faq || [])
