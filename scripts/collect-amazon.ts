@@ -490,27 +490,38 @@ async function fetchAmazonMoversAndShakers(): Promise<AmazonProduct[]> {
  * Calculate trend score for Amazon products
  * Movers & Shakers = products with biggest sales rank jumps (shown as %)
  * 
- * NEW Scoring: Percentage ÷ 20 = points (capped at 70)
- * - 1,400%+ increase = 70 points
- * - 800% increase = 40 points
- * - 400% increase = 20 points
- * - 200% increase = 10 points
+ * Base score: 100 points for being on Movers & Shakers
+ * Review adjustments: +/- up to 15 points based on ratings and review count
+ * Final score: 85-115 (capped at 100 after adjustments)
+ * 
+ * @param salesJumpPercent - Sales jump percentage from M&S page
+ * @param starRating - Amazon star rating (1-5) - optional
+ * @param reviewCount - Total number of reviews - optional
+ * @returns Base score (85-100) before age decay
  */
-function calculateAmazonTrendScore(salesJumpPercent?: number): number {
+function calculateAmazonTrendScore(
+  salesJumpPercent?: number,
+  starRating?: number | null,
+  reviewCount?: number | null
+): number {
   // Products on Amazon Movers & Shakers are TRULY VIRAL
   // They get a base score of 100 to ensure they dominate "Trending Now"
-  // This creates a clear hierarchy:
-  // - "Trending Now" (70+) = Amazon M&S products (start at 100, decay over time)
-  // - "Rising Fast" (50-69) = Reddit buzz products NOT on M&S
+  let baseScore = 100
   
-  if (!salesJumpPercent || salesJumpPercent <= 0) {
-    // Even without specific sales jump %, being on M&S means it's viral
-    return 100
+  // Apply review-based adjustments if we have review data
+  if (starRating !== undefined && starRating !== null) {
+    const { calculateCombinedReviewAdjustment } = require('../lib/review-scoring')
+    const reviewAdjustment = calculateCombinedReviewAdjustment(starRating, reviewCount)
+    
+    // Apply adjustment (subtract because high ratings add points, low ratings subtract)
+    // Base score 100 + adjustment (can be negative) = final score
+    baseScore = baseScore + reviewAdjustment
+    
+    // Cap at 100 (can't go above 100, but can go below)
+    baseScore = Math.min(100, Math.max(70, baseScore)) // Floor at 70, ceiling at 100
   }
   
-  // All M&S products start at 100 points
-  // With age decay, they'll stay in "Trending Now" for 5-7 days
-  return 100
+  return baseScore
 }
 
 /**
@@ -558,19 +569,21 @@ async function processAmazonData() {
       continue // Skip if we don't have a real product name
     }
 
-    const trendScore = calculateAmazonTrendScore(product.salesJumpPercent)
-
     try {
       // Extract ASIN from product URL for reliable matching
       const productASIN = extractASIN(product.amazonUrl)
       
       // Check if product exists by ASIN (handles query parameter variations)
       let existing = null
+      let existingMetadata = null
       if (productASIN) {
         // Find all products with this ASIN
         const productsWithASIN = await prisma.product.findMany({
           where: {
             amazonUrl: { contains: productASIN },
+          },
+          include: {
+            metadata: true, // Include metadata to get review ratings
           },
         })
         
@@ -579,6 +592,7 @@ async function processAmazonData() {
           const published = productsWithASIN.find(p => p.status === 'PUBLISHED')
           const onMS = productsWithASIN.find(p => p.onMoversShakers === true)
           existing = published || onMS || productsWithASIN[0]
+          existingMetadata = existing?.metadata || null
           
           // If we found multiple, merge the others into this one
           if (productsWithASIN.length > 1) {
@@ -634,33 +648,47 @@ async function processAmazonData() {
           where: {
             amazonUrl: product.amazonUrl,
           },
+          include: {
+            metadata: true, // Include metadata to get review ratings
+          },
         })
+        if (existing) {
+          existingMetadata = existing.metadata || null
+        }
       }
 
+      // Fetch or use existing metadata for review-based scoring
+      let starRating: number | null = null
+      let reviewCount: number | null = null
+      
+      if (existing && existingMetadata) {
+        starRating = existingMetadata.starRating || null
+        reviewCount = existingMetadata.totalReviewCount || null
+      } else if (existing) {
+        // Fetch metadata if not included in query
+        const metadata = await prisma.productMetadata.findUnique({
+          where: { productId: existing.id },
+        })
+        starRating = metadata?.starRating || null
+        reviewCount = metadata?.totalReviewCount || null
+      }
+      
+      // Calculate trend score with review adjustments
+      const trendScore = calculateAmazonTrendScore(
+        product.salesJumpPercent,
+        starRating,
+        reviewCount
+      )
+
       if (existing) {
-        // Recalculate total score (Amazon + Reddit)
+        // Recalculate total score (Amazon with review adjustments + Reddit)
         const allSignals = await prisma.trendSignal.findMany({
           where: { productId: existing.id },
         })
         
-        // Calculate Amazon score (70 points max)
-        let amazonScore = 0
-        for (const signal of allSignals) {
-          if (signal.source === 'amazon_movers') {
-            const metadata = signal.metadata as any
-            const salesJump = signal.value || metadata?.salesJumpPercent || 0
-            if (salesJump > 0) {
-              const calculatedScore = Math.min(70, Math.floor(salesJump / 20))
-              // Give at least 10 points for being on Movers & Shakers, even with low percentages
-              amazonScore = Math.max(10, calculatedScore)
-              break // Use highest Amazon score
-            } else {
-              amazonScore = 10 // Base score
-            }
-          }
-        }
-        // Use the new Amazon score if higher (ensure minimum 10)
-        amazonScore = Math.max(10, Math.max(amazonScore, trendScore))
+        // Use the trendScore calculated above (includes review adjustments)
+        // This is the base Amazon score (85-100, depending on reviews)
+        let amazonScore = trendScore
         
         // Calculate Reddit bonus score (30 points max)
         const redditSignals = allSignals.filter(s => s.source === 'reddit_skincare')
@@ -686,8 +714,10 @@ async function processAmazonData() {
         }
         redditScore = Math.min(30, redditScore) // Cap at 30
         
-        // Total score = Amazon (0-70) + Reddit bonus (0-30) = max 100
-        const totalScore = amazonScore + redditScore
+        // Total score = Amazon (85-100 with review adjustments) + Reddit bonus (0-30) = max 100
+        // Note: Amazon score already includes review adjustments, so we just add Reddit bonus
+        // Cap at 100 to ensure we don't exceed maximum
+        const totalScore = Math.min(100, amazonScore + redditScore)
 
         // Import setFirstDetected function
         const { setFirstDetected } = await import('../lib/trending-products')

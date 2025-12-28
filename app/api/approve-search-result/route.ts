@@ -158,6 +158,23 @@ export async function POST(request: Request) {
         productName = product.name
       }
 
+      // Migrate image to R2 if it's an Amazon image
+      let imageUrl = amazonData?.imageUrl || product.imageUrl
+      if (imageUrl && (imageUrl.includes('amazon.com') || imageUrl.includes('media-amazon'))) {
+        try {
+          const { storeAmazonImageInR2, extractASINFromUrl } = await import('@/lib/image-storage')
+          const asin = extractASINFromUrl(amazonData?.amazonUrl || product.amazonUrl || '')
+          const r2ImageUrl = await storeAmazonImageInR2(imageUrl, product.id, asin || undefined)
+          if (r2ImageUrl) {
+            imageUrl = r2ImageUrl
+            console.log(`✅ Migrated image to R2 for product: ${product.name}`)
+          }
+        } catch (error) {
+          console.error('Error migrating image to R2:', error)
+          // Continue with original image URL if migration fails
+        }
+      }
+
       // Update product
       await prisma.product.update({
         where: { id: product.id },
@@ -165,7 +182,7 @@ export async function POST(request: Request) {
           name: productName,
           brand: amazonData?.brand || product.brand,
           price: amazonData?.price || product.price,
-          imageUrl: amazonData?.imageUrl || product.imageUrl,
+          imageUrl,
           trendScore: Math.max(product.trendScore, totalScore),
           status: 'FLAGGED', // Set to FLAGGED for review generation
           onMoversShakers: amazonData ? isOnMoversShakers : product.onMoversShakers, // Use admin's M&S toggle
@@ -288,12 +305,15 @@ export async function POST(request: Request) {
         productName = searchTerm
       }
 
+      // Migrate image to R2 if it's an Amazon image
+      let imageUrl = amazonData?.imageUrl
+      // Create product first to get the ID, then migrate image
       const newProduct = await prisma.product.create({
         data: {
           name: productName,
           brand: amazonData?.brand || (productName !== searchTerm ? productName.split(' ')[0] : searchTerm.split(' ')[0]),
           price: amazonData?.price,
-          imageUrl: amazonData?.imageUrl,
+          imageUrl: imageUrl, // Will update with R2 URL if migration succeeds
           amazonUrl: amazonData?.amazonUrl,
           trendScore: totalScore,
           status: 'FLAGGED',
@@ -301,6 +321,27 @@ export async function POST(request: Request) {
           lastSeenOnMoversShakers: amazonData && isOnMoversShakers ? new Date() : null, // Set timestamp only if on M&S
         },
       })
+
+      // Migrate image to R2 after product creation (we need the product ID)
+      if (imageUrl && (imageUrl.includes('amazon.com') || imageUrl.includes('media-amazon'))) {
+        try {
+          const { storeAmazonImageInR2, extractASINFromUrl } = await import('@/lib/image-storage')
+          const asin = extractASINFromUrl(amazonData?.amazonUrl || '')
+          const r2ImageUrl = await storeAmazonImageInR2(imageUrl, newProduct.id, asin || undefined)
+          if (r2ImageUrl) {
+            // Update product with R2 image URL
+            await prisma.product.update({
+              where: { id: newProduct.id },
+              data: { imageUrl: r2ImageUrl },
+            })
+            imageUrl = r2ImageUrl
+            console.log(`✅ Migrated image to R2 for new product: ${productName}`)
+          }
+        } catch (error) {
+          console.error('Error migrating image to R2:', error)
+          // Continue with original image URL if migration fails
+        }
+      }
 
       // Initialize age decay fields (set firstDetected, baseScore, currentScore, etc.)
       const { setFirstDetected } = await import('@/lib/trending-products')

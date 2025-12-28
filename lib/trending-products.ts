@@ -1363,8 +1363,27 @@ export async function setFirstDetected(productId: string, baseScore: number) {
         lastSeenOnMoversShakers: true,
         createdAt: true, // Include createdAt for trending calculation
         peakScore: true, // Include peakScore for updatePeakScore
+        metadata: {
+          select: {
+            starRating: true,
+            totalReviewCount: true,
+          },
+        },
       },
     })
+    
+    // Apply review-based adjustments to baseScore if we have review data
+    let adjustedBaseScore = baseScore
+    if (product?.metadata?.starRating) {
+      const { calculateCombinedReviewAdjustment } = await import('./review-scoring')
+      const reviewAdjustment = calculateCombinedReviewAdjustment(
+        product.metadata.starRating,
+        product.metadata.totalReviewCount
+      )
+      adjustedBaseScore = baseScore + reviewAdjustment
+      // Cap at 100, floor at 70 (don't go too low for M&S products)
+      adjustedBaseScore = Math.min(100, Math.max(70, adjustedBaseScore))
+    }
 
     // pageViews and clicks are not available until migration is run
     // Use null values - they'll be handled gracefully in calculateCurrentScore
@@ -1377,8 +1396,8 @@ export async function setFirstDetected(productId: string, baseScore: number) {
 
     // Only set firstDetected if it's not already set (new product)
     if (!product?.firstDetected) {
-      // Add small random variation to baseScore for new products (1-5 points variation)
-      const variedBaseScore = addScoreVariation(baseScore)
+      // Add small random variation to adjustedBaseScore for new products (1-5 points variation)
+      const variedBaseScore = addScoreVariation(adjustedBaseScore)
       
       const result = calculateCurrentScore(
         variedBaseScore, 
@@ -1402,10 +1421,10 @@ export async function setFirstDetected(productId: string, baseScore: number) {
       })
     } else {
       // Update existing product's base score and recalculate
-      // If product was already on M&S and coming back, don't reset baseScore to 100
+      // If product was already on M&S and coming back, don't reset baseScore
       // Instead, only update if the new baseScore is higher (boost) or if it dropped off M&S
       const currentBaseScore = product.baseScore || 0
-      const finalBaseScore = droppedOffMS ? baseScore : Math.max(currentBaseScore, baseScore)
+      const finalBaseScore = droppedOffMS ? adjustedBaseScore : Math.max(currentBaseScore, adjustedBaseScore)
       
       const result = calculateCurrentScore(
         finalBaseScore, 
