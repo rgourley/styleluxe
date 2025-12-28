@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidatePath, revalidateTag } from 'next/cache'
 
 // Force dynamic rendering to prevent build-time data collection
 export const dynamic = 'force-dynamic'
@@ -59,10 +60,17 @@ export async function PATCH(
     const { id } = await params
     const body = await request.json()
 
-    // Get current product to preserve Amazon URL
+    // Get current product to preserve Amazon URL and check if it has content
     const currentProduct = await prisma.product.findUnique({
       where: { id },
-      select: { amazonUrl: true, name: true },
+      select: { 
+        amazonUrl: true, 
+        name: true,
+        status: true,
+        content: {
+          select: { slug: true }
+        }
+      },
     })
 
     if (!currentProduct) {
@@ -72,18 +80,45 @@ export async function PATCH(
       )
     }
 
+    // Build update data
+    const updateData: any = {}
+    if (body.name !== undefined) updateData.name = body.name
+    if (body.brand !== undefined) updateData.brand = body.brand
+    if (body.category !== undefined) updateData.category = body.category
+    if (body.price !== undefined) updateData.price = body.price
+    if (body.imageUrl !== undefined) updateData.imageUrl = body.imageUrl
+    if (body.amazonUrl !== undefined) updateData.amazonUrl = body.amazonUrl
+    if (body.status !== undefined) updateData.status = body.status
+    // Preserve Amazon URL if not explicitly provided
+    if (body.amazonUrl === undefined) {
+      updateData.amazonUrl = currentProduct.amazonUrl
+    }
+
     const product = await prisma.product.update({
       where: { id },
-      data: {
-        name: body.name,
-        brand: body.brand !== undefined ? body.brand : undefined,
-        category: body.category !== undefined ? body.category : undefined,
-        // Preserve Amazon URL - it's the key for matching duplicates
-        // Don't update it unless explicitly provided
-        amazonUrl: body.amazonUrl !== undefined ? body.amazonUrl : currentProduct.amazonUrl,
-        // Can add other fields here if needed (price, etc.)
-      },
+      data: updateData,
+      include: {
+        content: {
+          select: { slug: true }
+        }
+      }
     })
+
+    // Invalidate cache when product is updated
+    // This ensures homepage and product pages show updated data
+    revalidateTag('products')
+    revalidateTag('trending')
+    revalidateTag('rising')
+    revalidateTag('recent')
+    revalidatePath('/')
+    revalidatePath('/trending')
+    revalidatePath('/') // Homepage
+    revalidatePath('/trending') // Trending page
+    
+    // Invalidate product page if it has content
+    if (product.content?.slug) {
+      revalidatePath(`/products/${product.content.slug}`)
+    }
 
     return NextResponse.json({
       success: true,

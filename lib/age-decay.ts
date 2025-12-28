@@ -51,12 +51,21 @@ export function getAgeMultiplier(daysTrending: number, droppedOffMS: boolean = f
 }
 
 /**
- * Calculate days since first detected
+ * Calculate days since first detected or created
+ * "Trending" means any product with activity (score > 20), not just M&S products
+ * So we calculate from when the product was first created/tracked
  */
-export function calculateDaysTrending(firstDetected: Date | null | undefined): number {
-  if (!firstDetected) return 0
+export function calculateDaysTrending(
+  firstDetected: Date | null | undefined,
+  createdAt?: Date | null | undefined
+): number {
+  // Use createdAt (when product was first added to our system) as the baseline
+  // This represents how long the product has been "trending" (tracked) on our site
+  // firstDetected is only for M&S-specific tracking, but "trending" is broader
+  const startDate = createdAt || firstDetected
+  if (!startDate) return 0
   const now = new Date()
-  const diffTime = now.getTime() - firstDetected.getTime()
+  const diffTime = now.getTime() - startDate.getTime()
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
   return Math.max(0, diffDays)
 }
@@ -98,9 +107,12 @@ export function calculateCurrentScore(
   firstDetected: Date | null | undefined,
   pageViews?: number | null | undefined,
   clicks?: number | null | undefined,
-  droppedOffMS?: boolean
+  droppedOffMS?: boolean,
+  createdAt?: Date | null | undefined
 ): AgeDecayResult {
-  const daysTrending = calculateDaysTrending(firstDetected)
+  // Calculate days trending from createdAt (when product was first added to our system)
+  // "Trending" means any product with activity (score > 20), not just M&S products
+  const daysTrending = calculateDaysTrending(firstDetected, createdAt)
   const ageMultiplier = getAgeMultiplier(daysTrending, droppedOffMS || false)
   
   const base = baseScore || 0
@@ -126,7 +138,7 @@ export function calculateCurrentScore(
  */
 export function getTimelineText(daysTrending: number): string {
   if (daysTrending === 0) return 'New today'
-  if (daysTrending === 1) return 'Just detected'
+  if (daysTrending === 1) return 'Trending for 1 day' // Changed from "Just detected" to be more accurate
   if (daysTrending <= 7) return `Trending for ${daysTrending} days`
   if (daysTrending <= 14) return `Hot for ${daysTrending} days`
   return `Peaked ${daysTrending} days ago`

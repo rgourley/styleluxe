@@ -693,6 +693,11 @@ async function processAmazonData() {
         const { setFirstDetected } = await import('../lib/trending-products')
 
         // Update existing product - mark as currently on M&S
+        // If product was already on M&S before, don't reset baseScore to 100
+        // Instead, boost it if the new score is higher, but don't reset if it was already trending
+        const shouldResetBaseScore = !existing.onMoversShakers || existing.baseScore === null || existing.baseScore < 50
+        const newBaseScore = shouldResetBaseScore ? totalScore : Math.max(existing.baseScore || 0, totalScore)
+        
         await prisma.product.update({
           where: { id: existing.id },
           data: {
@@ -705,7 +710,8 @@ async function processAmazonData() {
         })
 
         // Update age decay fields (set firstDetected if new, update baseScore)
-        await setFirstDetected(existing.id, totalScore)
+        // Pass the new baseScore to setFirstDetected, which will handle the update
+        await setFirstDetected(existing.id, newBaseScore)
 
         // Check if we already have a recent Amazon signal for this product (within last 24 hours)
         const recentSignal = await prisma.trendSignal.findFirst({
@@ -894,6 +900,27 @@ async function processAmazonData() {
   console.log(`   - Updated: ${updated} existing products`)
   console.log(`   - Skipped: ${skipped} products (invalid names)`)
   console.log(`   - Products with score > 60 are flagged for review generation`)
+  
+  // Invalidate cache after all product updates
+  console.log(`\n🔄 Invalidating homepage cache...`)
+  try {
+    const revalidateUrl = process.env.NEXT_PUBLIC_SITE_URL 
+      ? `${process.env.NEXT_PUBLIC_SITE_URL}/api/revalidate`
+      : process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}/api/revalidate`
+        : 'http://localhost:3000/api/revalidate'
+    await fetch(revalidateUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tags: ['products', 'trending', 'rising', 'recent', 'new', 'peak-viral', 'warming'],
+        paths: ['/', '/trending'],
+      }),
+    })
+    console.log(`   ✅ Cache invalidated successfully`)
+  } catch (error) {
+    console.warn(`   ⚠️  Cache invalidation failed (non-critical):`, error)
+  }
 
   // Mark products that are NO LONGER on Movers & Shakers
   console.log(`\n🔄 Checking for products that dropped off Movers & Shakers...`)
@@ -908,6 +935,7 @@ async function processAmazonData() {
       amazonUrl: true,
       baseScore: true,
       firstDetected: true,
+      createdAt: true, // Include createdAt for trending calculation
     },
   })
 
@@ -930,10 +958,11 @@ async function processAmazonData() {
       const fullProduct = await prisma.product.findUnique({
         where: { id: product.id },
         // @ts-ignore - pageViews and clicks will be available after migration
-        select: { pageViews: true, clicks: true },
+        select: { pageViews: true, clicks: true, createdAt: true },
       })
       
       // Calculate with faster decay since product dropped off M&S
+      // Use createdAt for trending calculation (how long product has been tracked, not just on M&S)
       const result = calculateCurrentScore(
         newBaseScore, 
         product.firstDetected,
@@ -941,7 +970,8 @@ async function processAmazonData() {
         fullProduct?.pageViews,
         // @ts-ignore
         fullProduct?.clicks,
-        true // droppedOffMS = true for faster decay
+        true, // droppedOffMS = true for faster decay
+        product.createdAt || fullProduct?.createdAt || product.firstDetected // Use createdAt for trending calculation
       )
       
       // No minimum score - products can decay to zero over time
@@ -956,6 +986,25 @@ async function processAmazonData() {
           trendScore: finalScore, // Update legacy score
         },
       })
+      
+      // Invalidate cache via API endpoint (scripts can't directly call revalidateTag)
+      try {
+        const revalidateUrl = process.env.NEXT_PUBLIC_SITE_URL 
+          ? `${process.env.NEXT_PUBLIC_SITE_URL}/api/revalidate`
+          : 'http://localhost:3000/api/revalidate'
+        await fetch(revalidateUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tags: ['products', 'trending', 'rising', 'recent'],
+            paths: ['/', '/trending'],
+          }),
+        }).catch(() => {
+          // Silently fail if revalidation endpoint is not available (e.g., in scripts)
+        })
+      } catch (error) {
+        // Non-critical, continue even if cache invalidation fails
+      }
 
       console.log(`  ⬇️  ${product.name.substring(0, 50)} dropped off M&S (${currentBaseScore} → ${newBaseScore} base score, current: ${finalScore})`)
       droppedOff++

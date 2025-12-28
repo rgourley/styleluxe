@@ -2,6 +2,7 @@ import {
   getTrendingNowHomepage,
   getRisingFastProducts,
   getRecentlyHotProducts,
+  getMostRecentTrendingProducts,
   searchProducts,
 } from '@/lib/trending-products'
 import Link from 'next/link'
@@ -13,8 +14,8 @@ import Script from 'next/script'
 // Fixed header for consistency (no date dependency to avoid hydration issues)
 const headerText = "Trending Beauty Products Right Now"
 
-// Revalidate homepage every 60 seconds to keep it fresh
-export const revalidate = 60
+// Revalidate homepage every 5 seconds to keep it fresh (aggressive cache updates)
+export const revalidate = 5
 
 // Generate metadata for better SEO - canonical URLs always use production domain
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.thestyleluxe.com'
@@ -70,10 +71,12 @@ export default async function Home({
     trendingNow,
     risingFast,
     recentlyHot,
+    mostRecent,
   ] = await Promise.all([
     getTrendingNowHomepage(8), // Show 8 products
     getRisingFastProducts(8),
     getRecentlyHotProducts(8),
+    getMostRecentTrendingProducts(4), // Show 4 products
   ])
   
   // Handle search
@@ -293,6 +296,35 @@ export default async function Home({
               </section>
             )}
 
+            {/* Section 2.5: Most Recent Trending Products */}
+            {mostRecent.length > 0 && (
+              <section className="mb-20">
+                <div className="mb-8">
+                  <div>
+                    <h2 className="text-3xl md:text-4xl font-bold text-[#2D2D2D] mb-3 tracking-tight">
+                      Most Recent Trending Products
+                    </h2>
+                    <p className="text-sm text-[#6b6b6b] tracking-wide">
+                      The latest products we've added to our trending collection.
+                    </p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+                  {mostRecent.map((product) => (
+                    <ProductCard key={product.id} product={product} />
+                  ))}
+                </div>
+                <div className="text-center">
+                  <Link
+                    href="/trending?filter=all"
+                    className="text-sm font-medium text-[#FF6B6B] hover:text-[#E07856] transition-colors"
+                  >
+                    View More →
+                  </Link>
+                </div>
+              </section>
+            )}
+
             {/* Section 3: Recently Hot */}
             {recentlyHot.length > 0 && (
               <section className="mb-20">
@@ -367,7 +399,7 @@ export default async function Home({
         )}
 
         {/* Empty State */}
-        {!searchQuery && trendingNow.length === 0 && risingFast.length === 0 && recentlyHot.length === 0 && (
+        {!searchQuery && trendingNow.length === 0 && risingFast.length === 0 && recentlyHot.length === 0 && mostRecent.length === 0 && (
           <div className="text-center py-20">
             <p className="text-gray-500 text-lg mb-4">No trending products yet.</p>
             <p className="text-gray-400 mb-4">Products will appear here once they're flagged and published.</p>

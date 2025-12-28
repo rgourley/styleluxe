@@ -26,9 +26,50 @@ export async function PATCH(
       )
     }
 
+    // Check if content already exists
+    const existingContent = await prisma.productContent.findUnique({
+      where: { productId: id },
+      select: { slug: true },
+    })
+
+    // Generate unique slug if needed
+    const { generateSlug, generateUniqueSlug } = await import('@/lib/utils')
+    let finalSlug: string | undefined = undefined
+    
+    if (body.slug !== undefined) {
+      // Slug is being provided/updated
+      finalSlug = body.slug
+      // Check if it's unique (unless it's the current slug for this product)
+      if (!existingContent || existingContent.slug !== finalSlug) {
+        const existingWithSlug = await prisma.productContent.findUnique({
+          where: { slug: finalSlug },
+          select: { productId: true },
+        })
+        if (existingWithSlug && existingWithSlug.productId !== id && finalSlug) {
+          // Slug exists for another product, make it unique
+          finalSlug = await generateUniqueSlug(finalSlug, id)
+        }
+      }
+    } else if (!existingContent) {
+      // No slug provided and no existing content - generate one for creation
+      const baseSlug = generateSlug(product.name)
+      finalSlug = await generateUniqueSlug(baseSlug, id)
+    } else {
+      // If existingContent exists and no slug provided, use existing slug
+      finalSlug = existingContent.slug
+    }
+    
+    // Ensure finalSlug is defined before proceeding
+    if (!finalSlug) {
+      return NextResponse.json(
+        { success: false, message: 'Slug is required' },
+        { status: 400 }
+      )
+    }
+
     // Update specific fields (allows partial updates)
     const updateData: any = {}
-    if (body.slug !== undefined) updateData.slug = body.slug // Allow slug updates
+    if (finalSlug !== undefined) updateData.slug = finalSlug // Only update slug if we have a finalSlug
     if (body.previousSlugs !== undefined) updateData.previousSlugs = body.previousSlugs // Allow previousSlugs updates
     if (body.hook !== undefined) updateData.hook = body.hook
     if (body.whyTrending !== undefined) updateData.whyTrending = body.whyTrending
@@ -55,7 +96,7 @@ export async function PATCH(
       },
       create: {
         productId: id,
-        slug: body.slug || product.name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, ''),
+        slug: finalSlug,
         previousSlugs: body.previousSlugs || null,
         hook: body.hook || null,
         whyTrending: body.whyTrending || null,
@@ -124,6 +165,24 @@ export async function PUT(
       )
     }
 
+    // Generate unique slug if creating new content
+    const { generateSlug, generateUniqueSlug } = await import('@/lib/utils')
+    let finalSlug = body.slug
+    if (!finalSlug) {
+      const baseSlug = generateSlug(product.name)
+      finalSlug = await generateUniqueSlug(baseSlug, id)
+    } else {
+      // If slug is provided, still check it's unique (unless it's for this product)
+      const existing = await prisma.productContent.findUnique({
+        where: { slug: finalSlug },
+        select: { productId: true },
+      })
+      if (existing && existing.productId !== id) {
+        // Slug exists for another product, make it unique
+        finalSlug = await generateUniqueSlug(finalSlug, id)
+      }
+    }
+
     // Update or create content (full replace)
     const content = await prisma.productContent.upsert({
       where: { productId: id },
@@ -147,7 +206,7 @@ export async function PUT(
       },
       create: {
         productId: id,
-        slug: body.slug || product.name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, ''),
+        slug: finalSlug,
         hook: body.hook,
         whyTrending: body.whyTrending,
         whatItDoes: body.whatItDoes,

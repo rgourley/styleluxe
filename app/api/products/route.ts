@@ -131,7 +131,9 @@ export async function GET(request: Request) {
       
       return {
         ...product,
-        trendScore: totalScore,
+        // Don't overwrite trendScore - use the database value (currentScore is the authoritative score)
+        // Only add the recalculated score as metadata for reference
+        _recalculatedScore: totalScore,
         _scoreBreakdown: {
           amazon: amazonScore,
           reddit: redditScore,

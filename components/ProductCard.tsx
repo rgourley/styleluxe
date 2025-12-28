@@ -54,9 +54,19 @@ export default function ProductCard({ product, priority = false }: { product: an
   const userQuote = getUserQuote()
   
   const [imageSrc, setImageSrc] = useState(() => {
-    if (product.imageUrl && !product.imageUrl.endsWith('.gif') && product.imageUrl.startsWith('http')) {
-      return product.imageUrl
+    if (product.imageUrl) {
+      // If it's an R2 URL (contains r2.dev or r2.cloudflarestorage.com), use it directly
+      if (product.imageUrl.includes('r2.dev') || product.imageUrl.includes('r2.cloudflarestorage.com')) {
+        return product.imageUrl
+      }
+      // If it's not an Amazon URL (e.g., base64, other CDN), use it
+      if (!product.imageUrl.includes('amazon') && !product.imageUrl.includes('amazonaws') && product.imageUrl.startsWith('http')) {
+        return product.imageUrl
+      }
+      // If it's an Amazon URL, we'll try to fall back to Amazon image URL generator
+      // but Amazon may block it, so we'll show a placeholder if it fails
     }
+    // Fallback to Amazon image URL generator (may be blocked)
     if (product.amazonUrl) {
       return getAmazonImageUrl(product.amazonUrl) || null
     }
@@ -64,11 +74,18 @@ export default function ProductCard({ product, priority = false }: { product: an
   })
 
   const handleImageError = () => {
-    if (product.amazonUrl && imageSrc !== getAmazonImageUrl(product.amazonUrl)) {
+    // If image failed to load, try Amazon image URL generator as fallback
+    if (product.amazonUrl) {
       const amazonImage = getAmazonImageUrl(product.amazonUrl)
-      if (amazonImage) {
+      if (amazonImage && imageSrc !== amazonImage) {
         setImageSrc(amazonImage)
+      } else {
+        // If Amazon image also fails, set to null to show placeholder
+        setImageSrc(null)
       }
+    } else {
+      // No fallback available, show placeholder
+      setImageSrc(null)
     }
   }
 

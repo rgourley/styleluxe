@@ -8,6 +8,7 @@ import { prisma } from './prisma'
 import { searchRedditForQuotes } from './search-reddit-quotes'
 import { searchAmazonProduct } from './amazon-search'
 import { formatReviewQuotes, formatQuotesAsMarkdown } from './format-review-quotes'
+import { generateSlug, generateUniqueSlug } from './utils'
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -49,18 +50,7 @@ interface ProductData {
   }> | null
 }
 
-/**
- * Generate a URL slug from product name
- */
-function generateSlug(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .trim()
-    .substring(0, 100)
-}
+// generateSlug and generateUniqueSlug are now imported from ./utils
 
 /**
  * Build context about the product from trend signals and reviews
@@ -707,14 +697,22 @@ export async function generateAndSaveContent(productId: string): Promise<void> {
     })),
   }, redditQuotes, editorNotes, googleTrendsData)
 
-  // Generate slug
-  const slug = generateSlug(productWithRelations.name)
+  // Generate unique slug
+  const baseSlug = generateSlug(productWithRelations.name)
+  const slug = await generateUniqueSlug(baseSlug, productWithRelations.id)
+
+  // Check existing content to avoid updating slug unnecessarily
+  const existingContent = await prisma.productContent.findUnique({
+    where: { productId: productWithRelations.id },
+    select: { slug: true },
+  })
 
   // Save to database
   await prisma.productContent.upsert({
     where: { productId: productWithRelations.id },
     update: {
-      slug,
+      // Only update slug if it's different from existing
+      ...(existingContent?.slug !== slug ? { slug } : {}),
       hook: content.hook,
       whyTrending: content.whyTrending,
       whatItDoes: content.whatItDoes,

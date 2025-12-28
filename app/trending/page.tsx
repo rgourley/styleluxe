@@ -18,7 +18,7 @@ export const metadata = {
   },
 }
 
-async function getFilteredProducts(filter: string, category?: string | null, searchQuery?: string | null, page: number = 1, pageSize: number = 24) {
+async function getFilteredProducts(filter: string, category?: string | null, searchQuery?: string | null, page: number = 1, pageSize: number = 48) {
   const cachedFn = unstable_cache(
     async () => {
       const skip = (page - 1) * pageSize
@@ -117,7 +117,8 @@ async function getFilteredProducts(filter: string, category?: string | null, sea
           AND: baseConditions,
         }
 
-        const products = await Promise.race([
+        // Fetch one extra product to check if there are more pages
+        const productsWithExtra = await Promise.race([
           prisma.product.findMany({
             where,
             include: {
@@ -143,7 +144,7 @@ async function getFilteredProducts(filter: string, category?: string | null, sea
                   { trendScore: 'desc' }, // Fallback to trendScore if currentScore is null
                 ],
             skip: skip,
-            take: pageSize,
+            take: pageSize + 1, // Fetch one extra to check for next page
           }),
           new Promise<any[]>((resolve) => 
             setTimeout(() => {
@@ -153,8 +154,14 @@ async function getFilteredProducts(filter: string, category?: string | null, sea
           )
         ])
 
-        console.log(`✅ Found ${products.length} products for filter "${filter}"`)
-        return products
+        // Check if there are more products (we fetched pageSize + 1)
+        // productsWithExtra is an array from the Promise.race
+        const productsArray = Array.isArray(productsWithExtra) ? productsWithExtra : []
+        const hasMore = productsArray.length > pageSize
+        const products = productsArray.slice(0, pageSize) // Return only the requested amount
+        
+        console.log(`✅ Found ${products.length} products for filter "${filter}"${hasMore ? ' (more available)' : ''}`)
+        return { products, hasMore }
       } catch (error) {
         console.error(`❌ Database error in getFilteredProducts (filter: ${filter}):`, error)
         // Log the error details for debugging
@@ -162,7 +169,7 @@ async function getFilteredProducts(filter: string, category?: string | null, sea
           console.error('Error message:', error.message)
           console.error('Error stack:', error.stack)
         }
-        return []
+        return { products: [], hasMore: false }
       }
     },
     [`trending-${filter}-${category || 'all'}-${searchQuery || 'none'}-page-${page}-v2`], // Include page in cache key
@@ -185,13 +192,12 @@ export default async function TrendingPage({
   const category = params.category
   const searchQuery = params.q
   const page = parseInt(params.page || '1', 10)
-  const pageSize = 24
+  const pageSize = 48 // Increased from 24 to show more products per page
 
-  const products = await getFilteredProducts(activeFilter, category, searchQuery, page, pageSize)
-  
-  // Check if there are more products (fetch one extra to see if there's a next page)
-  const nextPageProducts = await getFilteredProducts(activeFilter, category, searchQuery, page + 1, 1)
-  const hasMore = nextPageProducts.length > 0
+  const result = await getFilteredProducts(activeFilter, category, searchQuery, page, pageSize)
+  // Handle both array and object return types
+  const products = Array.isArray(result) ? result : (result?.products || [])
+  const hasMore = Array.isArray(result) ? false : (result?.hasMore || false)
 
   const filters = [
     { id: 'all', label: 'All', description: 'All products' },
@@ -224,7 +230,7 @@ export default async function TrendingPage({
               return (
                 <Link
                   key={filter.id}
-                  href={`/trending?filter=${filter.id}${category ? `&category=${encodeURIComponent(category)}` : ''}${searchQuery ? `&q=${encodeURIComponent(searchQuery)}` : ''}`}
+                  href={`/trending?filter=${filter.id}${category ? `&category=${encodeURIComponent(category)}` : ''}${searchQuery ? `&q=${encodeURIComponent(searchQuery)}` : ''}&page=1`}
                   className={`
                     px-4 py-2 text-sm font-medium transition-colors border-b-2
                     ${isActive

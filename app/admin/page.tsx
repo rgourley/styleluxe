@@ -21,6 +21,8 @@ interface Product {
   brand: string | null
   price: number | null
   trendScore: number
+  currentScore: number | null
+  baseScore: number | null
   status: 'FLAGGED' | 'DRAFT' | 'PUBLISHED'
   imageUrl: string | null
   amazonUrl: string | null
@@ -1349,7 +1351,10 @@ function AdminDashboard() {
                             </p>
                           )}
                           <div className="flex items-center gap-4 text-sm text-gray-500 mb-2">
-                            <span>Trend Score: <strong className="text-gray-900">{product.trendScore.toFixed(0)}</strong></span>
+                            <span>Trend Score: <strong className="text-gray-900">{(product.currentScore ?? product.trendScore ?? 0).toFixed(0)}</strong></span>
+                            {product.currentScore !== null && product.currentScore !== product.trendScore && (
+                              <span className="text-xs text-gray-400">(base: {product.trendScore?.toFixed(0) ?? 'N/A'})</span>
+                            )}
                             {product.price && (
                               <span>Price: <strong className="text-gray-900">${product.price.toFixed(2)}</strong></span>
                             )}
@@ -1575,7 +1580,7 @@ function AdminDashboard() {
                             <p className="font-medium text-gray-900">{product.name}</p>
                             <p className="text-sm text-gray-500">
                               {product.brand && `${product.brand} • `}
-                              Status: {product.status} • Score: {product.trendScore}
+                              Status: {product.status} • Score: {product.currentScore ?? product.trendScore ?? 0}
                               {product.content?.slug && ' • Has content'}
                             </p>
                           </div>

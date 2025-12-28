@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidatePath, revalidateTag } from 'next/cache'
 
 // Force dynamic rendering to prevent build-time data collection
 export const dynamic = 'force-dynamic'
@@ -89,6 +90,19 @@ export async function POST(
           imageUrl: finalImageUrl || product.imageUrl,
         },
       })
+      
+      // Invalidate cache when product is updated
+      revalidatePath('/', 'layout')
+      revalidatePath('/trending', 'page')
+      
+      // Invalidate product page if it has content
+      const updatedProduct = await prisma.product.findUnique({
+        where: { id: product.id },
+        include: { content: { select: { slug: true } } }
+      })
+      if (updatedProduct?.content?.slug) {
+        revalidatePath(`/products/${updatedProduct.content.slug}`)
+      }
     }
 
     // Store or update metadata

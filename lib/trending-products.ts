@@ -1,6 +1,6 @@
 import { prisma } from './prisma'
 import { calculateCurrentScore, calculateDaysTrending, updatePeakScore } from './age-decay'
-import { unstable_cache } from 'next/cache'
+import { unstable_cache, revalidateTag } from 'next/cache'
 import { ensureSchemaSynced } from './auto-sync-schema'
 
 /**
@@ -115,7 +115,7 @@ export async function getTrendingNowHomepage(limit: number = 8) {
     },
     ['trending-now-homepage-v2'],
     {
-      revalidate: 60,
+      revalidate: 10, // Reduced from 60 to 10 seconds for faster updates
       tags: ['products', 'trending'],
     }
   )
@@ -382,7 +382,7 @@ export async function getAboutToExplodeProducts(limit: number = 6) {
     },
     ['about-to-explode-products'],
     {
-      revalidate: 60,
+      revalidate: 10, // Reduced from 60 to 10 seconds for faster updates
       tags: ['products', 'rising'],
     }
   )
@@ -497,7 +497,7 @@ export async function getRecentlyHotProducts(limit: number = 6) {
     },
     ['recently-hot-products'],
     {
-      revalidate: 60,
+      revalidate: 10, // Reduced from 60 to 10 seconds for faster updates
       tags: ['products', 'recent'],
     }
   )
@@ -670,6 +670,7 @@ export async function recalculateAllScores() {
         peakScore: true,
         onMoversShakers: true,
         lastSeenOnMoversShakers: true,
+        createdAt: true, // Include createdAt for trending calculation
         // Note: pageViews and clicks are not selected here to avoid errors if columns don't exist
         // They will be null in calculateCurrentScore calls
   },
@@ -691,7 +692,8 @@ export async function recalculateAllScores() {
           product.pageViews,
           // @ts-ignore
           product.clicks,
-          droppedOffMS
+          droppedOffMS,
+          product.createdAt || product.firstDetected // Use createdAt for trending calculation, fallback to firstDetected
         )
         const newPeakScore = updatePeakScore(result.currentScore, product.peakScore)
 
@@ -704,6 +706,9 @@ export async function recalculateAllScores() {
             lastUpdated: new Date(),
           },
         })
+        
+        // Cache invalidation is handled via API endpoint in scripts
+        // revalidateTag requires 2 args in Next.js 16, so we skip it here
 
         updated++
   } catch (error) {
@@ -782,6 +787,73 @@ export async function getPeakViralProducts(limit: number = 8) {
     {
       revalidate: 60,
       tags: ['products', 'peak-viral'],
+    }
+  )()
+}
+
+/**
+ * Get most recent trending products - products that were most recently published
+ * Ordered by publishedAt date (most recent first)
+ * Cached for 60 seconds
+ */
+export async function getMostRecentTrendingProducts(limit: number = 4) {
+  return unstable_cache(
+    async () => {
+      if (!process.env.DATABASE_URL) {
+        return []
+      }
+
+      try {
+        const products = await Promise.race([
+          prisma.product.findMany({
+            where: {
+              status: 'PUBLISHED',
+              content: {
+                isNot: null, // Must have content
+              },
+              publishedAt: {
+                not: null, // Must have been published
+              },
+              OR: [
+                { price: { gte: 5 } },
+                { price: null },
+              ],
+            },
+            include: {
+              trendSignals: {
+                orderBy: {
+                  detectedAt: 'desc',
+                },
+                take: 3,
+              },
+              reviews: {
+                take: 5,
+              },
+              content: true,
+            },
+            orderBy: {
+              publishedAt: 'desc', // Most recently published first
+            },
+            take: limit,
+          }),
+          new Promise<any[]>((resolve) => 
+            setTimeout(() => {
+              console.warn('⚠️  Database query timeout - returning empty array')
+              resolve([])
+            }, 3000)
+          )
+        ])
+
+        return products
+      } catch (error) {
+        console.error('❌ Database error in getMostRecentTrendingProducts:', error)
+        return []
+      }
+    },
+    ['most-recent-trending-products-v1'],
+    {
+      revalidate: 10, // 10 seconds for faster updates
+      tags: ['products', 'trending', 'new'],
     }
   )()
 }
@@ -942,9 +1014,9 @@ export async function getRisingFastProducts(limit: number = 8) {
         return []
       }
     },
-    ['rising-fast-products-v2'],
+    ['rising-fast-products-v3'], // Updated cache key to force refresh on live site
     {
-      revalidate: 60,
+      revalidate: 10, // Reduced from 60 to 10 seconds for faster cache updates
       tags: ['products', 'rising'],
     }
   )()
@@ -1194,6 +1266,8 @@ export async function setFirstDetected(productId: string, baseScore: number) {
         baseScore: true,
         onMoversShakers: true,
         lastSeenOnMoversShakers: true,
+        createdAt: true, // Include createdAt for trending calculation
+        peakScore: true, // Include peakScore for updatePeakScore
       },
     })
 
@@ -1216,7 +1290,8 @@ export async function setFirstDetected(productId: string, baseScore: number) {
         null,
         pageViews,
         clicks,
-        false // New products haven't dropped off M&S yet
+        false, // New products haven't dropped off M&S yet
+        product?.createdAt || new Date() // Use createdAt for trending calculation
       )
       
       await prisma.product.update({
@@ -1232,25 +1307,34 @@ export async function setFirstDetected(productId: string, baseScore: number) {
       })
     } else {
       // Update existing product's base score and recalculate
+      // If product was already on M&S and coming back, don't reset baseScore to 100
+      // Instead, only update if the new baseScore is higher (boost) or if it dropped off M&S
+      const currentBaseScore = product.baseScore || 0
+      const finalBaseScore = droppedOffMS ? baseScore : Math.max(currentBaseScore, baseScore)
+      
       const result = calculateCurrentScore(
-        baseScore, 
-        product.firstDetected,
+        finalBaseScore, 
+        product.firstDetected, // Keep original firstDetected date for M&S tracking
         pageViews,
         clicks,
-        droppedOffMS
+        droppedOffMS,
+        product?.createdAt || product.firstDetected // Use createdAt for trending calculation
       )
-      const newPeakScore = updatePeakScore(result.currentScore, product.baseScore || 0)
+      const newPeakScore = updatePeakScore(result.currentScore, finalBaseScore)
 
       await prisma.product.update({
         where: { id: productId },
         data: {
-          baseScore: baseScore,
+          baseScore: finalBaseScore,
           currentScore: result.currentScore,
           daysTrending: result.daysTrending,
           peakScore: newPeakScore,
           lastUpdated: new Date(),
         },
   })
+      
+      // Cache invalidation is handled via API endpoint in scripts
+      // revalidateTag requires 2 args in Next.js 16, so we skip it here
     }
   } catch (error) {
     console.error(`Error setting firstDetected for product ${productId}:`, error)

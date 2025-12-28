@@ -9,8 +9,17 @@ import { S3Client, PutObjectCommand, GetObjectCommand, HeadObjectCommand } from 
 // Extract endpoint (should be base URL without bucket name)
 const getEndpoint = () => {
   if (process.env.R2_ENDPOINT) {
-    // If endpoint includes /bucket-name, remove it (bucket name is separate)
-    const endpoint = process.env.R2_ENDPOINT.replace(/\/[^\/]+$/, '')
+    // R2_ENDPOINT should be the base endpoint URL (e.g., https://account-id.r2.cloudflarestorage.com)
+    // If it includes a path like /beautyfinder, remove it
+    let endpoint = process.env.R2_ENDPOINT.trim()
+    // Remove trailing slash
+    endpoint = endpoint.replace(/\/$/, '')
+    // If it has a path component (like /beautyfinder), remove it
+    // But keep the protocol and domain
+    const urlMatch = endpoint.match(/^(https?:\/\/[^\/]+)/)
+    if (urlMatch) {
+      return urlMatch[1]
+    }
     return endpoint
   }
   if (process.env.R2_ACCOUNT_ID) {
@@ -20,14 +29,22 @@ const getEndpoint = () => {
   return 'https://2c3e132667c33997783c82dc6453e902.r2.cloudflarestorage.com'
 }
 
-const r2Client = new S3Client({
-  region: 'auto',
-  endpoint: getEndpoint(),
-  credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID || '',
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || '',
-  },
-})
+// Lazy initialization of R2 client to ensure env vars are loaded
+let r2Client: S3Client | null = null
+
+function getR2Client(): S3Client {
+  if (!r2Client) {
+    r2Client = new S3Client({
+      region: 'auto',
+      endpoint: getEndpoint(),
+      credentials: {
+        accessKeyId: process.env.R2_ACCESS_KEY_ID || '',
+        secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || '',
+      },
+    })
+  }
+  return r2Client
+}
 
 // Bucket name (should be 'beautyfinder' based on your endpoint)
 const BUCKET_NAME = process.env.R2_BUCKET_NAME || 'beautyfinder'
@@ -48,6 +65,10 @@ export async function uploadImageToR2(
   if (!BUCKET_NAME) {
     throw new Error('R2_BUCKET_NAME environment variable is not set')
   }
+  
+  if (!process.env.R2_ACCESS_KEY_ID || !process.env.R2_SECRET_ACCESS_KEY) {
+    throw new Error('R2_ACCESS_KEY_ID or R2_SECRET_ACCESS_KEY environment variables are not set')
+  }
 
   try {
     const command = new PutObjectCommand({
@@ -59,7 +80,7 @@ export async function uploadImageToR2(
       // or use a custom domain with public access
     })
 
-    await r2Client.send(command)
+    await getR2Client().send(command)
 
     // Return public URL
     const publicUrl = R2_PUBLIC_URL
@@ -67,9 +88,16 @@ export async function uploadImageToR2(
       : `https://${BUCKET_NAME}.r2.cloudflarestorage.com/products/${fileName}`
 
     return publicUrl
-  } catch (error) {
-    console.error('Error uploading image to R2:', error)
-    throw error
+  } catch (error: any) {
+    const errorMessage = error.message || String(error)
+    const errorCode = error.Code || error.code || error.$metadata?.httpStatusCode
+    console.error(`Error uploading image to R2 (Bucket: ${BUCKET_NAME}, Key: products/${fileName}):`, {
+      message: errorMessage,
+      code: errorCode,
+      endpoint: getEndpoint(),
+      hasCredentials: !!(process.env.R2_ACCESS_KEY_ID && process.env.R2_SECRET_ACCESS_KEY),
+    })
+    throw new Error(`R2 upload failed: ${errorMessage} (Code: ${errorCode || 'unknown'})`)
   }
 }
 
@@ -79,31 +107,83 @@ export async function uploadImageToR2(
  * @param fileName - Unique filename for storage
  * @returns Public URL of the uploaded image in R2
  */
-export async function downloadAndUploadToR2(imageUrl: string, fileName: string): Promise<string> {
-  try {
-    // Download the image
-    const response = await fetch(imageUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Referer': 'https://www.amazon.com/',
-      },
-    })
-
-    if (!response.ok) {
-      throw new Error(`Failed to download image: ${response.status} ${response.statusText}`)
-    }
-
-    // Get content type from response or infer from URL
-    const contentType = response.headers.get('content-type') || 'image/jpeg'
-    const arrayBuffer = await response.arrayBuffer()
-    const buffer = Buffer.from(arrayBuffer)
-
-    // Upload to R2
-    return await uploadImageToR2(buffer, fileName, contentType)
-  } catch (error) {
-    console.error(`Error downloading and uploading image from ${imageUrl}:`, error)
-    throw error
+export async function downloadAndUploadToR2(imageUrl: string, fileName: string, retries: number = 3): Promise<string> {
+  let lastError: Error | null = null
+  
+  // Fix protocol-relative URLs (starting with //)
+  let normalizedUrl = imageUrl
+  if (normalizedUrl.startsWith('//')) {
+    normalizedUrl = 'https:' + normalizedUrl
   }
+  // Ensure URL is absolute
+  if (!normalizedUrl.startsWith('http://') && !normalizedUrl.startsWith('https://')) {
+    throw new Error(`Invalid image URL format: ${imageUrl}`)
+  }
+  
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      console.log(`  Attempt ${attempt}/${retries}: Downloading ${normalizedUrl.substring(0, 80)}...`)
+      
+      // Download the image with retry logic
+      const response = await fetch(normalizedUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Referer': 'https://www.amazon.com/',
+          'Accept': 'image/webp,image/apng,image/*,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.9',
+        },
+        // Add timeout
+        signal: AbortSignal.timeout(30000), // 30 second timeout
+      })
+
+      if (!response.ok) {
+        // If Amazon blocked the request (403), provide helpful error message
+        if (response.status === 403 && imageUrl.includes('amazon')) {
+          throw new Error(`Amazon blocked the image request (403 Forbidden). The image may be protected or require authentication.`)
+        }
+        const errorText = await response.text().catch(() => '')
+        throw new Error(`HTTP ${response.status} ${response.statusText}: ${errorText.substring(0, 100)}`)
+      }
+
+      // Get content type from response or infer from URL
+      const contentType = response.headers.get('content-type') || 'image/jpeg'
+      const contentLength = response.headers.get('content-length')
+      
+      if (contentLength && parseInt(contentLength) === 0) {
+        throw new Error('Image file is empty (0 bytes)')
+      }
+      
+      const arrayBuffer = await response.arrayBuffer()
+      const buffer = Buffer.from(arrayBuffer)
+      
+      if (buffer.length === 0) {
+        throw new Error('Downloaded image buffer is empty')
+      }
+
+      console.log(`  ✓ Downloaded ${buffer.length} bytes, uploading to R2...`)
+      
+      // Upload to R2
+      const r2Url = await uploadImageToR2(buffer, fileName, contentType)
+      console.log(`  ✓ Uploaded to R2: ${r2Url}`)
+      return r2Url
+    } catch (error: any) {
+      lastError = error instanceof Error ? error : new Error(String(error))
+      console.error(`  ✗ Attempt ${attempt} failed:`, lastError.message)
+      
+      // If it's a network error or timeout, wait before retrying
+      if (attempt < retries && (error.name === 'AbortError' || error.message.includes('fetch'))) {
+        const delay = attempt * 2000 // 2s, 4s, 6s
+        console.log(`  ⏳ Waiting ${delay}ms before retry...`)
+        await new Promise(resolve => setTimeout(resolve, delay))
+      } else if (attempt < retries) {
+        // For other errors, shorter delay
+        await new Promise(resolve => setTimeout(resolve, 1000))
+      }
+    }
+  }
+  
+  // All retries failed
+  throw new Error(`Failed to download/upload image after ${retries} attempts: ${lastError?.message || 'Unknown error'}`)
 }
 
 /**
@@ -122,7 +202,7 @@ export async function imageExistsInR2(fileName: string): Promise<boolean> {
       Key: `products/${fileName}`,
     })
 
-    await r2Client.send(command)
+    await getR2Client().send(command)
     return true
   } catch (error: any) {
     if (error.name === 'NotFound' || error.$metadata?.httpStatusCode === 404) {
