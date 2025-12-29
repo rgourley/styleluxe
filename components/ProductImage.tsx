@@ -14,13 +14,28 @@ interface ProductImageProps {
 export default function ProductImage({ imageUrl, amazonUrl, productName, category, constrainSize = false }: ProductImageProps) {
   // Calculate image URL deterministically using useMemo
   const initialImageUrl = useMemo(() => {
-    // Priority: 1) product.imageUrl (if valid), 2) Amazon image from URL
-    if (imageUrl && !imageUrl.endsWith('.gif') && imageUrl.startsWith('http')) {
+    // Priority: 1) R2 URLs, 2) product.imageUrl (if not Amazon), 3) Amazon image from URL (fallback only)
+    
+    // Check if imageUrl is an R2 URL (preferred)
+    if (imageUrl && (imageUrl.includes('r2.dev') || imageUrl.includes('r2.cloudflarestorage.com'))) {
       return imageUrl
     }
-    if (amazonUrl) {
+    
+    // Check if imageUrl is NOT an Amazon URL and is valid
+    if (imageUrl && 
+        !imageUrl.endsWith('.gif') && 
+        imageUrl.startsWith('http') &&
+        !imageUrl.includes('amazon.com') &&
+        !imageUrl.includes('amazonaws')) {
+      return imageUrl
+    }
+    
+    // Only use Amazon URL as last resort if no R2 URL exists
+    // (This should rarely happen if images are properly migrated)
+    if (amazonUrl && (!imageUrl || imageUrl.includes('amazon'))) {
       return getAmazonImageUrl(amazonUrl)
     }
+    
     return null
   }, [imageUrl, amazonUrl])
   

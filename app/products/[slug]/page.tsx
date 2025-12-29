@@ -29,10 +29,17 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.thestyleluxe.com'
   const productUrl = `${siteUrl}/products/${slug}`
   
-  // Get product image URL (prefer product image, fallback to Amazon image)
+  // Get product image URL (prefer R2 URLs, avoid Amazon URLs)
   let imageUrl = product.imageUrl
+  // Only use product.imageUrl if it's an R2 URL or not an Amazon URL
+  if (imageUrl && (imageUrl.includes('amazon.com') || imageUrl.includes('amazonaws'))) {
+    // If imageUrl is an Amazon URL, don't use it (it might be blocked)
+    // Try to get from Amazon as fallback only if no R2 URL exists
+    imageUrl = null
+  }
+  // Only fallback to Amazon image if we don't have a valid imageUrl
   if (!imageUrl && product.amazonUrl) {
-    // Try to get Amazon image from URL
+    // Try to get Amazon image from URL (last resort)
     const asinMatch = product.amazonUrl.match(/\/dp\/([A-Z0-9]{10})/)
     if (asinMatch) {
       imageUrl = `https://images-na.ssl-images-amazon.com/images/P/${asinMatch[1]}.01._SCLZZZZZZZ_.jpg`
@@ -374,8 +381,14 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const formattedPublishedDate = formatDate(publishedDateObj)
   const formattedUpdatedDate = updatedDateObj ? formatDate(updatedDateObj) : ''
   
-  // Get product image for structured data
+  // Get product image for structured data (prefer R2 URLs, avoid Amazon URLs)
   let imageUrl = product.imageUrl
+  // Only use product.imageUrl if it's an R2 URL or not an Amazon URL
+  if (imageUrl && (imageUrl.includes('amazon.com') || imageUrl.includes('amazonaws'))) {
+    // If imageUrl is an Amazon URL, don't use it (it might be blocked)
+    imageUrl = null
+  }
+  // Only fallback to Amazon image if we don't have a valid imageUrl
   if (!imageUrl && product.amazonUrl) {
     const asinMatch = product.amazonUrl.match(/\/dp\/([A-Z0-9]{10})/)
     if (asinMatch) {
