@@ -43,10 +43,19 @@ export async function ensureSchemaSynced(): Promise<void> {
             "baseScore" DOUBLE PRECISION,
             "recordedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
             CONSTRAINT "ProductScoreHistory_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE CASCADE ON UPDATE CASCADE
-          );
-          CREATE INDEX IF NOT EXISTS "ProductScoreHistory_productId_idx" ON "ProductScoreHistory"("productId");
-          CREATE INDEX IF NOT EXISTS "ProductScoreHistory_recordedAt_idx" ON "ProductScoreHistory"("recordedAt");
-          CREATE INDEX IF NOT EXISTS "ProductScoreHistory_productId_recordedAt_idx" ON "ProductScoreHistory"("productId", "recordedAt");`,
+          )`,
+        },
+        {
+          name: 'ProductScoreHistory productId index',
+          sql: `CREATE INDEX IF NOT EXISTS "ProductScoreHistory_productId_idx" ON "ProductScoreHistory"("productId")`,
+        },
+        {
+          name: 'ProductScoreHistory recordedAt index',
+          sql: `CREATE INDEX IF NOT EXISTS "ProductScoreHistory_recordedAt_idx" ON "ProductScoreHistory"("recordedAt")`,
+        },
+        {
+          name: 'ProductScoreHistory composite index',
+          sql: `CREATE INDEX IF NOT EXISTS "ProductScoreHistory_productId_recordedAt_idx" ON "ProductScoreHistory"("productId", "recordedAt")`,
         },
       ]
       
