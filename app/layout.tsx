@@ -1,14 +1,23 @@
 import type { Metadata } from "next";
-import { Instrument_Sans, Atkinson_Hyperlegible, Outfit } from "next/font/google";
+import { Instrument_Sans, Atkinson_Hyperlegible, Outfit, Yellowtail } from "next/font/google";
 import "./globals.css";
 import { Providers } from '@/components/providers'
 import GoogleAnalytics from '@/components/GoogleAnalytics'
 
-// Logo font - Instrument Sans with multiple weights
+// Logo font - Yellowtail
+const yellowtail = Yellowtail({
+  variable: "--font-yellowtail",
+  subsets: ["latin"],
+  weight: ["400"],
+  display: 'swap',
+  preload: true,
+});
+
+// Logo font - Instrument Sans with multiple weights (kept for other uses)
 const instrumentSans = Instrument_Sans({
   variable: "--font-instrument",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"], // Regular (400) for "Beauty", Medium (500) for "Finder"
+  weight: ["400", "500", "600", "700"],
   display: 'swap',
   preload: true,
 });
@@ -44,7 +53,7 @@ export default function RootLayout({
   return (
     <html lang="en" data-scroll-behavior="smooth">
       <body
-        className={`${instrumentSans.variable} ${outfit.variable} ${atkinsonHyperlegible.variable} antialiased`}
+        className={`${yellowtail.variable} ${instrumentSans.variable} ${outfit.variable} ${atkinsonHyperlegible.variable} antialiased`}
       >
         <GoogleAnalytics />
         <Providers>
