@@ -2015,40 +2015,63 @@ export default function EditProductPage() {
           {/* Image Gallery */}
           {productImages.length > 0 && (
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3 mt-3">
-              {productImages.map((imageUrl, index) => (
-                <div key={index} className="relative group border border-gray-200 rounded overflow-hidden">
-                  <img
-                    src={imageUrl}
-                    alt={`Product image ${index + 1}`}
-                    className="w-full h-24 object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none'
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity flex items-center justify-center gap-1">
-                    {index === 0 && (
-                      <span className="text-xs bg-green-500 text-white px-1 py-0.5 rounded absolute top-1 left-1">
-                        Primary
-                      </span>
+              {productImages.map((imageUrl, index) => {
+                const isPlaceholder = isPlaceholderImage(imageUrl)
+                return (
+                  <div key={index} className="relative group border border-gray-200 rounded overflow-hidden">
+                    {isPlaceholder && (
+                      <div className="absolute inset-0 bg-amber-50 border-2 border-amber-300 z-10 flex items-center justify-center">
+                        <p className="text-xs text-amber-800 text-center px-1">
+                          ⚠️ Placeholder
+                        </p>
+                      </div>
                     )}
-                    <button
-                      onClick={() => handleSetPrimaryImage(index)}
-                      disabled={index === 0}
-                      className="text-white bg-blue-500 hover:bg-blue-600 px-1.5 py-0.5 rounded text-xs disabled:opacity-50 disabled:cursor-not-allowed"
-                      title="Set as primary"
-                    >
-                      ⭐
-                    </button>
-                    <button
-                      onClick={() => handleRemoveImage(index)}
-                      className="text-white bg-red-500 hover:bg-red-600 px-1.5 py-0.5 rounded text-xs"
-                      title="Remove image"
-                    >
-                      ✕
-                    </button>
+                    <img
+                      src={imageUrl}
+                      alt={`Product image ${index + 1}`}
+                      className={`w-full h-24 object-cover ${isPlaceholder ? 'opacity-30' : ''}`}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none'
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity flex items-center justify-center gap-1">
+                      {index === 0 && (
+                        <span className="text-xs bg-green-500 text-white px-1 py-0.5 rounded absolute top-1 left-1">
+                          Primary
+                        </span>
+                      )}
+                      {isPlaceholder && product.amazonUrl && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleFetchImageFromAmazon()
+                          }}
+                          disabled={scrapingAmazon}
+                          className="text-white bg-blue-500 hover:bg-blue-600 px-1 py-0.5 rounded text-xs disabled:opacity-50"
+                          title="Replace with real image from Amazon"
+                        >
+                          🔄
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleSetPrimaryImage(index)}
+                        disabled={index === 0}
+                        className="text-white bg-blue-500 hover:bg-blue-600 px-1.5 py-0.5 rounded text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Set as primary"
+                      >
+                        ⭐
+                      </button>
+                      <button
+                        onClick={() => handleRemoveImage(index)}
+                        className="text-white bg-red-500 hover:bg-red-600 px-1.5 py-0.5 rounded text-xs"
+                        title="Remove image"
+                      >
+                        ✕
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
 
