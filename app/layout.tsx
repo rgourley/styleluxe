@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
-import { Instrument_Sans, Atkinson_Hyperlegible, Outfit, Yellowtail } from "next/font/google";
+import { Instrument_Sans, Atkinson_Hyperlegible, Outfit, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { Providers } from '@/components/providers'
 import GoogleAnalytics from '@/components/GoogleAnalytics'
 
-// Logo font - Yellowtail
-const yellowtail = Yellowtail({
-  variable: "--font-yellowtail",
+// Logo font - Playfair Display
+const playfairDisplay = Playfair_Display({
+  variable: "--font-playfair",
   subsets: ["latin"],
-  weight: ["400"],
+  weight: ["400", "500", "600", "700"],
   display: 'swap',
   preload: true,
 });
@@ -53,7 +53,7 @@ export default function RootLayout({
   return (
     <html lang="en" data-scroll-behavior="smooth">
       <body
-        className={`${yellowtail.variable} ${instrumentSans.variable} ${outfit.variable} ${atkinsonHyperlegible.variable} antialiased`}
+        className={`${playfairDisplay.variable} ${instrumentSans.variable} ${outfit.variable} ${atkinsonHyperlegible.variable} antialiased`}
       >
         <GoogleAnalytics />
         <Providers>

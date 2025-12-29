@@ -106,17 +106,14 @@ export default function Header() {
             flexShrink: 0,
           }}>
             <span style={{
-              fontFamily: 'var(--font-yellowtail), cursive',
+              fontFamily: 'var(--font-playfair), serif',
               fontWeight: '400',
-              color: '#2D2D2D',
+              color: '#C9A9A6',
             }}>Beauty</span>
             <span style={{
-              fontFamily: 'var(--font-yellowtail), cursive',
+              fontFamily: 'var(--font-playfair), serif',
               fontWeight: '400',
-              background: 'linear-gradient(135deg, #FF6B6B, #E07856)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
+              color: '#C9A9A6',
             }}>Finder</span>
           </Link>
 
