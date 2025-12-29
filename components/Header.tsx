@@ -5,15 +5,16 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { getCategorySlug, categoryMetadata } from '@/lib/category-metadata'
 
-const topLevelCategories = ['Skincare', 'Makeup', 'Hair Care']
-const moreCategories = [
+const allCategories = [
+  'Skincare',
+  'Makeup',
+  'Hair Care',
   'Body Care',
   'Fragrance',
   'Tools & Accessories',
   'Men\'s Grooming',
   'Other'
 ]
-const allCategories = [...topLevelCategories, ...moreCategories]
 
 export default function Header() {
   const router = useRouter()
@@ -120,30 +121,7 @@ export default function Header() {
 
           {/* Navigation - Desktop */}
           <nav className="hidden md:flex items-center flex-grow justify-end" style={{ gap: '24px' }}>
-            {/* Top-Level Category Links */}
-            {topLevelCategories.map((category) => {
-              const categorySlug = getCategorySlug(category)
-              const categoryUrl = categorySlug ? `/trending/${categorySlug}` : `/trending?category=${encodeURIComponent(category)}`
-              return (
-                <Link
-                  key={category}
-                  href={categoryUrl}
-                  style={{
-                    fontSize: '15px',
-                    fontWeight: '500',
-                    color: '#2D2D2D',
-                    textDecoration: 'none',
-                    transition: 'color 0.2s',
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.color = '#FF6B6B'}
-                  onMouseLeave={(e) => e.currentTarget.style.color = '#2D2D2D'}
-                >
-                  {category}
-                </Link>
-              )
-            })}
-
-            {/* More Categories Dropdown */}
+            {/* Categories Dropdown */}
             <div 
               style={{ position: 'relative' }} 
               onMouseEnter={handleMouseEnter}
@@ -162,7 +140,7 @@ export default function Header() {
                 gap: '6px',
                 transition: 'color 0.2s',
               }}>
-                More Categories <span style={{ fontSize: '10px' }}>▼</span>
+                Categories <span style={{ fontSize: '10px' }}>▼</span>
               </button>
               
               {/* Dropdown Menu */}
@@ -170,7 +148,7 @@ export default function Header() {
                 <div style={{
                   position: 'absolute',
                   top: '100%',
-                  right: '0',
+                  left: '-16px',
                   marginTop: '8px',
                   backgroundColor: '#FFFFFF',
                   border: '1px solid #F0F0F0',
@@ -180,7 +158,7 @@ export default function Header() {
                   minWidth: '200px',
                   zIndex: 1000,
                 }}>
-                  {moreCategories.map((category) => (
+                  {allCategories.map((category) => (
                     <button
                       key={category}
                       onClick={() => handleCategoryClick(category)}
