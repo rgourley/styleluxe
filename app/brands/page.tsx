@@ -85,25 +85,7 @@ export default async function BrandsPage() {
                 <Link
                   key={brand.slug}
                   href={`/brands/${brand.slug}`}
-                  style={{
-                    display: 'block',
-                    backgroundColor: '#FFFFFF',
-                    border: '1px solid #F0F0F0',
-                    borderRadius: '1rem',
-                    padding: '1.5rem',
-                    textDecoration: 'none',
-                    transition: 'all 0.3s ease',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#FFF5F7'
-                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)'
-                    e.currentTarget.style.transform = 'translateY(-2px)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = '#FFFFFF'
-                    e.currentTarget.style.boxShadow = 'none'
-                    e.currentTarget.style.transform = 'translateY(0)'
-                  }}
+                  className="block bg-white border border-[#F0F0F0] rounded-2xl p-6 no-underline transition-all duration-300 hover:bg-[#FFF5F7] hover:shadow-lg hover:-translate-y-0.5"
                 >
                   <h3 style={{
                     fontSize: '1.25rem',
