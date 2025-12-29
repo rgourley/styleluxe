@@ -4,11 +4,18 @@ import ProductCard from '@/components/ProductCard'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import { unstable_cache } from 'next/cache'
-import { getCategoryMetadata, getCategoryName } from '@/lib/category-metadata'
+import { getCategoryMetadata, getCategoryName, categoryMetadata } from '@/lib/category-metadata'
 import { notFound } from 'next/navigation'
 
 // Revalidate every 10 seconds
 export const revalidate = 10
+
+// Generate static params for all categories
+export async function generateStaticParams() {
+  return Object.keys(categoryMetadata).map((slug) => ({
+    category: slug,
+  }))
+}
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.thestyleluxe.com'
 
