@@ -38,6 +38,10 @@ export default function Sparkline({
   })
 
   const pathData = `M ${points.join(' L ')}`
+  
+  // Get the last point (most recent value) for the dot
+  const lastPoint = points[points.length - 1]
+  const [lastX, lastY] = lastPoint.split(',').map(Number)
 
   return (
     <svg 
@@ -53,6 +57,13 @@ export default function Sparkline({
         strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
+      />
+      {/* Small dot at the end (most recent value) */}
+      <circle
+        cx={lastX}
+        cy={lastY}
+        r="1.5"
+        fill={color}
       />
     </svg>
   )

@@ -3,9 +3,12 @@
  * 
  * This searches Amazon for products matching a product name
  * and returns the best match with Amazon URL, price, image, etc.
+ * 
+ * Uses PA-API first (if configured), then falls back to scraping
  */
 
 import * as cheerio from 'cheerio'
+import { searchAmazonWithPAAPI, convertPAAPIItemToResult } from './amazon-paapi'
 
 export interface AmazonSearchResult {
   name: string
@@ -19,11 +22,50 @@ export interface AmazonSearchResult {
 }
 
 /**
+ * Get PA-API credentials from environment variables
+ */
+function getPAAPICredentials(): { accessKey: string; secretKey: string; partnerTag: string } | null {
+  const accessKey = process.env.AMAZON_PAAPI_ACCESS_KEY
+  const secretKey = process.env.AMAZON_PAAPI_SECRET_KEY
+  const partnerTag = process.env.AMAZON_PAAPI_PARTNER_TAG || process.env.AMAZON_ASSOCIATE_TAG
+
+  if (!accessKey || !secretKey || !partnerTag) {
+    return null
+  }
+
+  return { accessKey, secretKey, partnerTag }
+}
+
+/**
  * Search Amazon for a product by name
- * Uses Amazon's search page: https://www.amazon.com/s?k={query}
- * Tries multiple search strategies if the first one fails
+ * Tries PA-API first (if configured), then falls back to scraping
  */
 export async function searchAmazonProduct(productName: string): Promise<AmazonSearchResult | null> {
+  // Try PA-API first if credentials are configured
+  const paapiCreds = getPAAPICredentials()
+  if (paapiCreds) {
+    try {
+      const items = await searchAmazonWithPAAPI(productName, {
+        accessKey: paapiCreds.accessKey,
+        secretKey: paapiCreds.secretKey,
+        partnerTag: paapiCreds.partnerTag,
+        partnerType: 'Associates',
+        marketplace: 'www.amazon.com',
+      })
+
+      if (items && items.length > 0) {
+        // Return the first (best) match
+        const result = convertPAAPIItemToResult(items[0], paapiCreds.partnerTag)
+        console.log(`✅ PA-API found: ${result.name}`)
+        return result
+      }
+    } catch (error) {
+      console.warn('PA-API search failed, falling back to scraping:', error)
+      // Fall through to scraping fallback
+    }
+  }
+
+  // Fallback to scraping if PA-API not available or failed
   // Try multiple search strategies
   const searchStrategies = [
     productName, // Original full name
