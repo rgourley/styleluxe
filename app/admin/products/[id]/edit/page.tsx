@@ -1394,21 +1394,28 @@ export default function EditProductPage() {
                     <span className="text-xs text-gray-500 self-center">Saving...</span>
                   )}
                 </div>
-                {product.amazonUrl && !editedImageUrl && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault()
-                      e.stopPropagation()
-                      handleFetchImageFromAmazon()
-                    }}
-                    disabled={scrapingAmazon}
-                    className="mt-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 font-medium rounded-lg disabled:bg-gray-300 disabled:text-gray-500 text-sm"
-                  >
-                    {scrapingAmazon ? 'Fetching...' : '📥 Fetch Image from Amazon'}
-                  </button>
+                {product.amazonUrl && (!editedImageUrl || isPlaceholderImage(editedImageUrl)) && (
+                  <div className="mt-2">
+                    {isPlaceholderImage(editedImageUrl) && (
+                      <p className="text-xs text-amber-600 mb-2">
+                        ⚠️ Current image appears to be a placeholder/blocked image from Amazon
+                      </p>
+                    )}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        handleFetchImageFromAmazon()
+                      }}
+                      disabled={scrapingAmazon}
+                      className="px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 font-medium rounded-lg disabled:bg-gray-300 disabled:text-gray-500 text-sm"
+                    >
+                      {scrapingAmazon ? 'Fetching...' : '📥 Fetch Real Image from Amazon'}
+                    </button>
+                  </div>
                 )}
-                {editedImageUrl && (
+                {editedImageUrl && !isPlaceholderImage(editedImageUrl) && (
                   <img 
                     src={editedImageUrl} 
                     alt="Preview" 
@@ -1417,6 +1424,13 @@ export default function EditProductPage() {
                       (e.target as HTMLImageElement).style.display = 'none'
                     }}
                   />
+                )}
+                {editedImageUrl && isPlaceholderImage(editedImageUrl) && (
+                  <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded">
+                    <p className="text-xs text-amber-800 mb-2">
+                      ⚠️ This image appears to be a placeholder. Click "Fetch Real Image from Amazon" above to replace it.
+                    </p>
+                  </div>
                 )}
               </div>
 
