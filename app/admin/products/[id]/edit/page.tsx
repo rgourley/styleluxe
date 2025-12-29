@@ -749,7 +749,16 @@ export default function EditProductPage() {
       /spacer/i, // Spacer images
     ]
     
-    return placeholderPatterns.some(pattern => pattern.test(imageUrl))
+    // Check URL patterns first (fast)
+    if (placeholderPatterns.some(pattern => pattern.test(imageUrl))) {
+      return true
+    }
+    
+    // For R2 URLs, we can't easily check file size client-side without making a request
+    // So we'll rely on URL patterns and let the server-side script handle file size checks
+    // The server-side script (fix-placeholder-images-for-products.ts) checks file sizes
+    
+    return false
   }
 
   const handleFetchImageFromAmazon = async () => {
