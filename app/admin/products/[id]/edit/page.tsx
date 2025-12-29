@@ -1735,10 +1735,18 @@ export default function EditProductPage() {
                     setEditedProductName(e.target.value)
                   }}
                   className="text-xl font-bold text-gray-900 bg-transparent border-b-2 border-transparent hover:border-gray-300 focus:border-purple-500 focus:outline-none px-1"
-                  onBlur={handleSaveProductName}
                 />
                 {editedProductName !== product.name && (
-                  <span className="text-xs text-gray-500">(edited)</span>
+                  <>
+                    <span className="text-xs text-gray-500">(edited)</span>
+                    <button
+                      onClick={handleSaveProductName}
+                      disabled={savingName || !editedProductName.trim()}
+                      className="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded disabled:bg-gray-400"
+                    >
+                      {savingName ? 'Saving...' : 'Save'}
+                    </button>
+                  </>
                 )}
               </div>
             </div>
