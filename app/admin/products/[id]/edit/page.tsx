@@ -1510,6 +1510,95 @@ export default function EditProductPage() {
               )}
             </div>
 
+            {/* Product Images Gallery - Also show when no content */}
+            <div className="border-t border-gray-200 pt-6 mt-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Product Images</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Upload multiple images for the product. The first image is used as the primary image.
+              </p>
+
+              {/* Image Upload */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Upload Image
+                </label>
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleUploadProductImage}
+                    disabled={uploadingImage}
+                    className="text-sm text-gray-600 disabled:opacity-50"
+                  />
+                  {uploadingImage && (
+                    <span className="text-xs text-gray-500">Uploading...</span>
+                  )}
+                </div>
+                {product.amazonUrl && productImages.length === 0 && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      handleFetchImageFromAmazon()
+                    }}
+                    disabled={scrapingAmazon}
+                    className="mt-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 font-medium rounded-lg disabled:bg-gray-300 disabled:text-gray-500 text-sm"
+                  >
+                    {scrapingAmazon ? 'Fetching...' : '📥 Or Fetch Image from Amazon'}
+                  </button>
+                )}
+              </div>
+
+              {/* Image Gallery */}
+              {productImages.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-4">
+                  {productImages.map((imageUrl, index) => (
+                    <div key={index} className="relative group border border-gray-200 rounded-lg overflow-hidden">
+                      <img
+                        src={imageUrl}
+                        alt={`Product image ${index + 1}`}
+                        className="w-full h-32 object-cover"
+                        onError={(e) => {
+                          console.error('Image failed to load:', imageUrl.substring(0, 50))
+                          ;(e.target as HTMLImageElement).style.display = 'none'
+                        }}
+                        onLoad={() => {
+                          console.log('Image loaded successfully')
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity flex items-center justify-center gap-2">
+                        {index === 0 && (
+                          <span className="text-xs bg-green-500 text-white px-2 py-1 rounded absolute top-2 left-2">
+                            Primary
+                          </span>
+                        )}
+                        <button
+                          onClick={() => handleSetPrimaryImage(index)}
+                          disabled={index === 0}
+                          className="text-white bg-blue-500 hover:bg-blue-600 px-2 py-1 rounded text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Set as primary"
+                        >
+                          ⭐
+                        </button>
+                        <button
+                          onClick={() => handleRemoveImage(index)}
+                          className="text-white bg-red-500 hover:bg-red-600 px-2 py-1 rounded text-xs"
+                          title="Remove image"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {productImages.length === 0 && (
+                <p className="text-sm text-gray-500 italic">No images uploaded yet</p>
+              )}
+            </div>
+
             <div className="border-t border-gray-200 pt-6 mt-6">
               <p className="text-gray-600 mb-6 text-center">Ready to generate content?</p>
               <div className="text-center">
