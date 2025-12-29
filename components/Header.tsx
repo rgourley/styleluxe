@@ -273,11 +273,10 @@ export default function Header() {
             </Link>
           </nav>
 
-          {/* Mobile Menu Icon */}
+          {/* Mobile Menu Icon - Hidden on desktop, visible on mobile */}
           <button 
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             style={{
-              display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontSize: '24px',
@@ -289,7 +288,7 @@ export default function Header() {
               width: '40px',
               height: '40px',
             }} 
-            className="block md:hidden"
+            className="flex md:hidden"
             aria-label="Toggle menu"
           >
             {isMobileMenuOpen ? '✕' : '☰'}
