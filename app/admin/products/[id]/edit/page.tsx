@@ -1496,44 +1496,67 @@ export default function EditProductPage() {
               {/* Image Gallery */}
               {productImages.length > 0 && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-4">
-                  {productImages.map((imageUrl, index) => (
-                    <div key={index} className="relative group border border-gray-200 rounded-lg overflow-hidden">
-                      <img
-                        src={imageUrl}
-                        alt={`Product image ${index + 1}`}
-                        className="w-full h-32 object-cover"
-                        onError={(e) => {
-                          console.error('Image failed to load:', imageUrl.substring(0, 50))
-                          ;(e.target as HTMLImageElement).style.display = 'none'
-                        }}
-                        onLoad={() => {
-                          console.log('Image loaded successfully')
-                        }}
-                      />
-                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity flex items-center justify-center gap-2">
-                        {index === 0 && (
-                          <span className="text-xs bg-green-500 text-white px-2 py-1 rounded absolute top-2 left-2">
-                            Primary
-                          </span>
+                  {productImages.map((imageUrl, index) => {
+                    const isPlaceholder = isPlaceholderImage(imageUrl)
+                    return (
+                      <div key={index} className="relative group border border-gray-200 rounded-lg overflow-hidden">
+                        {isPlaceholder && (
+                          <div className="absolute inset-0 bg-amber-50 border-2 border-amber-300 z-10 flex items-center justify-center">
+                            <p className="text-xs text-amber-800 text-center px-2">
+                              ⚠️ Placeholder Image
+                            </p>
+                          </div>
                         )}
-                        <button
-                          onClick={() => handleSetPrimaryImage(index)}
-                          disabled={index === 0}
-                          className="text-white bg-blue-500 hover:bg-blue-600 px-2 py-1 rounded text-xs disabled:opacity-50 disabled:cursor-not-allowed"
-                          title="Set as primary"
-                        >
-                          ⭐
-                        </button>
-                        <button
-                          onClick={() => handleRemoveImage(index)}
-                          className="text-white bg-red-500 hover:bg-red-600 px-2 py-1 rounded text-xs"
-                          title="Remove image"
-                        >
-                          ✕
-                        </button>
+                        <img
+                          src={imageUrl}
+                          alt={`Product image ${index + 1}`}
+                          className={`w-full h-32 object-cover ${isPlaceholder ? 'opacity-30' : ''}`}
+                          onError={(e) => {
+                            console.error('Image failed to load:', imageUrl.substring(0, 50))
+                            ;(e.target as HTMLImageElement).style.display = 'none'
+                          }}
+                          onLoad={() => {
+                            console.log('Image loaded successfully')
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity flex items-center justify-center gap-2">
+                          {index === 0 && (
+                            <span className="text-xs bg-green-500 text-white px-2 py-1 rounded absolute top-2 left-2">
+                              Primary
+                            </span>
+                          )}
+                          {isPlaceholder && product.amazonUrl && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleFetchImageFromAmazon()
+                              }}
+                              disabled={scrapingAmazon}
+                              className="text-white bg-blue-500 hover:bg-blue-600 px-2 py-1 rounded text-xs disabled:opacity-50"
+                              title="Replace with real image from Amazon"
+                            >
+                              🔄 Replace
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleSetPrimaryImage(index)}
+                            disabled={index === 0}
+                            className="text-white bg-blue-500 hover:bg-blue-600 px-2 py-1 rounded text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Set as primary"
+                          >
+                            ⭐
+                          </button>
+                          <button
+                            onClick={() => handleRemoveImage(index)}
+                            className="text-white bg-red-500 hover:bg-red-600 px-2 py-1 rounded text-xs"
+                            title="Remove image"
+                          >
+                            ✕
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               )}
 
@@ -1585,44 +1608,67 @@ export default function EditProductPage() {
               {/* Image Gallery */}
               {productImages.length > 0 && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-4">
-                  {productImages.map((imageUrl, index) => (
-                    <div key={index} className="relative group border border-gray-200 rounded-lg overflow-hidden">
-                      <img
-                        src={imageUrl}
-                        alt={`Product image ${index + 1}`}
-                        className="w-full h-32 object-cover"
-                        onError={(e) => {
-                          console.error('Image failed to load:', imageUrl.substring(0, 50))
-                          ;(e.target as HTMLImageElement).style.display = 'none'
-                        }}
-                        onLoad={() => {
-                          console.log('Image loaded successfully')
-                        }}
-                      />
-                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity flex items-center justify-center gap-2">
-                        {index === 0 && (
-                          <span className="text-xs bg-green-500 text-white px-2 py-1 rounded absolute top-2 left-2">
-                            Primary
-                          </span>
+                  {productImages.map((imageUrl, index) => {
+                    const isPlaceholder = isPlaceholderImage(imageUrl)
+                    return (
+                      <div key={index} className="relative group border border-gray-200 rounded-lg overflow-hidden">
+                        {isPlaceholder && (
+                          <div className="absolute inset-0 bg-amber-50 border-2 border-amber-300 z-10 flex items-center justify-center">
+                            <p className="text-xs text-amber-800 text-center px-2">
+                              ⚠️ Placeholder Image
+                            </p>
+                          </div>
                         )}
-                        <button
-                          onClick={() => handleSetPrimaryImage(index)}
-                          disabled={index === 0}
-                          className="text-white bg-blue-500 hover:bg-blue-600 px-2 py-1 rounded text-xs disabled:opacity-50 disabled:cursor-not-allowed"
-                          title="Set as primary"
-                        >
-                          ⭐
-                        </button>
-                        <button
-                          onClick={() => handleRemoveImage(index)}
-                          className="text-white bg-red-500 hover:bg-red-600 px-2 py-1 rounded text-xs"
-                          title="Remove image"
-                        >
-                          ✕
-                        </button>
+                        <img
+                          src={imageUrl}
+                          alt={`Product image ${index + 1}`}
+                          className={`w-full h-32 object-cover ${isPlaceholder ? 'opacity-30' : ''}`}
+                          onError={(e) => {
+                            console.error('Image failed to load:', imageUrl.substring(0, 50))
+                            ;(e.target as HTMLImageElement).style.display = 'none'
+                          }}
+                          onLoad={() => {
+                            console.log('Image loaded successfully')
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-opacity flex items-center justify-center gap-2">
+                          {index === 0 && (
+                            <span className="text-xs bg-green-500 text-white px-2 py-1 rounded absolute top-2 left-2">
+                              Primary
+                            </span>
+                          )}
+                          {isPlaceholder && product.amazonUrl && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleFetchImageFromAmazon()
+                              }}
+                              disabled={scrapingAmazon}
+                              className="text-white bg-blue-500 hover:bg-blue-600 px-2 py-1 rounded text-xs disabled:opacity-50"
+                              title="Replace with real image from Amazon"
+                            >
+                              🔄 Replace
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleSetPrimaryImage(index)}
+                            disabled={index === 0}
+                            className="text-white bg-blue-500 hover:bg-blue-600 px-2 py-1 rounded text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Set as primary"
+                          >
+                            ⭐
+                          </button>
+                          <button
+                            onClick={() => handleRemoveImage(index)}
+                            className="text-white bg-red-500 hover:bg-red-600 px-2 py-1 rounded text-xs"
+                            title="Remove image"
+                          >
+                            ✕
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               )}
 
