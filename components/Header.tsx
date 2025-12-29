@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { getCategorySlug, categoryMetadata } from '@/lib/category-metadata'
 
 const categories = [
   'Skincare',
@@ -30,7 +31,13 @@ export default function Header() {
   }
 
   const handleCategoryClick = (category: string) => {
-    router.push(`/trending?category=${encodeURIComponent(category)}`)
+    const categorySlug = getCategorySlug(category)
+    if (categorySlug) {
+      router.push(`/trending/${categorySlug}`)
+    } else {
+      // Fallback to old URL structure if slug not found
+      router.push(`/trending?category=${encodeURIComponent(category)}`)
+    }
     setIsDropdownOpen(false)
   }
 
