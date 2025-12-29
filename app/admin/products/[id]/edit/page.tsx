@@ -734,6 +734,24 @@ export default function EditProductPage() {
     }
   }
 
+  // Check if an image URL is likely a placeholder/blocked image
+  const isPlaceholderImage = (imageUrl: string | null | undefined): boolean => {
+    if (!imageUrl) return true
+    
+    // Check for common Amazon placeholder patterns
+    const placeholderPatterns = [
+      /01jrA-8DXYL/i, // Common Amazon placeholder GIF
+      /1px/i, // 1px images
+      /\.gif$/i, // GIF files (often placeholders)
+      /fls-na\.amazon\.com/i, // Tracking URLs
+      /uedata/i, // Amazon tracking
+      /placeholder/i, // Generic placeholder
+      /spacer/i, // Spacer images
+    ]
+    
+    return placeholderPatterns.some(pattern => pattern.test(imageUrl))
+  }
+
   const handleFetchImageFromAmazon = async () => {
     if (!product || !product.amazonUrl) {
       setMessage('Product does not have an Amazon URL')
