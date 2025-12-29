@@ -107,12 +107,12 @@ export default function Header() {
           }}>
             <span style={{
               fontFamily: 'var(--font-playfair), serif',
-              fontWeight: '400',
+              fontWeight: '600',
               color: '#2D2D2D',
             }}>Beauty</span>
             <span style={{
               fontFamily: 'var(--font-playfair), serif',
-              fontWeight: '400',
+              fontWeight: '600',
               color: '#2D2D2D',
             }}>Finder</span>
           </Link>
