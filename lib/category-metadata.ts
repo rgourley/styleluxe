@@ -113,3 +113,5 @@ export function getCategoryName(categorySlug: string): string | null {
   return slugToCategory[categorySlug] || null
 }
 
+
+

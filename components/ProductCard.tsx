@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { getTrendEmoji, getTrendLabel, formatTrendDuration, getSalesSpikePercent } from '@/lib/product-utils'
 import { getAmazonImageUrl } from '@/lib/amazon-image'
 import { addAmazonAffiliateTag } from '@/lib/amazon-affiliate'
 import { getTrendBadge, getTimelineText } from '@/lib/age-decay'
+import Sparkline from './Sparkline'
 
 export default function ProductCard({ product, priority = false }: { product: any; priority?: boolean }) {
   const currentScore = product.currentScore ?? product.trendScore ?? 0
@@ -52,6 +53,24 @@ export default function ProductCard({ product, priority = false }: { product: an
   }
   
   const userQuote = getUserQuote()
+  
+  // Fetch sparkline data
+  const [sparklineData, setSparklineData] = useState<number[]>([])
+  useEffect(() => {
+    // Only fetch if product has content (published)
+    if (product.content?.slug) {
+      fetch(`/api/products/${product.id}/sparkline`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.scores && data.scores.length > 0) {
+            setSparklineData(data.scores)
+          }
+        })
+        .catch(() => {
+          // Silently fail if no data available
+        })
+    }
+  }, [product.id, product.content?.slug])
   
   const [imageSrc, setImageSrc] = useState(() => {
     if (product.imageUrl) {
@@ -240,6 +259,14 @@ export default function ProductCard({ product, priority = false }: { product: an
               fontWeight: '600',
               color: '#16a34a',
             }}>{salesSpike}</span>
+          )}
+          {sparklineData.length > 0 && (
+            <div suppressHydrationWarning style={{
+              display: 'flex',
+              alignItems: 'center',
+            }}>
+              <Sparkline data={sparklineData} width={60} height={20} color="#E07856" />
+            </div>
           )}
         </div>
 

@@ -1416,6 +1416,17 @@ export async function setFirstDetected(productId: string, baseScore: number) {
           lastUpdated: new Date(),
         },
       })
+
+      // Record score snapshot for sparkline
+      await prisma.productScoreHistory.create({
+        data: {
+          productId,
+          currentScore: result.currentScore,
+          baseScore: variedBaseScore,
+        },
+      }).catch(() => {
+        // Ignore errors if table doesn't exist yet (schema not synced)
+      })
     } else {
       // Update existing product's base score and recalculate
       // If product was already on M&S and coming back, don't reset baseScore
@@ -1442,7 +1453,33 @@ export async function setFirstDetected(productId: string, baseScore: number) {
           peakScore: newPeakScore,
           lastUpdated: new Date(),
         },
-  })
+      })
+
+      // Record score snapshot for sparkline (only if score changed significantly or daily)
+      // Check if we already recorded today
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const existingToday = await prisma.productScoreHistory.findFirst({
+        where: {
+          productId,
+          recordedAt: {
+            gte: today,
+          },
+        },
+      })
+
+      // Only record if we haven't recorded today, or if score changed by more than 5 points
+      if (!existingToday || Math.abs((existingToday.currentScore || 0) - result.currentScore) > 5) {
+        await prisma.productScoreHistory.create({
+          data: {
+            productId,
+            currentScore: result.currentScore,
+            baseScore: finalBaseScore,
+          },
+        }).catch(() => {
+          // Ignore errors if table doesn't exist yet (schema not synced)
+        })
+      }
       
       // Cache invalidation is handled via API endpoint in scripts
       // revalidateTag requires 2 args in Next.js 16, so we skip it here

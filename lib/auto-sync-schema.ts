@@ -34,6 +34,20 @@ export async function ensureSchemaSynced(): Promise<void> {
           name: 'images column in ProductContent',
           sql: `ALTER TABLE "ProductContent" ADD COLUMN IF NOT EXISTS "images" JSONB;`,
         },
+        {
+          name: 'ProductScoreHistory table',
+          sql: `CREATE TABLE IF NOT EXISTS "ProductScoreHistory" (
+            "id" TEXT NOT NULL PRIMARY KEY,
+            "productId" TEXT NOT NULL,
+            "currentScore" DOUBLE PRECISION NOT NULL,
+            "baseScore" DOUBLE PRECISION,
+            "recordedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            CONSTRAINT "ProductScoreHistory_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE CASCADE ON UPDATE CASCADE
+          );
+          CREATE INDEX IF NOT EXISTS "ProductScoreHistory_productId_idx" ON "ProductScoreHistory"("productId");
+          CREATE INDEX IF NOT EXISTS "ProductScoreHistory_recordedAt_idx" ON "ProductScoreHistory"("recordedAt");
+          CREATE INDEX IF NOT EXISTS "ProductScoreHistory_productId_recordedAt_idx" ON "ProductScoreHistory"("productId", "recordedAt");`,
+        },
       ]
       
       // Apply each schema change

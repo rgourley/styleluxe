@@ -8,3 +8,5 @@ ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "lastSeenOnMoversShakers" TIMESTA
 CREATE INDEX IF NOT EXISTS "Product_onMoversShakers_idx" ON "Product"("onMoversShakers");
 
 
+
+

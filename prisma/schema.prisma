@@ -48,6 +48,7 @@ model Product {
   content      ProductContent?
   metadata     ProductMetadata?
   questions    ProductQuestion[]
+  scoreHistory ProductScoreHistory[]
 
   @@index([trendScore])
   @@index([status])
@@ -230,4 +231,18 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model ProductScoreHistory {
+  id          String   @id @default(cuid())
+  productId   String
+  currentScore Float
+  baseScore    Float?
+  recordedAt   DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([recordedAt])
+  @@index([productId, recordedAt])
 }
