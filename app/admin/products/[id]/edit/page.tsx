@@ -1792,6 +1792,29 @@ export default function EditProductPage() {
         <div className="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Product Stats & Metadata</h3>
           <div className="grid md:grid-cols-4 gap-6">
+            {/* Brand */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Brand
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={editedBrand}
+                  onChange={(e) => {
+                    hasEditedBrand.current = true
+                    setEditedBrand(e.target.value)
+                  }}
+                  onBlur={handleSaveBrand}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
+                  placeholder="Enter brand name..."
+                />
+                {savingBrand && (
+                  <span className="text-xs text-gray-500 self-center">Saving...</span>
+                )}
+              </div>
+            </div>
+            
             {/* Category */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -1883,8 +1906,36 @@ export default function EditProductPage() {
               )}
             </div>
 
+            {/* Editor Notes for AI */}
+            <div className="col-span-full border-t border-gray-200 pt-4 mt-4">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Editor Notes for AI (Optional)
+              </label>
+              <p className="text-xs text-gray-500 mb-2">
+                Add context, trends, or insights about this product. These notes will be used when generating or regenerating content with AI. Examples: "Went viral on TikTok in January", "Known for causing breakouts in sensitive skin", "Popular with oily skin users".
+              </p>
+              <textarea
+                value={editorNotes}
+                onChange={(e) => {
+                  hasEditedNotes.current = true
+                  setEditorNotes(e.target.value)
+                }}
+                onBlur={handleSaveEditorNotes}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent min-h-[100px] text-sm"
+                placeholder="Add notes about why this is trending, who it's for, common complaints, etc..."
+              />
+              <div className="flex justify-between items-center mt-2">
+                <p className="text-xs text-gray-500">
+                  Notes are saved automatically when you click outside the textarea
+                </p>
+                {savingNotes && (
+                  <span className="text-xs text-gray-500">Saving...</span>
+                )}
+              </div>
+            </div>
+
             {/* Amazon Details - Manual Editing */}
-            <div className="border-t border-gray-200 pt-4 mt-4">
+            <div className="col-span-full border-t border-gray-200 pt-4 mt-4">
               <h4 className="text-sm font-semibold text-gray-900 mb-3">Amazon Details</h4>
               
               {/* Amazon URL */}
