@@ -3,6 +3,7 @@ import { getTrendEmoji, getTrendLabel, formatTrendDuration, getSalesSpikePercent
 import { getTimelineText } from '@/lib/age-decay'
 import { addAmazonAffiliateTag } from '@/lib/amazon-affiliate'
 import { findProductByName } from '@/lib/product-search'
+import { getCategorySlug } from '@/lib/category-metadata'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import MarkdownContent from '@/components/MarkdownContent'
@@ -560,13 +561,17 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     },
   ]
   
-  // Add category if available
+  // Add category if available (use new slug structure)
   if (product.category) {
+    const categorySlug = getCategorySlug(product.category)
+    const categoryUrl = categorySlug 
+      ? `${siteUrl}/trending/${categorySlug}`
+      : `${siteUrl}/trending?category=${encodeURIComponent(product.category)}`
     breadcrumbItems.push({
       '@type': 'ListItem',
       position: 3,
       name: product.category,
-      item: `${siteUrl}/trending?category=${encodeURIComponent(product.category.toLowerCase())}`,
+      item: categoryUrl,
     })
   }
   
@@ -660,16 +665,22 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                 Trending Products
               </Link>
             </li>
-            {product.category && (
-              <>
-                <li className="text-[#b8b8b8]">/</li>
-                <li>
-                  <Link href={`/trending?category=${encodeURIComponent(product.category.toLowerCase())}`} className="hover:text-[#E07856] transition-colors">
-                    {product.category}
-                  </Link>
-                </li>
-              </>
-            )}
+            {product.category && (() => {
+              const categorySlug = getCategorySlug(product.category)
+              const categoryUrl = categorySlug 
+                ? `/trending/${categorySlug}`
+                : `/trending?category=${encodeURIComponent(product.category)}`
+              return (
+                <>
+                  <li className="text-[#b8b8b8]">/</li>
+                  <li>
+                    <Link href={categoryUrl} className="hover:text-[#E07856] transition-colors">
+                      {product.category}
+                    </Link>
+                  </li>
+                </>
+              )
+            })()}
             <li className="text-[#b8b8b8]">/</li>
             <li className="text-[#2D2D2D] font-medium" aria-current="page">
               {product.name}
