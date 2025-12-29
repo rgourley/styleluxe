@@ -217,8 +217,9 @@ export default async function CategoryTrendingPage({
   }
 
   const result = await getFilteredProducts(activeFilter, categorySlug, searchQuery, page, pageSize)
-  const products = result?.products || []
-  const hasMore = result?.hasMore || false
+  // Handle both array and object return types
+  const products = Array.isArray(result) ? result : (result?.products || [])
+  const hasMore = Array.isArray(result) ? false : (result?.hasMore || false)
 
   const filters = [
     { id: 'all', label: 'All', description: 'All products' },
