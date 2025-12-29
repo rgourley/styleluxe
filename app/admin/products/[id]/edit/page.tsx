@@ -1984,15 +1984,31 @@ export default function EditProductPage() {
 
           {/* Image Upload */}
           <div className="mb-3">
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleUploadProductImage}
-              disabled={uploadingImage}
-              className="text-xs text-gray-600 disabled:opacity-50"
-            />
-            {uploadingImage && (
-              <span className="text-xs text-gray-500 ml-2">Uploading...</span>
+            <div className="flex gap-2 items-center">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleUploadProductImage}
+                disabled={uploadingImage}
+                className="text-xs text-gray-600 disabled:opacity-50"
+              />
+              {uploadingImage && (
+                <span className="text-xs text-gray-500">Uploading...</span>
+              )}
+            </div>
+            {product.amazonUrl && productImages.length === 0 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  handleFetchImageFromAmazon()
+                }}
+                disabled={scrapingAmazon}
+                className="mt-2 px-3 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-700 font-medium rounded text-xs disabled:bg-gray-300 disabled:text-gray-500"
+              >
+                {scrapingAmazon ? 'Fetching...' : '📥 Or Fetch Image from Amazon'}
+              </button>
             )}
           </div>
 
