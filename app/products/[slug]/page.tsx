@@ -397,6 +397,37 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   }
 
   // Structured Data (JSON-LD) for SEO
+  // Google requires at least one of: offers, review, or aggregateRating
+  // We'll always include offers (required), and add aggregateRating/review if available
+  
+  // Always include offers (required by Google)
+  const offers = product.price ? {
+    '@type': 'Offer',
+    price: product.price,
+    priceCurrency: product.currency || 'USD',
+    availability: 'https://schema.org/InStock',
+    url: product.amazonUrl || undefined,
+    seller: product.amazonUrl ? {
+      '@type': 'Organization',
+      name: 'Amazon',
+    } : undefined,
+  } : product.amazonUrl ? {
+    // If no price but we have Amazon URL, still include offers with priceCurrency
+    '@type': 'Offer',
+    priceCurrency: 'USD',
+    availability: 'https://schema.org/InStock',
+    url: product.amazonUrl,
+    seller: {
+      '@type': 'Organization',
+      name: 'Amazon',
+    },
+  } : {
+    // Fallback: minimal offer without price (still valid)
+    '@type': 'Offer',
+    priceCurrency: 'USD',
+    availability: 'https://schema.org/InStock',
+  }
+
   const structuredData = {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -407,17 +438,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
       name: product.brand,
     } : undefined,
     image: imageUrl,
-    offers: product.price ? {
-      '@type': 'Offer',
-      price: product.price,
-      priceCurrency: product.currency || 'USD',
-      availability: 'https://schema.org/InStock',
-      url: product.amazonUrl,
-      seller: {
-        '@type': 'Organization',
-        name: 'Amazon',
-      },
-    } : undefined,
+    offers: offers, // Always included (required by Google)
     aggregateRating: product.metadata?.starRating && product.metadata?.totalReviewCount ? {
       '@type': 'AggregateRating',
       ratingValue: product.metadata.starRating,
