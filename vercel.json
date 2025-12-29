@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/collect-data",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/update-product-ratings",
+      "schedule": "0 2 1,15 * *"
     }
   ]
 }

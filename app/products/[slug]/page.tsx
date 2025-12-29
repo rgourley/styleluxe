@@ -4,6 +4,7 @@ import { getTimelineText } from '@/lib/age-decay'
 import { addAmazonAffiliateTag } from '@/lib/amazon-affiliate'
 import { findProductByName } from '@/lib/product-search'
 import { getCategorySlug } from '@/lib/category-metadata'
+import { brandToSlug } from '@/lib/brands'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import MarkdownContent from '@/components/MarkdownContent'
@@ -676,6 +677,19 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
                   <li>
                     <Link href={categoryUrl} className="hover:text-[#E07856] transition-colors">
                       {product.category}
+                    </Link>
+                  </li>
+                </>
+              )
+            })()}
+            {product.brand && (() => {
+              const brandSlug = brandToSlug(product.brand)
+              return (
+                <>
+                  <li className="text-[#b8b8b8]">/</li>
+                  <li>
+                    <Link href={`/brands/${brandSlug}`} className="hover:text-[#E07856] transition-colors">
+                      {product.brand}
                     </Link>
                   </li>
                 </>

@@ -1,7 +1,12 @@
 import Link from 'next/link'
+import { getAllBrands } from '@/lib/brands'
 
-export default function Footer() {
+export default async function Footer() {
   const currentYear = new Date().getFullYear()
+  
+  // Get top brands for footer (limit to 12 most popular)
+  const brands = await getAllBrands()
+  const topBrands = brands.slice(0, 12)
 
   return (
     <footer className="border-t border-[#F0F0F0] mt-24 bg-white/50">
@@ -27,6 +32,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/brands" className="text-sm text-[#6b6b6b] hover:text-[#E07856] transition-colors">
+                  Brands
+                </Link>
+              </li>
+              <li>
                 <Link href="/about" className="text-sm text-[#6b6b6b] hover:text-[#E07856] transition-colors">
                   About Us
                 </Link>
@@ -44,6 +54,46 @@ export default function Footer() {
             </ul>
           </div>
 
+          {/* Brands Column */}
+          <div className="mb-6 sm:mb-0">
+            <h3 className="text-sm font-semibold text-[#2D2D2D] mb-3 sm:mb-4 tracking-wide uppercase">Brands</h3>
+            {topBrands.length > 0 ? (
+              <ul className="space-y-2 sm:space-y-3">
+                {topBrands.map((brand) => (
+                  <li key={brand.slug}>
+                    <Link 
+                      href={`/brands/${brand.slug}`} 
+                      className="text-sm text-[#6b6b6b] hover:text-[#E07856] transition-colors"
+                    >
+                      {brand.brand}
+                    </Link>
+                  </li>
+                ))}
+                {brands.length > 12 && (
+                  <li>
+                    <Link 
+                      href="/brands" 
+                      className="text-sm text-[#6b6b6b] hover:text-[#E07856] transition-colors font-medium"
+                    >
+                      View All Brands →
+                    </Link>
+                  </li>
+                )}
+              </ul>
+            ) : (
+              <ul className="space-y-2 sm:space-y-3">
+                <li>
+                  <Link 
+                    href="/brands" 
+                    className="text-sm text-[#6b6b6b] hover:text-[#E07856] transition-colors"
+                  >
+                    View All Brands
+                  </Link>
+                </li>
+              </ul>
+            )}
+          </div>
+
           {/* Legal Column */}
           <div className="mb-6 sm:mb-0">
             <h3 className="text-sm font-semibold text-[#2D2D2D] mb-3 sm:mb-4 tracking-wide uppercase">Legal</h3>
@@ -59,14 +109,6 @@ export default function Footer() {
                 </Link>
               </li>
             </ul>
-          </div>
-
-          {/* Info Column */}
-          <div className="mb-6 sm:mb-0">
-            <h3 className="text-sm font-semibold text-[#2D2D2D] mb-3 sm:mb-4 tracking-wide uppercase">Info</h3>
-            <p className="text-sm text-[#6b6b6b] leading-relaxed">
-              Real data. Honest reviews. No hype.
-            </p>
           </div>
         </div>
 

@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import Link from 'next/link'
+import { brandToSlug } from '@/lib/brands'
 
 interface ProductHeroSectionProps {
   product: {
@@ -60,16 +62,28 @@ export default function ProductHeroSection({
     <div ref={containerRef} style={{ opacity: 0 }}>
       {/* Brand */}
       {product.brand && (
-        <p style={{
-          fontSize: '12px',
-          fontWeight: '400',
-          color: '#8b8b8b',
-          textTransform: 'uppercase',
-          letterSpacing: '0.1em',
-          marginBottom: '8px',
-        }}>
+        <Link
+          href={`/brands/${brandToSlug(product.brand)}`}
+          style={{
+            fontSize: '12px',
+            fontWeight: '400',
+            color: '#8b8b8b',
+            textTransform: 'uppercase',
+            letterSpacing: '0.1em',
+            marginBottom: '8px',
+            textDecoration: 'none',
+            display: 'inline-block',
+            transition: 'color 0.2s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = '#E07856'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = '#8b8b8b'
+          }}
+        >
           {product.brand}
-        </p>
+        </Link>
       )}
 
       {/* Product Name - H1 */}

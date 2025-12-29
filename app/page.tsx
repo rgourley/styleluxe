@@ -22,6 +22,7 @@ export const revalidate = 5
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.thestyleluxe.com'
 
 export const metadata = {
+  metadataBase: new URL(siteUrl), // Required for absolute image URLs on mobile
   title: "Trending Beauty Products Right Now - What's Going Viral",
   description: "Discover the hottest trending beauty products on TikTok, Instagram, Reddit, and Amazon. Real data, honest reviews, no hype.",
   alternates: {
@@ -32,9 +33,10 @@ export const metadata = {
     description: "Discover the hottest trending beauty products on TikTok, Instagram, Reddit, and Amazon. Real data, honest reviews, no hype.",
     type: "website",
     url: siteUrl,
+    siteName: "BeautyFinder",
     images: [
       {
-        url: "/images/unsplash-image-4nulm-JUYFo.webp",
+        url: `${siteUrl}/images/unsplash-image-4nulm-JUYFo.webp`, // Absolute URL for mobile
         width: 1200,
         height: 630,
         alt: "Trending Beauty Products",
@@ -45,7 +47,7 @@ export const metadata = {
     card: "summary_large_image",
     title: "Trending Beauty Products Right Now",
     description: "Discover the hottest trending beauty products on TikTok, Instagram, Reddit, and Amazon.",
-    images: ["/images/unsplash-image-4nulm-JUYFo.webp"],
+    images: [`${siteUrl}/images/unsplash-image-4nulm-JUYFo.webp`], // Absolute URL for mobile
   },
 }
 

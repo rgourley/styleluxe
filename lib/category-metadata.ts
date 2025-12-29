@@ -14,7 +14,7 @@ export const categoryMetadata: Record<string, CategoryMetadata> = {
     title: 'Trending Skincare Products',
     description: 'Discover the hottest skincare products trending right now on TikTok, Instagram, Reddit, and Amazon.',
     subhead: 'From viral serums to breakout cleansers, find the skincare products everyone is talking about.',
-    seoTitle: 'Trending Skincare Products 2024 - What\'s Going Viral Right Now',
+    seoTitle: 'Trending Skincare Products - What\'s Going Viral Right Now',
     seoDescription: 'Discover the hottest trending skincare products on TikTok, Instagram, Reddit, and Amazon. Real data, honest reviews. Find serums, cleansers, moisturizers, and more that are going viral.',
   },
   'makeup': {
@@ -22,7 +22,7 @@ export const categoryMetadata: Record<string, CategoryMetadata> = {
     title: 'Trending Makeup Products',
     description: 'Find the makeup products that are trending right now - from viral lipsticks to must-have foundations.',
     subhead: 'Discover the makeup products everyone is raving about on social media and beauty communities.',
-    seoTitle: 'Trending Makeup Products 2024 - Viral Beauty Finds',
+    seoTitle: 'Trending Makeup Products - Viral Beauty Finds',
     seoDescription: 'Discover the hottest trending makeup products on TikTok, Instagram, Reddit, and Amazon. Real data, honest reviews. Find lipsticks, foundations, eyeshadows, and more that are going viral.',
   },
   'hair-care': {
@@ -30,7 +30,7 @@ export const categoryMetadata: Record<string, CategoryMetadata> = {
     title: 'Trending Hair Care Products',
     description: 'Explore the hair care products that are trending right now - from viral shampoos to game-changing treatments.',
     subhead: 'Find the hair care products everyone is talking about and adding to their routines.',
-    seoTitle: 'Trending Hair Care Products 2024 - Viral Hair Finds',
+    seoTitle: 'Trending Hair Care Products - Viral Hair Finds',
     seoDescription: 'Discover the hottest trending hair care products on TikTok, Instagram, Reddit, and Amazon. Real data, honest reviews. Find shampoos, conditioners, treatments, and more that are going viral.',
   },
   'body-care': {
@@ -38,7 +38,7 @@ export const categoryMetadata: Record<string, CategoryMetadata> = {
     title: 'Trending Body Care Products',
     description: 'Discover the body care products that are trending right now - from viral lotions to must-have scrubs.',
     subhead: 'Find the body care products everyone is loving and recommending.',
-    seoTitle: 'Trending Body Care Products 2024 - Viral Body Care Finds',
+    seoTitle: 'Trending Body Care Products - Viral Body Care Finds',
     seoDescription: 'Discover the hottest trending body care products on TikTok, Instagram, Reddit, and Amazon. Real data, honest reviews. Find lotions, scrubs, body washes, and more that are going viral.',
   },
   'fragrance': {
@@ -46,7 +46,7 @@ export const categoryMetadata: Record<string, CategoryMetadata> = {
     title: 'Trending Fragrance Products',
     description: 'Explore the fragrances that are trending right now - from viral perfumes to must-have scents.',
     subhead: 'Discover the fragrances everyone is talking about and adding to their collection.',
-    seoTitle: 'Trending Fragrance Products 2024 - Viral Perfume Finds',
+    seoTitle: 'Trending Fragrance Products - Viral Perfume Finds',
     seoDescription: 'Discover the hottest trending fragrance products on TikTok, Instagram, Reddit, and Amazon. Real data, honest reviews. Find perfumes, colognes, and scents that are going viral.',
   },
   'tools-accessories': {
@@ -54,7 +54,7 @@ export const categoryMetadata: Record<string, CategoryMetadata> = {
     title: 'Trending Beauty Tools & Accessories',
     description: 'Find the beauty tools and accessories that are trending right now - from viral brushes to game-changing devices.',
     subhead: 'Discover the tools and accessories everyone is raving about.',
-    seoTitle: 'Trending Beauty Tools & Accessories 2024 - Viral Beauty Tools',
+    seoTitle: 'Trending Beauty Tools & Accessories - Viral Beauty Tools',
     seoDescription: 'Discover the hottest trending beauty tools and accessories on TikTok, Instagram, Reddit, and Amazon. Real data, honest reviews. Find brushes, devices, applicators, and more that are going viral.',
   },
   'mens-grooming': {
@@ -62,7 +62,7 @@ export const categoryMetadata: Record<string, CategoryMetadata> = {
     title: 'Trending Men\'s Grooming Products',
     description: 'Explore the men\'s grooming products that are trending right now - from viral skincare to must-have essentials.',
     subhead: 'Find the men\'s grooming products everyone is talking about.',
-    seoTitle: 'Trending Men\'s Grooming Products 2024 - Viral Grooming Finds',
+    seoTitle: 'Trending Men\'s Grooming Products - Viral Grooming Finds',
     seoDescription: 'Discover the hottest trending men\'s grooming products on TikTok, Instagram, Reddit, and Amazon. Real data, honest reviews. Find skincare, shaving products, and more that are going viral.',
   },
   'other': {
@@ -70,7 +70,7 @@ export const categoryMetadata: Record<string, CategoryMetadata> = {
     title: 'Trending Beauty Products',
     description: 'Discover beauty products that are trending right now across all categories.',
     subhead: 'Find the products everyone is talking about and adding to their routines.',
-    seoTitle: 'Trending Beauty Products 2024 - Viral Beauty Finds',
+    seoTitle: 'Trending Beauty Products - Viral Beauty Finds',
     seoDescription: 'Discover the hottest trending beauty products on TikTok, Instagram, Reddit, and Amazon. Real data, honest reviews.',
   },
 }
