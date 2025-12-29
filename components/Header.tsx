@@ -5,16 +5,15 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { getCategorySlug, categoryMetadata } from '@/lib/category-metadata'
 
-const categories = [
-  'Skincare',
-  'Makeup',
-  'Hair Care',
+const topLevelCategories = ['Skincare', 'Makeup', 'Hair Care']
+const moreCategories = [
   'Body Care',
   'Fragrance',
   'Tools & Accessories',
   'Men\'s Grooming',
   'Other'
 ]
+const allCategories = [...topLevelCategories, ...moreCategories]
 
 export default function Header() {
   const router = useRouter()
@@ -120,7 +119,92 @@ export default function Header() {
           </Link>
 
           {/* Navigation - Desktop */}
-          <nav className="hidden md:flex items-center flex-grow justify-end" style={{ gap: '32px' }}>
+          <nav className="hidden md:flex items-center flex-grow justify-end" style={{ gap: '24px' }}>
+            {/* Top-Level Category Links */}
+            {topLevelCategories.map((category) => {
+              const categorySlug = getCategorySlug(category)
+              const categoryUrl = categorySlug ? `/trending/${categorySlug}` : `/trending?category=${encodeURIComponent(category)}`
+              return (
+                <Link
+                  key={category}
+                  href={categoryUrl}
+                  style={{
+                    fontSize: '15px',
+                    fontWeight: '500',
+                    color: '#2D2D2D',
+                    textDecoration: 'none',
+                    transition: 'color 0.2s',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = '#FF6B6B'}
+                  onMouseLeave={(e) => e.currentTarget.style.color = '#2D2D2D'}
+                >
+                  {category}
+                </Link>
+              )
+            })}
+
+            {/* More Categories Dropdown */}
+            <div 
+              style={{ position: 'relative' }} 
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+            >
+              <button style={{
+                fontSize: '15px',
+                fontWeight: '500',
+                color: isDropdownOpen ? '#FF6B6B' : '#2D2D2D',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '8px 0',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                transition: 'color 0.2s',
+              }}>
+                More Categories <span style={{ fontSize: '10px' }}>▼</span>
+              </button>
+              
+              {/* Dropdown Menu */}
+              {isDropdownOpen && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  right: '0',
+                  marginTop: '8px',
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid #F0F0F0',
+                  borderRadius: '12px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                  padding: '8px 0',
+                  minWidth: '200px',
+                  zIndex: 1000,
+                }}>
+                  {moreCategories.map((category) => (
+                    <button
+                      key={category}
+                      onClick={() => handleCategoryClick(category)}
+                      style={{
+                        width: '100%',
+                        textAlign: 'left',
+                        padding: '10px 20px',
+                        fontSize: '14px',
+                        color: '#2D2D2D',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        transition: 'background-color 0.15s',
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#FFF5F7'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      {category}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {/* Search Bar */}
             <form onSubmit={handleSearch} style={{
               position: 'relative',
@@ -152,68 +236,6 @@ export default function Header() {
                 onBlur={(e) => e.currentTarget.style.borderColor = '#F0F0F0'}
               />
             </form>
-
-            {/* Categories Dropdown */}
-            <div 
-              style={{ position: 'relative' }} 
-              onMouseEnter={handleMouseEnter}
-              onMouseLeave={handleMouseLeave}
-            >
-              <button style={{
-                fontSize: '15px',
-                fontWeight: '500',
-                color: isDropdownOpen ? '#FF6B6B' : '#2D2D2D',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                padding: '8px 0',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                transition: 'color 0.2s',
-              }}>
-                Categories <span style={{ fontSize: '10px' }}>▼</span>
-              </button>
-              
-              {/* Dropdown Menu */}
-              {isDropdownOpen && (
-                <div style={{
-                  position: 'absolute',
-                  top: '100%',
-                  left: '-16px',
-                  marginTop: '8px',
-                  backgroundColor: '#FFFFFF',
-                  border: '1px solid #F0F0F0',
-                  borderRadius: '12px',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                  padding: '8px 0',
-                  minWidth: '200px',
-                  zIndex: 1000,
-                }}>
-                  {categories.map((category) => (
-                    <button
-                      key={category}
-                      onClick={() => handleCategoryClick(category)}
-                      style={{
-                        width: '100%',
-                        textAlign: 'left',
-                        padding: '10px 20px',
-                        fontSize: '14px',
-                        color: '#2D2D2D',
-                        background: 'none',
-                        border: 'none',
-                        cursor: 'pointer',
-                        transition: 'background-color 0.15s',
-                      }}
-                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#FFF5F7'}
-                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                    >
-                      {category}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
 
             {/* About Link */}
             <Link href="/about" style={{
@@ -367,7 +389,7 @@ export default function Header() {
                     flexDirection: 'column',
                     gap: '8px',
                   }}>
-                    {categories.map((category) => (
+                    {allCategories.map((category) => (
                       <button
                         key={category}
                         onClick={() => {
