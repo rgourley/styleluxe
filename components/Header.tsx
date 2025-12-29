@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { getCategorySlug, categoryMetadata } from '@/lib/category-metadata'
 
+const topLevelCategories = ['Skincare', 'Makeup', 'Hair Care']
 const allCategories = [
   'Skincare',
   'Makeup',
@@ -121,6 +122,29 @@ export default function Header() {
 
           {/* Navigation - Desktop */}
           <nav className="hidden md:flex items-center flex-grow justify-end" style={{ gap: '24px' }}>
+            {/* Top-Level Category Links */}
+            {topLevelCategories.map((category) => {
+              const categorySlug = getCategorySlug(category)
+              const categoryUrl = categorySlug ? `/trending/${categorySlug}` : `/trending?category=${encodeURIComponent(category)}`
+              return (
+                <Link
+                  key={category}
+                  href={categoryUrl}
+                  style={{
+                    fontSize: '15px',
+                    fontWeight: '500',
+                    color: '#2D2D2D',
+                    textDecoration: 'none',
+                    transition: 'color 0.2s',
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = '#FF6B6B'}
+                  onMouseLeave={(e) => e.currentTarget.style.color = '#2D2D2D'}
+                >
+                  {category}
+                </Link>
+              )
+            })}
+
             {/* Categories Dropdown */}
             <div 
               style={{ position: 'relative' }} 
@@ -158,6 +182,32 @@ export default function Header() {
                   minWidth: '200px',
                   zIndex: 1000,
                 }}>
+                  {/* All Categories Link */}
+                  <Link
+                    href="/trending"
+                    onClick={() => setIsDropdownOpen(false)}
+                    style={{
+                      width: '100%',
+                      textAlign: 'left',
+                      padding: '10px 20px',
+                      fontSize: '14px',
+                      color: '#FF6B6B',
+                      fontWeight: '600',
+                      textDecoration: 'none',
+                      display: 'block',
+                      transition: 'background-color 0.15s',
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#FFF5F7'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    All Categories
+                  </Link>
+                  <div style={{
+                    height: '1px',
+                    backgroundColor: '#F0F0F0',
+                    margin: '4px 0',
+                  }} />
+                  {/* Individual Categories */}
                   {allCategories.map((category) => (
                     <button
                       key={category}
