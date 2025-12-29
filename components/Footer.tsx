@@ -14,8 +14,19 @@ export default async function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 sm:gap-12 mb-8 sm:mb-12">
           {/* Brand Column */}
           <div className="mb-6 sm:mb-0">
-            <Link href="/" className="text-xl sm:text-2xl font-bold tracking-tight mb-3 sm:mb-4 inline-block">
-              <span className="text-[#2D2D2D]">Beauty</span><span className="text-[#FF6B6B]">Finder</span>
+            <Link 
+              href="/" 
+              className="mb-3 sm:mb-4 inline-block"
+              style={{
+                fontFamily: 'var(--font-playfair), serif',
+                fontSize: '1.5rem',
+                fontWeight: '600',
+                color: '#2D2D2D',
+                textDecoration: 'none',
+                letterSpacing: '-0.01em',
+              }}
+            >
+              BeautyFinder
             </Link>
             <p className="text-sm text-[#6b6b6b] leading-relaxed">
               Discover trending beauty products from TikTok, Instagram, Reddit, and Amazon.
@@ -58,28 +69,25 @@ export default async function Footer() {
           <div className="mb-6 sm:mb-0">
             <h3 className="text-sm font-semibold text-[#2D2D2D] mb-3 sm:mb-4 tracking-wide uppercase">Brands</h3>
             {topBrands.length > 0 ? (
-              <ul className="space-y-2 sm:space-y-3">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2 sm:gap-y-3">
                 {topBrands.map((brand) => (
-                  <li key={brand.slug}>
-                    <Link 
-                      href={`/brands/${brand.slug}`} 
-                      className="text-sm text-[#6b6b6b] hover:text-[#E07856] transition-colors"
-                    >
-                      {brand.brand}
-                    </Link>
-                  </li>
+                  <Link 
+                    key={brand.slug}
+                    href={`/brands/${brand.slug}`} 
+                    className="text-sm text-[#6b6b6b] hover:text-[#E07856] transition-colors block"
+                  >
+                    {brand.brand}
+                  </Link>
                 ))}
                 {brands.length > 12 && (
-                  <li>
-                    <Link 
-                      href="/brands" 
-                      className="text-sm text-[#6b6b6b] hover:text-[#E07856] transition-colors font-medium"
-                    >
-                      View All Brands →
-                    </Link>
-                  </li>
+                  <Link 
+                    href="/brands" 
+                    className="text-sm text-[#6b6b6b] hover:text-[#E07856] transition-colors font-medium col-span-2"
+                  >
+                    View All Brands →
+                  </Link>
                 )}
-              </ul>
+              </div>
             ) : (
               <ul className="space-y-2 sm:space-y-3">
                 <li>
