@@ -64,10 +64,31 @@ async function migrateAmazonImagesToR2() {
           asin = asinMatch ? (asinMatch[1] || asinMatch[2] || asinMatch[3]) : undefined
         }
 
-        // Migrate image to R2
-        const amazonImageUrl = product.imageUrl || product.amazonUrl
+        // Check if the current image URL is a placeholder/blocked image
+        const isPlaceholderImage = product.imageUrl && (
+          product.imageUrl.includes('01jrA-8DXYL.gif') || // Common Amazon placeholder
+          product.imageUrl.includes('fls-na.amazon.com') || // Tracking URL
+          product.imageUrl.length < 100 // Very short URLs are often placeholders
+        )
+
+        // If we have a placeholder or invalid image, try to generate a proper Amazon image URL from ASIN
+        let amazonImageUrl = product.imageUrl
+        if (isPlaceholderImage && asin) {
+          const { getAmazonImageUrl } = await import('../lib/amazon-image')
+          const generatedUrl = getAmazonImageUrl(product.amazonUrl || '')
+          if (generatedUrl) {
+            console.log(`   ⚠️  Detected placeholder image, using generated URL from ASIN`)
+            amazonImageUrl = generatedUrl
+          }
+        }
+
+        // Fallback to Amazon URL if no image URL
         if (!amazonImageUrl) {
-          console.log(`⚠️  Skipping ${product.name} - no image URL`)
+          amazonImageUrl = product.amazonUrl
+        }
+
+        if (!amazonImageUrl) {
+          console.log(`⚠️  Skipping ${product.name} - no image URL or Amazon URL`)
           skipped++
           continue
         }

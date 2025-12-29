@@ -2,6 +2,7 @@ import { getProductBySlug, getRelatedProducts } from '@/lib/products'
 import { getTrendEmoji, getTrendLabel, formatTrendDuration, getSalesSpikePercent } from '@/lib/product-utils'
 import { getTimelineText } from '@/lib/age-decay'
 import { addAmazonAffiliateTag } from '@/lib/amazon-affiliate'
+import { findProductByName } from '@/lib/product-search'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import MarkdownContent from '@/components/MarkdownContent'
@@ -873,62 +874,81 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             <section>
               <h2 className="text-3xl md:text-4xl font-bold text-[#2D2D2D] mb-6 tracking-tight">Alternatives Worth Considering</h2>
               <div className="prose prose-lg max-w-none text-[#2D2D2D] leading-relaxed">
-                {product.content.alternatives.split('\n\n').filter(para => para.trim()).map((alternative, index) => {
-                  // Check if this is a category header (starts with **)
-                  const categoryMatch = alternative.match(/^\*\*(.+?)\*\*\s+(.+?)\s*\(\$[\d.,]+\):?\s*([\s\S]+)$/)
-                  
-                  if (categoryMatch) {
-                    const category = categoryMatch[1].trim()
-                    const productName = categoryMatch[2].trim()
-                    const description = categoryMatch[3].trim()
-                    const priceMatch = alternative.match(/\$[\d.,]+/)
-                    const price = priceMatch ? priceMatch[0] : ''
+                {(await Promise.all(
+                  product.content.alternatives.split('\n\n').filter(para => para.trim()).map(async (alternative, index) => {
+                    // Check if this is a category header (starts with **)
+                    // Format: **Category:** Product Name ($price) - description
+                    const categoryMatch = alternative.match(/^\*\*([^:]+):\*\*\s+(.+?)(?:\s*\(\$|$)/)
                     
-                    return (
-                      <div key={index} style={{ marginBottom: '32px' }}>
-                        <h3 style={{
-                          fontSize: '18px',
-                          fontWeight: '600',
-                          color: '#2D2D2D',
-                          marginBottom: '12px',
-                        }}>
-                          {category}
-                        </h3>
+                    if (categoryMatch) {
+                      const category = categoryMatch[1].trim()
+                      // Extract product name - everything after category but before the price
+                      const fullText = categoryMatch[2].trim()
+                      const productNameMatch = fullText.match(/^(.+?)\s*\(\$[\d.,]+\)/)
+                      const altProductName = productNameMatch ? productNameMatch[1].trim() : fullText.split('(')[0].trim()
+                      // Extract description (everything after the price)
+                      const descriptionMatch = alternative.match(/\(\$[\d.,]+\)\s*[-–]\s*(.+)$/)
+                      const description = descriptionMatch ? descriptionMatch[1].trim() : ''
+                      const priceMatch = alternative.match(/\$[\d.,]+/)
+                      const price = priceMatch ? priceMatch[0] : ''
+                      
+                      // Try to find matching product in our database
+                      const matchedProduct = await findProductByName(altProductName, 0.6, product.id)
+                      
+                      return (
+                        <div key={index} style={{ marginBottom: '32px' }}>
+                          <h3 style={{
+                            fontSize: '18px',
+                            fontWeight: '600',
+                            color: '#2D2D2D',
+                            marginBottom: '12px',
+                          }}>
+                            {category}
+                          </h3>
+                          <AlternativeProduct
+                            productName={altProductName}
+                            price={price}
+                            description={description}
+                            matchedProduct={matchedProduct}
+                          />
+                        </div>
+                      )
+                    }
+                    
+                    // Try regular format without category
+                    // Format: Product Name ($price) - description
+                    const match = alternative.match(/^(.+?)\s*\(\$[\d.,]+\)/)
+                    
+                    if (match) {
+                      const altProductName = match[1].trim()
+                      // Extract description (everything after the price)
+                      const descriptionMatch = alternative.match(/\(\$[\d.,]+\)\s*[-–]\s*(.+)$/)
+                      const description = descriptionMatch ? descriptionMatch[1].trim() : ''
+                      const priceMatch = alternative.match(/\$[\d.,]+/)
+                      const price = priceMatch ? priceMatch[0] : ''
+                      
+                      // Try to find matching product in our database
+                      const matchedProduct = await findProductByName(altProductName, 0.6, product.id)
+                      
+                      return (
                         <AlternativeProduct
-                          productName={productName}
+                          key={index}
+                          productName={altProductName}
                           price={price}
                           description={description}
+                          matchedProduct={matchedProduct}
                         />
+                      )
+                    }
+                    
+                    // Fallback: render as plain markdown if format doesn't match
+                    return (
+                      <div key={index} style={{ marginBottom: '24px' }}>
+                        <MarkdownContent content={alternative} />
                       </div>
                     )
-                  }
-                  
-                  // Try regular format without category
-                  const match = alternative.match(/^(.+?)\s*\(\$[\d.,]+\):?\s*([\s\S]+)$/)
-                  
-                  if (match) {
-                    const productName = match[1].trim()
-                    const description = match[2].trim()
-                    const priceMatch = alternative.match(/\$[\d.,]+/)
-                    const price = priceMatch ? priceMatch[0] : ''
-                    
-                    return (
-                      <AlternativeProduct
-                        key={index}
-                        productName={productName}
-                        price={price}
-                        description={description}
-                      />
-                    )
-                  }
-                  
-                  // Fallback: render as plain markdown if format doesn't match
-                  return (
-                    <div key={index} style={{ marginBottom: '24px' }}>
-                      <MarkdownContent content={alternative} />
-                    </div>
-                  )
-                })}
+                  })
+                ))}
               </div>
             </section>
           )}

@@ -713,12 +713,62 @@ export default function EditProductPage() {
           const refreshData = await refreshResponse.json()
           if (refreshData.success) {
             setProduct(refreshData.product)
+            // Update image URL if it was fetched
+            if (refreshData.product.imageUrl && refreshData.product.imageUrl !== product.imageUrl) {
+              setEditedImageUrl(refreshData.product.imageUrl)
+              if (refreshData.product.imageUrl && productImages.length === 0) {
+                setProductImages([refreshData.product.imageUrl])
+              }
+            }
             // Don't update editedProductName since it's been edited
           }
         }
         setTimeout(() => setMessage(null), 3000)
       } else {
         setMessage(`❌ Failed: ${data.message}`)
+      }
+    } catch (error) {
+      setMessage(`❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setScrapingAmazon(false)
+    }
+  }
+
+  const handleFetchImageFromAmazon = async () => {
+    if (!product || !product.amazonUrl) {
+      setMessage('Product does not have an Amazon URL')
+      return
+    }
+
+    setScrapingAmazon(true)
+    setMessage('Fetching image from Amazon...')
+    
+    try {
+      // Scrape Amazon product page - this will fetch the image and migrate it to R2
+      const response = await fetch(`/api/products/${productId}/scrape-amazon`, {
+        method: 'POST',
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        // Refresh product to get the new image URL
+        const refreshResponse = await fetch(`/api/products/${productId}`)
+        const refreshData = await refreshResponse.json()
+        if (refreshData.success && refreshData.product.imageUrl) {
+          setProduct(refreshData.product)
+          setEditedImageUrl(refreshData.product.imageUrl)
+          // Add to productImages if not already there
+          if (!productImages.includes(refreshData.product.imageUrl)) {
+            setProductImages([refreshData.product.imageUrl, ...productImages])
+          }
+          setMessage(`✅ Image fetched from Amazon and stored in R2!`)
+        } else {
+          setMessage(`✅ Amazon data scraped, but no image was found`)
+        }
+        setTimeout(() => setMessage(null), 3000)
+      } else {
+        setMessage(`❌ Failed to fetch image: ${data.message}`)
       }
     } catch (error) {
       setMessage(`❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
@@ -1326,6 +1376,20 @@ export default function EditProductPage() {
                     <span className="text-xs text-gray-500 self-center">Saving...</span>
                   )}
                 </div>
+                {product.amazonUrl && !editedImageUrl && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      handleFetchImageFromAmazon()
+                    }}
+                    disabled={scrapingAmazon}
+                    className="mt-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 font-medium rounded-lg disabled:bg-gray-300 disabled:text-gray-500 text-sm"
+                  >
+                    {scrapingAmazon ? 'Fetching...' : '📥 Fetch Image from Amazon'}
+                  </button>
+                )}
                 {editedImageUrl && (
                   <img 
                     src={editedImageUrl} 
@@ -1369,15 +1433,31 @@ export default function EditProductPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Upload Image
                 </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleUploadProductImage}
-                  disabled={uploadingImage}
-                  className="text-sm text-gray-600 disabled:opacity-50"
-                />
-                {uploadingImage && (
-                  <span className="text-xs text-gray-500 ml-2">Uploading...</span>
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleUploadProductImage}
+                    disabled={uploadingImage}
+                    className="text-sm text-gray-600 disabled:opacity-50"
+                  />
+                  {uploadingImage && (
+                    <span className="text-xs text-gray-500">Uploading...</span>
+                  )}
+                </div>
+                {product.amazonUrl && productImages.length === 0 && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      handleFetchImageFromAmazon()
+                    }}
+                    disabled={scrapingAmazon}
+                    className="mt-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 font-medium rounded-lg disabled:bg-gray-300 disabled:text-gray-500 text-sm"
+                  >
+                    {scrapingAmazon ? 'Fetching...' : '📥 Or Fetch Image from Amazon'}
+                  </button>
                 )}
               </div>
 

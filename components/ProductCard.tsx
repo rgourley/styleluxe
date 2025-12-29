@@ -145,11 +145,24 @@ export default function ProductCard({ product, priority = false }: { product: an
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#8b8b8b',
+            backgroundColor: '#f8f8f8',
+            backgroundImage: 'linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%)',
           }}>
-            <svg style={{ width: '4rem', height: '4rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
+            {/* Generic beauty product placeholder */}
+            <div style={{
+              width: '60%',
+              height: '60%',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#c0c0c0',
+            }}>
+              <svg style={{ width: '3rem', height: '3rem', marginBottom: '0.5rem' }} fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.39-2.1 1.39-1.6 0-2.23-.72-2.32-1.64H8.04c.1 1.7 1.36 2.66 2.86 2.97V19h2.34v-1.67c1.52-.29 2.72-1.16 2.72-2.77 0-1.96-1.7-2.76-3.66-3.21z"/>
+              </svg>
+              <span style={{ fontSize: '0.75rem', textAlign: 'center', color: '#a0a0a0' }}>Product Image</span>
+            </div>
           </div>
         )}
         

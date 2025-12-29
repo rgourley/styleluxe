@@ -8,10 +8,11 @@ import { ensureSchemaSynced } from './auto-sync-schema'
  */
 
 /**
- * Section 1: "Trending Now"
- * Query: current_score >= 70 AND days_trending <= 7
+ * Section 1: "Selling Out Fast" (formerly "Trending Now")
+ * Query: current_score >= 65 AND days_trending <= 14 (or up to 21 for high scores)
  * Limit: 8 products
  * Sort: current_score DESC
+ * Score range: 65-100
  */
 export async function getTrendingNowHomepage(limit: number = 8) {
   const cachedFn = unstable_cache(
@@ -38,16 +39,12 @@ export async function getTrendingNowHomepage(limit: number = 8) {
               AND: [
                 {
                   OR: [
-                    { currentScore: { gte: 60 } }, // Lowered from 70 to 60
+                    { currentScore: { gte: 65 } }, // Selling Out Fast: 65-100
                     {
                       AND: [
                         { currentScore: null },
-                        { trendScore: { gte: 60 } }, // Lowered from 70 to 60
+                        { trendScore: { gte: 65 } }, // Selling Out Fast: 65-100
                       ],
-                    },
-                    // Fallback: include products with any score if they have content
-                    {
-                      currentScore: null,
                     },
                   ],
                 },
