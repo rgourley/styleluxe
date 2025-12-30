@@ -56,7 +56,7 @@ GOOGLE_CLIENT_SECRET=paste-your-client-secret-here
 3. Go to **Settings** > **Environment Variables**
 4. Add `NEXTAUTH_URL` (IMPORTANT for OAuth):
    - **Name:** `NEXTAUTH_URL`
-   - **Value:** `https://beautyfinder.io`
+   - **Value:** `https://www.beautyfinder.io`
    - **Environment:** Select "Production" (and "Preview" if you want)
    - Click **"Save"**
 5. Add `GOOGLE_CLIENT_ID`:
