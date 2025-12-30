@@ -44,7 +44,30 @@ async function fixPlaceholderImages() {
     for (const product of products) {
       if (!product.imageUrl) continue
       
-      // Check URL patterns
+      // Skip products that already have valid R2 images
+      const hasR2Image = product.imageUrl.includes('r2.dev') || 
+                        product.imageUrl.includes('r2.cloudflarestorage.com') ||
+                        product.imageUrl.includes('pub-') // R2 public URLs
+      
+      if (hasR2Image) {
+        // Check if it's a small file (placeholder stored in R2)
+        try {
+          const response = await fetch(product.imageUrl, { method: 'HEAD' })
+          const contentLength = response.headers.get('content-length')
+          if (contentLength) {
+            const size = parseInt(contentLength)
+            if (size < 2000) { // Less than 2KB is likely a placeholder
+              console.log(`   Found small R2 file (placeholder): ${product.name} (${size} bytes)`)
+              placeholderProducts.push(product)
+            }
+          }
+        } catch (error) {
+          // If we can't check, skip it (assume it's valid)
+        }
+        continue // Skip R2 images that are valid size
+      }
+      
+      // Check URL patterns for Amazon placeholders
       const placeholderPatterns = [
         /01jrA-8DXYL/i,
         /1px/i,
@@ -53,29 +76,15 @@ async function fixPlaceholderImages() {
         /uedata/i,
         /placeholder/i,
         /spacer/i,
+        /images-na\.ssl-images-amazon\.com\/images\/P\/[A-Z0-9]{10}\.01\._SCLZZZZZZZ_\.jpg/i, // Legacy placeholder format
       ]
       
       const matchesPattern = placeholderPatterns.some(pattern => pattern.test(product.imageUrl || ''))
       
-      // Also check file size if it's an R2 URL
-      let isSmallFile = false
-      if (product.imageUrl.includes('r2.dev') || product.imageUrl.includes('r2.cloudflarestorage.com')) {
-        try {
-          const response = await fetch(product.imageUrl, { method: 'HEAD' })
-          const contentLength = response.headers.get('content-length')
-          if (contentLength) {
-            const size = parseInt(contentLength)
-            isSmallFile = size < 2000 // Less than 2KB is likely a placeholder
-            if (isSmallFile) {
-              console.log(`   Found small file: ${product.name} (${size} bytes)`)
-            }
-          }
-        } catch (error) {
-          // If we can't check, assume it might be a placeholder if pattern matches
-        }
-      }
+      // Check if it's an Amazon URL (might be a placeholder)
+      const isAmazonUrl = product.imageUrl.includes('amazon.com') || product.imageUrl.includes('media-amazon')
       
-      if (matchesPattern || isSmallFile) {
+      if (matchesPattern || (isAmazonUrl && !hasR2Image)) {
         placeholderProducts.push(product)
       }
     }

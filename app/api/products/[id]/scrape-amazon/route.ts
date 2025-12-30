@@ -62,9 +62,17 @@ export async function POST(
     console.log(`    Reviews: ${productData.totalReviewCount || 'N/A'}`)
     console.log(`    Price: ${productData.price || 'N/A'}`)
 
+    // Check if product already has an R2 image (don't overwrite it)
+    const hasR2Image = product.imageUrl && (
+      product.imageUrl.includes('r2.dev') || 
+      product.imageUrl.includes('r2.cloudflarestorage.com') ||
+      product.imageUrl.includes('pub-') // R2 public URLs
+    )
+
     // Store image in R2 if we have one and it's from Amazon
-    let finalImageUrl = productData.imageUrl || product.imageUrl
-    if (productData.imageUrl && (productData.imageUrl.includes('amazon.com') || productData.imageUrl.includes('media-amazon'))) {
+    // BUT only if product doesn't already have an R2 image
+    let finalImageUrl = product.imageUrl // Keep existing image by default
+    if (!hasR2Image && productData.imageUrl && (productData.imageUrl.includes('amazon.com') || productData.imageUrl.includes('media-amazon'))) {
       try {
         const { storeAmazonImageInR2, extractASINFromUrl } = await import('@/lib/image-storage')
         const asin = productData.asin || extractASINFromUrl(product.amazonUrl || '')
@@ -73,22 +81,31 @@ export async function POST(
           finalImageUrl = r2ImageUrl
           console.log(`  ✓ Stored image in R2: ${r2ImageUrl}`)
         } else {
-          console.log(`  ⚠️ Failed to store image in R2, using original URL`)
+          console.log(`  ⚠️ Failed to store image in R2, keeping existing image`)
+          // Don't update imageUrl if R2 upload failed - keep existing
         }
       } catch (error) {
         console.error('  ⚠️ Error storing image in R2:', error)
-        // Continue with original URL if R2 upload fails
+        // Keep existing image if R2 upload fails
       }
+    } else if (hasR2Image) {
+      console.log(`  ℹ️  Product already has R2 image, not overwriting: ${product.imageUrl?.substring(0, 50)}...`)
     }
 
-    // Update product with latest price and image if available
-    if (productData.price || finalImageUrl) {
+    // Update product with latest price (only update image if we got a new R2 image)
+    const updateData: any = {}
+    if (productData.price) {
+      updateData.price = productData.price
+    }
+    // Only update imageUrl if we have a new R2 image (not if we're keeping the existing one)
+    if (finalImageUrl && finalImageUrl !== product.imageUrl && (finalImageUrl.includes('r2.dev') || finalImageUrl.includes('r2.cloudflarestorage.com'))) {
+      updateData.imageUrl = finalImageUrl
+    }
+    
+    if (Object.keys(updateData).length > 0) {
       await prisma.product.update({
         where: { id: product.id },
-        data: {
-          price: productData.price || product.price,
-          imageUrl: finalImageUrl || product.imageUrl,
-        },
+        data: updateData,
       })
       
       // Invalidate cache when product is updated

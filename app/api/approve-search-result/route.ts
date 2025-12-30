@@ -158,21 +158,33 @@ export async function POST(request: Request) {
         productName = product.name
       }
 
-      // Migrate image to R2 if it's an Amazon image
-      let imageUrl = amazonData?.imageUrl || product.imageUrl
-      if (imageUrl && (imageUrl.includes('amazon.com') || imageUrl.includes('media-amazon'))) {
+      // Check if product already has an R2 image (don't overwrite it)
+      const hasR2Image = product.imageUrl && (
+        product.imageUrl.includes('r2.dev') || 
+        product.imageUrl.includes('r2.cloudflarestorage.com') ||
+        product.imageUrl.includes('pub-') // R2 public URLs
+      )
+
+      // Migrate image to R2 if it's an Amazon image, but only if product doesn't already have R2 image
+      let imageUrl = product.imageUrl // Keep existing image by default
+      if (!hasR2Image && amazonData?.imageUrl && (amazonData.imageUrl.includes('amazon.com') || amazonData.imageUrl.includes('media-amazon'))) {
         try {
           const { storeAmazonImageInR2, extractASINFromUrl } = await import('@/lib/image-storage')
           const asin = extractASINFromUrl(amazonData?.amazonUrl || product.amazonUrl || '')
-          const r2ImageUrl = await storeAmazonImageInR2(imageUrl, product.id, asin || undefined)
+          const r2ImageUrl = await storeAmazonImageInR2(amazonData.imageUrl, product.id, asin || undefined)
           if (r2ImageUrl) {
             imageUrl = r2ImageUrl
             console.log(`✅ Migrated image to R2 for product: ${product.name}`)
+          } else {
+            // If R2 migration failed, keep existing image (don't use Amazon placeholder)
+            console.log(`⚠️ Failed to migrate image to R2, keeping existing image`)
           }
         } catch (error) {
           console.error('Error migrating image to R2:', error)
-          // Continue with original image URL if migration fails
+          // Keep existing image if migration fails (don't overwrite with Amazon placeholder)
         }
+      } else if (hasR2Image) {
+        console.log(`ℹ️  Product already has R2 image, not overwriting: ${product.imageUrl?.substring(0, 50)}...`)
       }
 
       // Update product
