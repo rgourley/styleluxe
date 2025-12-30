@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/auth-utils'
 
 // Force dynamic rendering to prevent build-time data collection
 export const dynamic = 'force-dynamic'
@@ -20,6 +21,10 @@ async function extractNamesFromUrls() {
 }
 
 export async function POST(request: Request) {
+  // Check authentication
+  const authError = await requireAdmin()
+  if (authError) return authError
+
   try {
     // Lazy load all script functions to prevent build-time execution
     const { source } = await request.json()

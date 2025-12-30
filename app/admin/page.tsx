@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useSession, signOut } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import { getAmazonImageUrl } from '@/lib/amazon-image'
 import { addAmazonAffiliateTag } from '@/lib/amazon-affiliate'
 
@@ -31,35 +33,18 @@ interface Product {
 }
 
 export default function AdminPage() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [password, setPassword] = useState('')
-  const [authError, setAuthError] = useState('')
-  const [isLoading, setIsLoading] = useState(true)
+  const { data: session, status } = useSession()
+  const router = useRouter()
 
-  // Auth check - MUST be before any conditional returns
+  // Redirect to login if not authenticated
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const auth = sessionStorage.getItem('admin_auth')
-      if (auth === 'true') {
-        setIsAuthenticated(true)
-      }
-      setIsLoading(false)
+    if (status === 'unauthenticated') {
+      router.push('/admin/login')
     }
-  }, [])
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (password === 'BeautyFinder2025!Admin') {
-      sessionStorage.setItem('admin_auth', 'true')
-      setIsAuthenticated(true)
-      setAuthError('')
-    } else {
-      setAuthError('Incorrect password')
-    }
-  }
+  }, [status, router])
 
   // Show loading while checking auth
-  if (isLoading) {
+  if (status === 'loading') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-gray-600">Loading...</div>
@@ -67,42 +52,9 @@ export default function AdminPage() {
     )
   }
 
-  // Show login form if not authenticated
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-6">Admin Access</h1>
-          {authError && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
-              {authError}
-            </div>
-          )}
-          <form onSubmit={handleLogin}>
-            <div className="mb-4">
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Enter admin password"
-                autoFocus
-              />
-            </div>
-            <button
-              type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg"
-            >
-              Access Admin
-            </button>
-          </form>
-        </div>
-      </div>
-    )
+  // Show loading if not authenticated (will redirect)
+  if (status === 'unauthenticated' || !session) {
+    return null // Will redirect via useEffect
   }
 
   // Render the full dashboard
@@ -883,7 +835,7 @@ function AdminDashboard() {
             </Link>
             <button
               onClick={() => {
-                sessionStorage.removeItem('admin_auth')
+                signOut({ callbackUrl: '/admin/login' })
                 window.location.reload()
               }}
               className="text-sm text-red-600 hover:text-red-800"

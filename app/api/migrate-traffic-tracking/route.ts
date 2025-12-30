@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireAdmin } from '@/lib/auth-utils'
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic'
@@ -85,10 +86,18 @@ async function runMigration() {
 }
 
 export async function POST() {
+  // Check authentication
+  const authError = await requireAdmin()
+  if (authError) return authError
+
   return runMigration()
 }
 
 export async function GET() {
+  // Check authentication
+  const authError = await requireAdmin()
+  if (authError) return authError
+
   return runMigration()
 }
 

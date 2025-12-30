@@ -5,10 +5,15 @@
 
 import { NextResponse } from 'next/server'
 import { revalidatePath, revalidateTag } from 'next/cache'
+import { requireAdmin } from '@/lib/auth-utils'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(request: Request) {
+  // Check authentication
+  const authError = await requireAdmin()
+  if (authError) return authError
+
   try {
     const body = await request.json()
     const { paths, tags } = body

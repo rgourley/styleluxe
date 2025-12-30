@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { searchAmazonProduct } from '@/lib/amazon-search'
 import { prisma } from '@/lib/prisma'
+import { requireAdmin } from '@/lib/auth-utils'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,6 +10,10 @@ export const dynamic = 'force-dynamic'
  * Searches Amazon for selected product mentions
  */
 export async function POST(request: Request) {
+  // Check authentication
+  const authError = await requireAdmin()
+  if (authError) return authError
+
   try {
     const { productMentions } = await request.json()
 

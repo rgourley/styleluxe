@@ -3,6 +3,8 @@ import { Instrument_Sans, Atkinson_Hyperlegible, Outfit, Playfair_Display } from
 import "./globals.css";
 import { Providers } from '@/components/providers'
 import GoogleAnalytics from '@/components/GoogleAnalytics'
+// Validate environment variables on app startup
+import '@/lib/validate-env'
 
 // Logo font - Playfair Display
 const playfairDisplay = Playfair_Display({

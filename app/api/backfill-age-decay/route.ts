@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/auth-utils'
 
 // Force dynamic rendering to prevent build-time execution
 export const dynamic = 'force-dynamic'
@@ -7,6 +8,10 @@ export const dynamic = 'force-dynamic'
  * API endpoint to backfill age decay data for existing products
  */
 export async function POST(request: Request) {
+  // Check authentication
+  const authError = await requireAdmin()
+  if (authError) return authError
+
   try {
     console.log('🔄 Starting age decay backfill via API...')
     // Use dynamic import to prevent execution during build

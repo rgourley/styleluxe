@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/auth-utils'
 
 // Force dynamic rendering to prevent build-time execution
 export const dynamic = 'force-dynamic'
@@ -8,9 +9,11 @@ export const dynamic = 'force-dynamic'
  * POST /api/backfill-reviews
  */
 export async function POST(request: Request) {
+  // Check authentication
+  const authError = await requireAdmin()
+  if (authError) return authError
+
   try {
-    // Optional: Add authentication/authorization check here
-    // For now, allow anyone to trigger it (you can add auth later)
 
     console.log('Starting review backfill via API...')
 

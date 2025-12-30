@@ -1,10 +1,15 @@
 import { NextResponse } from 'next/server'
 import { exec } from 'child_process'
 import { promisify } from 'util'
+import { requireAdmin } from '@/lib/auth-utils'
 
 const execAsync = promisify(exec)
 
 export async function POST() {
+  // Check authentication
+  const authError = await requireAdmin()
+  if (authError) return authError
+
   try {
     console.log('Running database migration...')
     

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
+import { requireAdmin } from '@/lib/auth-utils'
 
 // Force dynamic rendering to prevent build-time data collection
 export const dynamic = 'force-dynamic'
@@ -53,6 +54,10 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Check authentication
+  const authError = await requireAdmin()
+  if (authError) return authError
+
   try {
     // Lazy load prisma to prevent build-time execution
     const { prisma } = await import('@/lib/prisma')
@@ -152,6 +157,10 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Check authentication
+  const authError = await requireAdmin()
+  if (authError) return authError
+
   try {
     // Lazy load prisma to prevent build-time execution
     const { prisma } = await import('@/lib/prisma')

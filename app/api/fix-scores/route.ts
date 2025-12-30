@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/auth-utils'
 
 // Force dynamic rendering to prevent build-time data collection
 export const dynamic = 'force-dynamic'
@@ -57,6 +58,10 @@ function calculateScoreFromSignals(signals: any[]): number {
 }
 
 export async function POST() {
+  // Check authentication
+  const authError = await requireAdmin()
+  if (authError) return authError
+
   try {
     // Lazy load prisma to prevent build-time execution
     const { prisma } = await import('@/lib/prisma')

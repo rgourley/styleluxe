@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
+import { requireAdmin } from '@/lib/auth-utils'
 
 // Force dynamic rendering to prevent build-time data collection
 export const dynamic = 'force-dynamic'
@@ -7,6 +8,10 @@ export const dynamic = 'force-dynamic'
 export const maxDuration = 60 // 60 seconds for Vercel Pro, 10s default on free tier
 
 export async function POST(request: Request) {
+  // Check authentication
+  const authError = await requireAdmin()
+  if (authError) return authError
+
   try {
     // Lazy load dependencies to prevent build-time execution
     const { generateAndSaveContent } = await import('@/lib/generate-content')

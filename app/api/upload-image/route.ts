@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/auth-utils'
 
 /**
  * Image upload handler for serverless environments
@@ -6,6 +7,10 @@ import { NextResponse } from 'next/server'
  * Works in Vercel and other serverless platforms where filesystem is read-only
  */
 export async function POST(request: Request) {
+  // Check authentication
+  const authError = await requireAdmin()
+  if (authError) return authError
+
   try {
     const formData = await request.formData()
     const file = formData.get('file') as File

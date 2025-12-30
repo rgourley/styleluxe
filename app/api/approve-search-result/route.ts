@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { requireAdmin } from '@/lib/auth-utils'
 
 // Force dynamic rendering to prevent build-time data collection
 export const dynamic = 'force-dynamic'
@@ -7,6 +8,10 @@ export const dynamic = 'force-dynamic'
  * Approve and add a search result to the database
  */
 export async function POST(request: Request) {
+  // Check authentication
+  const authError = await requireAdmin()
+  if (authError) return authError
+
   try {
     // Lazy load dependencies to prevent build-time execution
     const { prisma } = await import('@/lib/prisma')

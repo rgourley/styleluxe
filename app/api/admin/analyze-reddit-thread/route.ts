@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { scrapeRedditThread } from '@/scripts/scrape-reddit-thread'
 import { prisma } from '@/lib/prisma'
+import { requireAdmin } from '@/lib/auth-utils'
 
 export const dynamic = 'force-dynamic'
 
@@ -36,6 +37,10 @@ interface ProductMatch {
  * Analyzes a Reddit thread URL and extracts product mentions (NO Amazon searches - user selects which to search)
  */
 export async function POST(request: Request) {
+  // Check authentication
+  const authError = await requireAdmin()
+  if (authError) return authError
+
   try {
     const { redditUrl } = await request.json()
 

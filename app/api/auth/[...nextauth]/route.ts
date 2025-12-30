@@ -9,9 +9,14 @@ const getPrisma = async () => {
   return prisma
 }
 
+// Validate required environment variables
+if (!process.env.NEXTAUTH_SECRET && process.env.NODE_ENV === 'production') {
+  throw new Error('NEXTAUTH_SECRET is required in production')
+}
+
 const auth = NextAuth({
   // Using JWT strategy, so no adapter needed
-  secret: process.env.NEXTAUTH_SECRET || 'fallback-secret-for-dev-only',
+  secret: process.env.NEXTAUTH_SECRET || (process.env.NODE_ENV === 'development' ? 'fallback-secret-for-dev-only' : undefined),
   trustHost: true, // Required for production/Vercel
   providers: [
     GoogleProvider({

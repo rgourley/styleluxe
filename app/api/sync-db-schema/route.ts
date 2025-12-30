@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireAdmin } from '@/lib/auth-utils'
 
 // Force dynamic rendering to prevent build-time data collection
 export const dynamic = 'force-dynamic'
@@ -10,6 +11,10 @@ export const dynamic = 'force-dynamic'
  * This ensures production database matches localhost/dev
  */
 export async function POST() {
+  // Check authentication
+  const authError = await requireAdmin()
+  if (authError) return authError
+
   try {
     console.log('🚀 Running full database schema sync to match Prisma schema...')
     
