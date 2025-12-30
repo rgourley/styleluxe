@@ -14,29 +14,12 @@ if (!process.env.NEXTAUTH_SECRET && process.env.NODE_ENV === 'production') {
   throw new Error('NEXTAUTH_SECRET is required in production')
 }
 
-// Determine the base URL for NextAuth callbacks
-const getBaseUrl = () => {
-  // Prioritize NEXTAUTH_URL if set
-  if (process.env.NEXTAUTH_URL) {
-    return process.env.NEXTAUTH_URL
-  }
-  // Fallback to NEXT_PUBLIC_SITE_URL
-  if (process.env.NEXT_PUBLIC_SITE_URL) {
-    return process.env.NEXT_PUBLIC_SITE_URL
-  }
-  // Default to beautyfinder.io for production
-  if (process.env.NODE_ENV === 'production') {
-    return 'https://beautyfinder.io'
-  }
-  // Development fallback
-  return 'http://localhost:3000'
-}
-
 const auth = NextAuth({
   // Using JWT strategy, so no adapter needed
   secret: process.env.NEXTAUTH_SECRET || (process.env.NODE_ENV === 'development' ? 'fallback-secret-for-dev-only' : undefined),
   trustHost: true, // Required for production/Vercel
-  url: getBaseUrl(), // Explicitly set the base URL
+  // Note: NextAuth uses NEXTAUTH_URL environment variable for callback URLs
+  // Make sure NEXTAUTH_URL=https://beautyfinder.io is set in Vercel!
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || '',
