@@ -65,16 +65,88 @@ const auth = NextAuth({
     strategy: 'jwt',
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async signIn({ user, account, profile }) {
+      // Handle Google OAuth sign-in - create user in database if they don't exist
+      if (account?.provider === 'google' && user.email) {
+        const prisma = await getPrisma()
+        
+        // Check if user exists
+        let dbUser = await prisma.user.findUnique({
+          where: { email: user.email },
+        })
+
+        // Create user if they don't exist
+        if (!dbUser) {
+          dbUser = await prisma.user.create({
+            data: {
+              email: user.email,
+              name: user.name || profile?.name || user.email.split('@')[0],
+              image: user.image || profile?.picture,
+              emailVerified: new Date(),
+              role: 'admin', // Auto-assign admin role for Google sign-ins
+            },
+          })
+        }
+
+        // Link Google account to user if not already linked
+        if (account) {
+          const existingAccount = await prisma.account.findFirst({
+            where: {
+              userId: dbUser.id,
+              provider: 'google',
+              providerAccountId: account.providerAccountId,
+            },
+          })
+
+          if (!existingAccount) {
+            await prisma.account.create({
+              data: {
+                userId: dbUser.id,
+                type: account.type,
+                provider: account.provider,
+                providerAccountId: account.providerAccountId,
+                access_token: account.access_token,
+                expires_at: account.expires_at,
+                token_type: account.token_type,
+                scope: account.scope,
+                id_token: account.id_token,
+              },
+            })
+          }
+        }
+
+        // Update user info
+        ;(user as any).id = dbUser.id
+        ;(user as any).role = dbUser.role
+      }
+
+      return true // Allow sign-in
+    },
+    async jwt({ token, user, account }) {
       if (user) {
         token.role = (user as any).role || 'admin'
+        token.id = (user as any).id || user.id
       }
+      
+      // Handle Google OAuth - fetch user from database
+      if (account?.provider === 'google' && token.email) {
+        const prisma = await getPrisma()
+        const dbUser = await prisma.user.findUnique({
+          where: { email: token.email as string },
+        })
+        
+        if (dbUser) {
+          token.role = dbUser.role || 'admin'
+          token.id = dbUser.id
+        }
+      }
+      
       return token
     },
     async session({ session, token }) {
       if (session.user) {
         (session.user as any).role = token.role || 'admin'
-        ;(session.user as any).id = token.sub
+        ;(session.user as any).id = token.id || token.sub
       }
       return session
     },
