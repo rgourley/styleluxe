@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
 
   // Get site URL for canonical links - always use production domain, not preview URLs
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.thestyleluxe.com'
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://beautyfinder.io'
   const productUrl = `${siteUrl}/products/${slug}`
   
   // Get product image URL (prefer R2 URLs, avoid Amazon URLs)
@@ -353,7 +353,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const verdict = product.content.hook || `${product.name} is ${product.trendScore >= 70 ? 'worth the hype' : 'trending but proceed with caution'}.`
 
   // Get site URL for canonical links - always use production domain
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.thestyleluxe.com'
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://beautyfinder.io'
   
   // Get related products for internal linking
   const relatedProducts = await getRelatedProducts(

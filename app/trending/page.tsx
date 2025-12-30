@@ -8,7 +8,7 @@ import { unstable_cache } from 'next/cache'
 // Revalidate every 10 seconds (reduced for faster cache updates)
 export const revalidate = 10
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.thestyleluxe.com'
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://beautyfinder.io'
 
 export const metadata = {
   title: "All Trending Beauty Products - Filter by Hot, Rising, Recent",

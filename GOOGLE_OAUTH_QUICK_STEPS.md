@@ -54,17 +54,22 @@ GOOGLE_CLIENT_SECRET=paste-your-client-secret-here
 1. Go to your Vercel project dashboard: https://vercel.com/dashboard
 2. Select your project
 3. Go to **Settings** > **Environment Variables**
-4. Add `GOOGLE_CLIENT_ID`:
+4. Add `NEXTAUTH_URL` (IMPORTANT for OAuth):
+   - **Name:** `NEXTAUTH_URL`
+   - **Value:** `https://beautyfinder.io`
+   - **Environment:** Select "Production" (and "Preview" if you want)
+   - Click **"Save"**
+5. Add `GOOGLE_CLIENT_ID`:
    - **Name:** `GOOGLE_CLIENT_ID`
    - **Value:** paste your client ID
    - **Environment:** Select "Production" (and "Preview" if you want)
    - Click **"Save"**
-5. Add `GOOGLE_CLIENT_SECRET`:
+6. Add `GOOGLE_CLIENT_SECRET`:
    - **Name:** `GOOGLE_CLIENT_SECRET`
    - **Value:** paste your client secret
    - **Environment:** Select "Production" (and "Preview" if you want)
    - Click **"Save"**
-6. **Redeploy** your app (Vercel will auto-redeploy, or trigger a new deployment)
+7. **Redeploy** your app (Vercel will auto-redeploy, or trigger a new deployment)
 
 ### Step 6: Restart Dev Server (Local)
 

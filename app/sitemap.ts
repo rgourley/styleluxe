@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Always use production domain for sitemap URLs
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.thestyleluxe.com'
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://beautyfinder.io'
   
   // Use fixed date for static pages to prevent hydration issues
   const now = new Date('2025-01-01') // Fixed date for build consistency

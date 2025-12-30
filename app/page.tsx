@@ -19,7 +19,7 @@ const headerText = "Trending Beauty Products Right Now"
 export const revalidate = 5
 
 // Generate metadata for better SEO - canonical URLs always use production domain
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.thestyleluxe.com'
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://beautyfinder.io'
 
 export const metadata = {
   metadataBase: new URL(siteUrl), // Required for absolute image URLs on mobile
@@ -96,7 +96,7 @@ export default async function Home({
   // Removed currentDate to avoid hydration mismatch (timezone differences)
 
   // Get site URL for canonical links - always use production domain
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.thestyleluxe.com'
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://beautyfinder.io'
 
   // Structured data for SEO
   const websiteStructuredData = {

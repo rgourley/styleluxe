@@ -82,12 +82,18 @@ GOOGLE_CLIENT_SECRET=your-client-secret-here
 
 1. Go to your Vercel project dashboard
 2. Go to **Settings** > **Environment Variables**
-3. Add:
+3. **IMPORTANT:** Add `NEXTAUTH_URL` first:
+   - **Name:** `NEXTAUTH_URL`
+   - **Value:** `https://beautyfinder.io`
+   - **Environment:** Production (and Preview if you want)
+   - Click "Save"
+   - **This tells NextAuth what domain to use for OAuth callbacks**
+4. Add:
    - **Name:** `GOOGLE_CLIENT_ID`
    - **Value:** your client ID
    - **Environment:** Production (and Preview if you want)
    - Click "Save"
-4. Add:
+5. Add:
    - **Name:** `GOOGLE_CLIENT_SECRET`
    - **Value:** your client secret
    - **Environment:** Production (and Preview if you want)
