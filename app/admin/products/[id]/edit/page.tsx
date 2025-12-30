@@ -205,7 +205,8 @@ export default function EditProductPage() {
         const updatedProduct = { ...product, name: editedProductName.trim() }
         setProduct(updatedProduct)
         
-        // Update slug in content if it exists, or create content with the slug
+        // Update slug in content if it exists (don't create content just for slug)
+        // Content should only be created when generating content, not when saving name
         if (content) {
           // Store old slug in previousSlugs array before updating
           const oldSlug = content.slug
@@ -231,21 +232,8 @@ export default function EditProductPage() {
               setContent({ ...content, slug: newSlug, previousSlugs: previousSlugs } as any)
             }
           }
-        } else {
-          // Create content with the new slug
-          const contentResponse = await fetch(`/api/products/${productId}/content`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ slug: newSlug }),
-          })
-          
-          if (contentResponse.ok) {
-            const contentData = await contentResponse.json()
-            if (contentData.success) {
-              setContent(contentData.content)
-            }
-          }
         }
+        // Don't create content here - it will be created when generating content
         
         // Keep the flag set so the name doesn't revert if fetchProduct is called later
         // The flag will only be reset when the user explicitly changes the name again
