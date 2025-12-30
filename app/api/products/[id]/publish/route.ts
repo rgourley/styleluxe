@@ -50,6 +50,14 @@ export async function POST(
       revalidatePath(`/products/${product.content.slug}`)
       revalidatePath('/') // Also invalidate homepage
       revalidatePath('/trending') // Also invalidate trending page
+      
+      // Invalidate brand pages if product has a brand
+      if (product.brand) {
+        const { brandToSlug } = await import('@/lib/brands')
+        const brandSlug = brandToSlug(product.brand)
+        revalidatePath(`/brands/${brandSlug}`, 'page')
+        revalidatePath('/brands', 'page') // Also invalidate brand listing
+      }
     }
 
     return NextResponse.json({

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 
 // Force dynamic rendering to prevent build-time data collection
 export const dynamic = 'force-dynamic'
@@ -109,9 +109,30 @@ export async function PATCH(
     revalidatePath('/', 'layout')
     revalidatePath('/trending', 'page')
     
+    // Invalidate cache tags used by getProductBySlug
+    revalidateTag('products')
+    
+    // Invalidate brand pages if brand changed
+    if (body.brand !== undefined && currentProduct) {
+      // Revalidate all brand pages (they'll regenerate on next request)
+      revalidatePath('/brands', 'page')
+      if (body.brand) {
+        const { brandToSlug } = await import('@/lib/brands')
+        const brandSlug = brandToSlug(body.brand)
+        revalidatePath(`/brands/${brandSlug}`, 'page')
+      }
+      // Also revalidate old brand if it changed
+      if (currentProduct.brand && currentProduct.brand !== body.brand) {
+        const { brandToSlug } = await import('@/lib/brands')
+        const oldBrandSlug = brandToSlug(currentProduct.brand)
+        revalidatePath(`/brands/${oldBrandSlug}`, 'page')
+      }
+    }
+    
     // Invalidate product page if it has content
     if (product.content?.slug) {
       revalidatePath(`/products/${product.content.slug}`)
+      revalidateTag(`product-${product.content.slug}`)
     }
 
     return NextResponse.json({

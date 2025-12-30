@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { brandToSlug } from '@/lib/brands'
+import Sparkline from './Sparkline'
 
 interface ProductHeroSectionProps {
   product: {
@@ -42,6 +43,24 @@ export default function ProductHeroSection({
   onAmazonClick,
 }: ProductHeroSectionProps) {
   const containerRef = useRef<HTMLDivElement>(null)
+
+  // Fetch sparkline data
+  const [sparklineData, setSparklineData] = useState<number[]>([])
+  useEffect(() => {
+    // Only fetch if product has content (published) and has an id
+    if (product.id) {
+      fetch(`/api/products/${product.id}/sparkline`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.scores && data.scores.length > 0) {
+            setSparklineData(data.scores)
+          }
+        })
+        .catch(() => {
+          // Silently fail if no data available
+        })
+    }
+  }, [product.id])
 
   useEffect(() => {
     // Add fade-in animation on mount
@@ -250,6 +269,20 @@ export default function ProductHeroSection({
               </div>
             )
           })()}
+
+          {/* Sparkline - Trend visualization */}
+          {sparklineData.length > 0 && (
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              backgroundColor: '#FFFBF5',
+              padding: '5px 12px',
+              borderRadius: '6px',
+              border: '1px solid #FFE4E9',
+            }}>
+              <Sparkline data={sparklineData} width={60} height={20} color="#E07856" />
+            </div>
+          )}
         </div>
       )}
 
