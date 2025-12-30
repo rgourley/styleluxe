@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { revalidatePath, revalidateTag } from 'next/cache'
+import { revalidatePath } from 'next/cache'
 
 // Force dynamic rendering to prevent build-time data collection
 export const dynamic = 'force-dynamic'
@@ -66,6 +66,7 @@ export async function PATCH(
       select: { 
         amazonUrl: true, 
         name: true,
+        brand: true,
         status: true,
         content: {
           select: { slug: true }
@@ -109,9 +110,6 @@ export async function PATCH(
     revalidatePath('/', 'layout')
     revalidatePath('/trending', 'page')
     
-    // Invalidate cache tags used by getProductBySlug
-    revalidateTag('products')
-    
     // Invalidate brand pages if brand changed
     if (body.brand !== undefined && currentProduct) {
       // Revalidate all brand pages (they'll regenerate on next request)
@@ -132,7 +130,6 @@ export async function PATCH(
     // Invalidate product page if it has content
     if (product.content?.slug) {
       revalidatePath(`/products/${product.content.slug}`)
-      revalidateTag(`product-${product.content.slug}`)
     }
 
     return NextResponse.json({
