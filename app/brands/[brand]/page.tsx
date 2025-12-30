@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: { params: Promise<{ brand: st
     }
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://beautyfinder.io'
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.beautyfinder.io'
   const brandUrl = `${siteUrl}/brands/${brandSlug}`
 
   // Get products to count
@@ -85,7 +85,7 @@ export default async function BrandPage({ params }: { params: Promise<{ brand: s
     notFound()
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://beautyfinder.io'
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.beautyfinder.io'
 
   return (
     <>

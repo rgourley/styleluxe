@@ -4,7 +4,7 @@ import Footer from '@/components/Footer'
 import Link from 'next/link'
 
 export async function generateMetadata() {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://beautyfinder.io'
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.beautyfinder.io'
 
   return {
     title: 'Beauty Brands - All Trending Brand Products',
@@ -25,7 +25,7 @@ export async function generateMetadata() {
 export default async function BrandsPage() {
   const brands = await getAllBrands()
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://beautyfinder.io'
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.beautyfinder.io'
 
   return (
     <>

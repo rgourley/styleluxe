@@ -18,13 +18,13 @@ You're getting `redirect_uri_mismatch` because NextAuth is using the wrong domai
 **IMPORTANT:** Set ALL of these in Vercel:
 
 1. **`NEXTAUTH_URL`**
-   - Value: `https://beautyfinder.io` (use **without www** - or match whatever domain users actually visit)
+   - Value: `https://www.beautyfinder.io`
    - Environment: Production, Preview, Development
    - **This is the most critical one!**
-   - ⚠️ **Must match exactly** what users type in their browser (beautyfinder.io or www.beautyfinder.io)
+   - ⚠️ **Must match exactly** what users type in their browser
 
 2. **`NEXT_PUBLIC_SITE_URL`**
-   - Value: `https://beautyfinder.io` (same as above - **must match** NEXTAUTH_URL)
+   - Value: `https://www.beautyfinder.io` (same as above - **must match** NEXTAUTH_URL)
    - Environment: Production, Preview, Development
 
 3. **`GOOGLE_CLIENT_ID`**
@@ -51,10 +51,8 @@ After updating environment variables:
 
 ### Step 5: Verify in Google Cloud Console
 
-Make sure your Google OAuth client has this redirect URI (match your actual domain):
-- ✅ `https://beautyfinder.io/api/auth/callback/google` (if using non-www)
-- OR `https://www.beautyfinder.io/api/auth/callback/google` (if using www)
-- OR both if you support both
+Make sure your Google OAuth client has this redirect URI:
+- ✅ `https://www.beautyfinder.io/api/auth/callback/google`
 
 **Important:** The redirect URI must match exactly what you set in `NEXTAUTH_URL` above!
 

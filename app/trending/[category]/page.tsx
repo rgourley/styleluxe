@@ -17,7 +17,7 @@ export async function generateStaticParams() {
   }))
 }
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://beautyfinder.io'
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.beautyfinder.io'
 
 export async function generateMetadata({ params }: { params: Promise<{ category: string }> }) {
   const { category: categorySlug } = await params

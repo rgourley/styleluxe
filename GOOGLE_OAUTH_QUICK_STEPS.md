@@ -29,12 +29,12 @@
    - Click **"+ Add URI"**
    - Add: `http://localhost:3000`
    - Click **"+ Add URI"** again
-   - Add: `https://beautyfinder.io`
+   - Add: `https://www.beautyfinder.io`
 7. **Authorized redirect URIs:**
    - Click **"+ Add URI"**
    - Add: `http://localhost:3000/api/auth/callback/google`
    - Click **"+ Add URI"** again
-   - Add: `https://beautyfinder.io/api/auth/callback/google`
+   - Add: `https://www.beautyfinder.io/api/auth/callback/google`
 8. Click **"Create"**
 9. **Copy both:**
    - Client ID

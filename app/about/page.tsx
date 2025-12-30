@@ -3,7 +3,7 @@ import Link from 'next/link'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://beautyfinder.io'
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.beautyfinder.io'
 
 export const metadata: Metadata = {
   title: 'About Us - BeautyFinder',

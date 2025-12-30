@@ -48,13 +48,13 @@ The NextAuth configuration has been updated to automatically:
    - **Authorized JavaScript origins:**
      ```
      http://localhost:3000
-     https://beautyfinder.io
+     https://www.beautyfinder.io
      ```
    
    - **Authorized redirect URIs:**
      ```
      http://localhost:3000/api/auth/callback/google
-     https://beautyfinder.io/api/auth/callback/google
+     https://www.beautyfinder.io/api/auth/callback/google
      ```
    
    - Click "Create"
@@ -84,7 +84,7 @@ GOOGLE_CLIENT_SECRET=your-client-secret-here
 2. Go to **Settings** > **Environment Variables**
 3. **IMPORTANT:** Add `NEXTAUTH_URL` first:
    - **Name:** `NEXTAUTH_URL`
-   - **Value:** `https://beautyfinder.io`
+   - **Value:** `https://www.beautyfinder.io`
    - **Environment:** Production (and Preview if you want)
    - Click "Save"
    - **This tells NextAuth what domain to use for OAuth callbacks**
@@ -131,7 +131,7 @@ npm run dev
 **Solution:**
 - Make sure the redirect URI in Google Console **exactly** matches: 
   - `http://localhost:3000/api/auth/callback/google` (for localhost)
-  - `https://beautyfinder.io/api/auth/callback/google` (for production)
+  - `https://www.beautyfinder.io/api/auth/callback/google` (for production)
 - Check for trailing slashes or http vs https
 - Make sure you added **both** URIs if testing both environments
 
@@ -162,7 +162,7 @@ npm run dev
 - You can use the **same** OAuth credentials for both
 - Just make sure to add **both** redirect URIs in Google Console
 - Localhost: `http://localhost:3000/api/auth/callback/google`
-- Production: `https://beautyfinder.io/api/auth/callback/google`
+- Production: `https://www.beautyfinder.io/api/auth/callback/google`
 
 ### **Test Users:**
 - If your app is in "Testing" mode, only test users can sign in

@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next'
 
 export default function robots(): MetadataRoute.Robots {
   // Always use production domain for robots.txt
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://beautyfinder.io'
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.beautyfinder.io'
 
   return {
     rules: [

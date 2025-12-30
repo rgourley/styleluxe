@@ -42,7 +42,7 @@ const atkinsonHyperlegible = Atkinson_Hyperlegible({
   preload: true,
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://beautyfinder.io'
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.beautyfinder.io'
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl), // Required for absolute image URLs on mobile iOS
