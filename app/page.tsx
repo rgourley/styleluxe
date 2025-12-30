@@ -205,6 +205,9 @@ export default async function Home({
       {/* Hero Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
         <div className="text-center mb-16">
+          <p className="text-lg md:text-xl text-[#6b6b6b] mb-4 tracking-wide uppercase">
+            Catch beauty trends before they sell out.
+          </p>
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-[#2D2D2D] mb-6 tracking-tight leading-tight">
             What Beauty Products<br />Are Trending Right Now?
           </h1>
