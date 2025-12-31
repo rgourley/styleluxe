@@ -1007,6 +1007,18 @@ export default function EditProductPage() {
       const data = await response.json()
 
       if (data.success) {
+        // Refresh content from server to ensure we have the latest saved data
+        const refreshResponse = await fetch(`/api/products/${productId}`, {
+          cache: 'no-store', // Force fresh data
+        })
+        const refreshData = await refreshResponse.json()
+        
+        if (refreshData.success && refreshData.product?.content) {
+          // Update content state with saved data from server
+          setContent(refreshData.product.content)
+          setFaqItems(refreshData.product.content.faq || [])
+        }
+        
         setMessage('✅ Saved successfully!')
         setTimeout(() => setMessage(null), 2000)
       } else {
