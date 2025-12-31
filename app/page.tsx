@@ -246,13 +246,13 @@ export default async function Home({
           </div>
         ) : (
           <>
-            {/* Section 1: Selling Out Fast */}
+            {/* Section 1: Selling Like Crazy */}
             {trendingNow.length > 0 && (
               <section className="mb-20">
                 <div className="mb-8">
                   <div>
                     <h2 className="text-3xl md:text-4xl font-bold text-[#2D2D2D] mb-3 tracking-tight">
-                      Selling Out Fast
+                      Selling Like Crazy
                     </h2>
                     <p className="text-sm text-[#6b6b6b] tracking-wide">
                       These products are exploding on Amazon, Reddit, and TikTok. Sales spiked 1000%+ this week, get them before they're gone. {currentDate}
