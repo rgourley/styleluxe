@@ -64,10 +64,8 @@ export async function GET(request: Request) {
         },
         content: true,
       },
-      orderBy: {
-        updatedAt: 'desc', // Sort by last imported/updated (most recent first)
-      },
-      take: limit,
+      // Don't sort here - we'll sort after processing scores
+      take: limit * 2, // Fetch more to account for filtering, then limit after sorting
     })
 
     // Recalculate trend scores using new system (Amazon 0-70 + Reddit bonus 0-30 = max 100)
@@ -161,15 +159,21 @@ export async function GET(request: Request) {
         }
         
         // Secondary sort: by date discovered (newest first)
-        // Use the earliest detectedAt from trendSignals as "date discovered"
-        const aDates = (a.trendSignals || []).map(s => new Date(s.detectedAt || 0).getTime()).filter(d => d > 0)
-        const bDates = (b.trendSignals || []).map(s => new Date(s.detectedAt || 0).getTime()).filter(d => d > 0)
+        // Use firstDetected if available, otherwise use earliest detectedAt from trendSignals
+        const aFirstDetected = (a as any).firstDetected 
+          ? new Date((a as any).firstDetected).getTime()
+          : (a.trendSignals || []).length > 0
+            ? Math.min(...(a.trendSignals || []).map(s => new Date(s.detectedAt || 0).getTime()).filter(d => d > 0))
+            : 0
         
-        const aEarliest = aDates.length > 0 ? Math.min(...aDates) : 0
-        const bEarliest = bDates.length > 0 ? Math.min(...bDates) : 0
+        const bFirstDetected = (b as any).firstDetected 
+          ? new Date((b as any).firstDetected).getTime()
+          : (b.trendSignals || []).length > 0
+            ? Math.min(...(b.trendSignals || []).map(s => new Date(s.detectedAt || 0).getTime()).filter(d => d > 0))
+            : 0
         
         // Sort descending (newest discoveries first)
-        return bEarliest - aEarliest
+        return bFirstDetected - aFirstDetected
       })
     } else {
       // For other statuses: sort by last updated (most recently imported/updated first)
@@ -180,7 +184,10 @@ export async function GET(request: Request) {
       })
     }
 
-    return NextResponse.json({ success: true, products: filteredProducts })
+    // Apply limit after sorting
+    const limitedProducts = filteredProducts.slice(0, limit)
+
+    return NextResponse.json({ success: true, products: limitedProducts })
   } catch (error) {
     console.error('Error fetching products:', error)
     return NextResponse.json(
