@@ -68,7 +68,7 @@ export default async function BlogPage() {
                     {post.publishedAt && (
                       <>
                         <span>•</span>
-                        <time dateTime={post.publishedAt}>
+                        <time dateTime={post.publishedAt.toISOString()}>
                           {new Date(post.publishedAt).toLocaleDateString('en-US', {
                             year: 'numeric',
                             month: 'long',

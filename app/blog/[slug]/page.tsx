@@ -113,7 +113,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             {post.publishedAt && (
               <>
                 <span>•</span>
-                <time dateTime={post.publishedAt}>
+                <time dateTime={post.publishedAt.toISOString()}>
                   {new Date(post.publishedAt).toLocaleDateString('en-US', {
                     year: 'numeric',
                     month: 'long',
