@@ -27,6 +27,9 @@ export default function NewBlogPostPage() {
   const [author, setAuthor] = useState('BeautyFinder Team')
   const [postStatus, setPostStatus] = useState<'DRAFT' | 'PUBLISHED'>('DRAFT')
   const [uploadingImage, setUploadingImage] = useState(false)
+  const [generatingPost, setGeneratingPost] = useState(false)
+  const [topicInput, setTopicInput] = useState('')
+  const [wordCount, setWordCount] = useState('1000')
 
   useEffect(() => {
     if (sessionStatus === 'unauthenticated') {
@@ -103,6 +106,45 @@ export default function NewBlogPostPage() {
       setMessage(`❌ Error uploading image: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setUploadingImage(false)
+    }
+  }
+
+  const handleGeneratePost = async () => {
+    if (!topicInput.trim()) {
+      setMessage('Please enter a topic')
+      return
+    }
+
+    setGeneratingPost(true)
+    setMessage('Generating blog post with AI...')
+
+    try {
+      const response = await fetch('/api/blog/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          topic: topicInput.trim(),
+          wordCount: parseInt(wordCount) || 1000,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.success && data.content) {
+        setContent(data.content)
+        // Auto-generate title from topic if title is empty
+        if (!title.trim()) {
+          setTitle(topicInput.trim())
+        }
+        setMessage('✅ Blog post generated successfully!')
+        setTimeout(() => setMessage(null), 3000)
+      } else {
+        setMessage(`❌ Failed to generate: ${data.message}`)
+      }
+    } catch (error) {
+      setMessage(`❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setGeneratingPost(false)
     }
   }
 
@@ -241,6 +283,50 @@ export default function NewBlogPostPage() {
               <option value="DRAFT">Draft</option>
               <option value="PUBLISHED">Published</option>
             </select>
+          </div>
+
+          {/* AI Generation */}
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              Generate with AI
+            </label>
+            <div className="space-y-3">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={topicInput}
+                  onChange={(e) => setTopicInput(e.target.value)}
+                  placeholder="Enter topic (e.g., 'Best Korean skincare trends 2025')"
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault()
+                      handleGeneratePost()
+                    }
+                  }}
+                />
+                <input
+                  type="number"
+                  value={wordCount}
+                  onChange={(e) => setWordCount(e.target.value)}
+                  placeholder="Words"
+                  className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  min="500"
+                  max="3000"
+                />
+                <button
+                  onClick={handleGeneratePost}
+                  disabled={generatingPost || !topicInput.trim()}
+                  className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {generatingPost ? 'Generating...' : 'Generate'}
+                </button>
+              </div>
+              <p className="text-xs text-gray-600">
+                AI will query your product database and create a blog post with relevant product links. 
+                Products in your database will link to BeautyFinder pages; others will use Amazon affiliate links.
+              </p>
+            </div>
           </div>
 
           {/* Content */}
