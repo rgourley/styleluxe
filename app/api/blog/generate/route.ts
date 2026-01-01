@@ -79,13 +79,21 @@ export async function POST(request: Request) {
 
         if (productUrl) {
           const priceText = product.price ? `$${product.price.toFixed(2)}` : 'price varies'
-          productsContext += `- **${product.name}**${product.brand ? ` (${product.brand})` : ''} - ${priceText} - ${productUrl}\n`
+          productsContext += `- **${product.name}**${product.brand ? ` (${product.brand})` : ''} - ${priceText}\n  Link: ${productUrl}\n`
         }
       }
 
-      productsContext += '\n**CRITICAL:** For products listed above, use the BeautyFinder links (preferred). Only use Amazon links if a product is NOT in the database.\n'
+      productsContext += '\n**CRITICAL FORMATTING INSTRUCTIONS:**\n'
+      productsContext += 'When mentioning products in the article:\n'
+      productsContext += '1. Use the product name in **bold** as a clickable link\n'
+      productsContext += '2. Format as markdown: **[Product Name](URL)** or **[Brand Product Name](URL)**\n'
+      productsContext += '3. Weave products naturally into relevant sections - don\'t create a separate "products" list\n'
+      productsContext += '4. Include products where they make sense contextually (e.g., when discussing a specific trend, ingredient, or category)\n'
+      productsContext += '5. For products in the database, use the BeautyFinder links provided above\n'
+      productsContext += '6. Example format: "The **[Medicube Collagen Cream](https://www.beautyfinder.io/products/medicube-collagen-cream)** has been gaining traction for its unique formulation."\n'
     } else {
-      productsContext = '\n**NOTE:** No products found in the BeautyFinder database for this topic. You can reference products with Amazon links when needed (format: https://www.amazon.com/dp/[ASIN]/?tag=' + associateTag + ')\n'
+      productsContext = '\n**NOTE:** No products found in the BeautyFinder database for this topic. You can reference products with Amazon affiliate links when needed (format: https://www.amazon.com/dp/[ASIN]/?tag=' + associateTag + ')\n'
+      productsContext += '\n**FORMATTING:** When mentioning products, use markdown format: **[Product Name](Amazon URL)**\n'
     }
 
     // Build the prompt based on user's style guide
@@ -93,12 +101,16 @@ export async function POST(request: Request) {
 
 Write a professional beauty industry article about "${topic}" for BeautyFinder's informed audience.
 
-PRODUCT SELECTION:
+PRODUCT SELECTION AND FORMATTING:
 - Query the database for products relevant to "${topic}"
 - Prioritize products with: recent data, strong trends, or relevant to the article angle
-- Use 3-5 products naturally throughout the article
-- Link to BeautyFinder product pages: ${siteUrl}/products/[product-slug]
-- For products NOT in database, use Amazon links: https://www.amazon.com/dp/[ASIN]/?tag=${associateTag} and include current price
+- Use 3-5 products naturally throughout the article in relevant sections
+- Format products as: **[Product Name](URL)** - product name in bold, linked
+- Weave products into the narrative where they make contextual sense (e.g., when discussing specific trends, ingredients, categories)
+- Don't create a separate "recommended products" section - integrate them naturally
+- For products in database: Use BeautyFinder links (preferred)
+- For products NOT in database: Use Amazon affiliate links with format: https://www.amazon.com/dp/[ASIN]/?tag=${associateTag}
+
 ${productsContext}
 CRITICAL - Avoid these AI patterns:
 - No "it's not just X, it's Y" constructions
