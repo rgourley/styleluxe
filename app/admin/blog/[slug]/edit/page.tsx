@@ -297,7 +297,6 @@ export default function EditBlogPostPage() {
                 value={content}
                 onChange={setContent}
                 placeholder="Write your blog post content in Markdown..."
-                minHeight="400px"
               />
             </div>
           </div>
