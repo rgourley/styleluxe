@@ -43,6 +43,11 @@ export default async function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/blog" className="text-sm text-[#6b6b6b] hover:text-[#E07856] transition-colors">
+                  Blog
+                </Link>
+              </li>
+              <li>
                 <Link href="/brands" className="text-sm text-[#6b6b6b] hover:text-[#E07856] transition-colors">
                   Brands
                 </Link>

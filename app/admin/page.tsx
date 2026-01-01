@@ -1968,6 +1968,25 @@ function AdminDashboard() {
           </div>
         )}
 
+        {/* Blog Management Section */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">Blog Management</h2>
+              <p className="text-sm text-gray-600">Create and manage blog posts</p>
+            </div>
+            <Link
+              href="/admin/blog"
+              className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium"
+            >
+              Manage Blog →
+            </Link>
+          </div>
+          <p className="text-sm text-gray-500">
+            Write blog posts using Markdown. Posts support featured images and can be published or saved as drafts.
+          </p>
+        </div>
+
         {/* Content Generation Info */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Content Generation</h2>

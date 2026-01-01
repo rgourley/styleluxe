@@ -246,3 +246,27 @@ model ProductScoreHistory {
   @@index([recordedAt])
   @@index([productId, recordedAt])
 }
+
+enum BlogPostStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model BlogPost {
+  id            String          @id @default(cuid())
+  title         String
+  slug          String          @unique
+  content       String          @db.Text // Markdown content
+  excerpt       String?         @db.Text
+  featuredImage String?
+  author        String          @default("BeautyFinder Team")
+  status        BlogPostStatus  @default(DRAFT)
+  publishedAt   DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([slug])
+  @@index([status])
+  @@index([publishedAt])
+  @@index([createdAt])
+}

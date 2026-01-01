@@ -79,6 +79,48 @@ export async function generateUniqueSlug(
   return `${baseSlug.substring(0, 70)}-${timestamp}`
 }
 
+/**
+ * Generate a unique slug for blog posts by checking if it exists and appending a number if needed
+ */
+export async function generateUniqueBlogSlug(
+  baseSlug: string,
+  excludePostId?: string
+): Promise<string> {
+  // Lazy load prisma to avoid circular dependencies
+  const { prisma } = await import('./prisma')
+  
+  let slug = baseSlug
+  let counter = 1
+  const maxAttempts = 100 // Safety limit
+  
+  while (counter < maxAttempts) {
+    // Check if slug exists (excluding current post if provided)
+    const existing = await prisma.blogPost.findUnique({
+      where: { slug },
+      select: { id: true },
+    })
+    
+    // If slug doesn't exist, we can use it
+    if (!existing) {
+      return slug
+    }
+    
+    // If slug exists but belongs to the same post, we can use it
+    if (excludePostId && existing.id === excludePostId) {
+      return slug
+    }
+    
+    // Slug exists for a different post, try with a suffix
+    const base = baseSlug.substring(0, 90) // Leave room for suffix
+    slug = `${base}-${counter}`
+    counter++
+  }
+  
+  // Fallback: use timestamp if we can't find a unique slug
+  const timestamp = Date.now().toString(36)
+  return `${baseSlug.substring(0, 70)}-${timestamp}`
+}
+
 
 
 
