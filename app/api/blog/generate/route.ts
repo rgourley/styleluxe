@@ -36,9 +36,9 @@ export async function POST(request: Request) {
     // Query database for relevant products
     const { prisma } = await import('@/lib/prisma')
     
-    // Search products by name/brand that might be relevant to the topic
+    // First, try to get products matching the topic (for relevance)
     const searchTerms = topic.toLowerCase().split(/\s+/).filter((term: string) => term.length > 2)
-    const products = await prisma.product.findMany({
+    const matchingProducts = await prisma.product.findMany({
       where: {
         status: 'PUBLISHED',
         OR: [
@@ -57,8 +57,44 @@ export async function POST(request: Request) {
       orderBy: {
         currentScore: 'desc',
       },
-      take: 10, // Get top 10 most relevant products
+      take: 20,
     })
+
+    // Also get top products by score (to give Claude a broader product database to choose from)
+    const topProducts = await prisma.product.findMany({
+      where: {
+        status: 'PUBLISHED',
+        content: {
+          isNot: null, // Only products with content (have detail pages)
+        },
+      },
+      include: {
+        content: {
+          select: {
+            slug: true,
+          },
+        },
+      },
+      orderBy: {
+        currentScore: 'desc',
+      },
+      take: 100, // Top 100 products by score
+    })
+
+    // Combine and deduplicate (prioritize matching products)
+    const productMap = new Map()
+    
+    // Add matching products first (they take priority)
+    matchingProducts.forEach(p => productMap.set(p.id, p))
+    
+    // Add top products (skip if already added)
+    topProducts.forEach(p => {
+      if (!productMap.has(p.id)) {
+        productMap.set(p.id, p)
+      }
+    })
+    
+    const products = Array.from(productMap.values())
 
     // Format products for the prompt
     let productsContext = ''
@@ -66,10 +102,12 @@ export async function POST(request: Request) {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.beautyfinder.io'
 
     if (products.length > 0) {
-      productsContext = '\n**PRODUCTS FROM BEAUTYFINDER DATABASE:**\n'
-      productsContext += `You have access to ${products.length} relevant products from the BeautyFinder database. Use 3-5 of these products naturally throughout the article.\n\n`
+      productsContext = '\n**BEAUTYFINDER PRODUCT DATABASE:**\n'
+      productsContext += `You have access to ${products.length} products from the BeautyFinder database. Use 3-8 products naturally throughout the article where they make contextual sense.\n\n`
+      productsContext += '**AVAILABLE PRODUCTS:**\n\n'
 
-      for (const product of products.slice(0, 5)) {
+      // Format products more concisely (one line per product)
+      for (const product of products) {
         const productSlug = product.content?.slug
         const productUrl = productSlug 
           ? `${siteUrl}/products/${productSlug}`
@@ -78,8 +116,9 @@ export async function POST(request: Request) {
             : null
 
         if (productUrl) {
-          const priceText = product.price ? `$${product.price.toFixed(2)}` : 'price varies'
-          productsContext += `- **${product.name}**${product.brand ? ` (${product.brand})` : ''} - ${priceText}\n  Link: ${productUrl}\n`
+          const priceText = product.price ? `$${product.price.toFixed(2)}` : ''
+          const brandText = product.brand ? `${product.brand} ` : ''
+          productsContext += `- ${brandText}**${product.name}**${priceText ? ` (${priceText})` : ''} → ${productUrl}\n`
         }
       }
 
@@ -87,12 +126,13 @@ export async function POST(request: Request) {
       productsContext += 'When mentioning products in the article:\n'
       productsContext += '1. Use the product name in **bold** as a clickable link\n'
       productsContext += '2. Format as markdown: **[Product Name](URL)** or **[Brand Product Name](URL)**\n'
-      productsContext += '3. Weave products naturally into relevant sections - don\'t create a separate "products" list\n'
-      productsContext += '4. Include products where they make sense contextually (e.g., when discussing a specific trend, ingredient, or category)\n'
-      productsContext += '5. For products in the database, use the BeautyFinder links provided above\n'
+      productsContext += '3. Weave products naturally into relevant sections where they make contextual sense\n'
+      productsContext += '4. Don\'t create a separate "products" or "recommendations" section - integrate them into the narrative\n'
+      productsContext += '5. Use the exact BeautyFinder URLs from the product list above\n'
       productsContext += '6. Example format: "The **[Medicube Collagen Cream](https://www.beautyfinder.io/products/medicube-collagen-cream)** has been gaining traction for its unique formulation."\n'
+      productsContext += '7. For products NOT in the list above, use Amazon affiliate links: https://www.amazon.com/dp/[ASIN]/?tag=' + associateTag + '\n'
     } else {
-      productsContext = '\n**NOTE:** No products found in the BeautyFinder database for this topic. You can reference products with Amazon affiliate links when needed (format: https://www.amazon.com/dp/[ASIN]/?tag=' + associateTag + ')\n'
+      productsContext = '\n**NOTE:** No products found in the BeautyFinder database. You can reference products with Amazon affiliate links when needed (format: https://www.amazon.com/dp/[ASIN]/?tag=' + associateTag + ')\n'
       productsContext += '\n**FORMATTING:** When mentioning products, use markdown format: **[Product Name](Amazon URL)**\n'
     }
 
