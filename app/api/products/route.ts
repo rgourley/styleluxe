@@ -149,12 +149,36 @@ export async function GET(request: Request) {
       filteredProducts = productsWithRecalculatedScores.filter(p => p._sourceType === source)
     }
 
-    // Sort by last updated (most recently imported/updated first)
-    filteredProducts.sort((a, b) => {
-      const aDate = new Date(a.updatedAt).getTime()
-      const bDate = new Date(b.updatedAt).getTime()
-      return bDate - aDate // Most recent first
-    })
+    // Sort products
+    if (status === 'FLAGGED') {
+      // For FLAGGED products: sort by score first (descending), then by date discovered (descending - newest first)
+      filteredProducts.sort((a, b) => {
+        // Primary sort: by score (highest first)
+        const aScore = a.currentScore ?? a.trendScore ?? 0
+        const bScore = b.currentScore ?? b.trendScore ?? 0
+        if (bScore !== aScore) {
+          return bScore - aScore // Descending (highest score first)
+        }
+        
+        // Secondary sort: by date discovered (newest first)
+        // Use the earliest detectedAt from trendSignals as "date discovered"
+        const aDates = (a.trendSignals || []).map(s => new Date(s.detectedAt || 0).getTime()).filter(d => d > 0)
+        const bDates = (b.trendSignals || []).map(s => new Date(s.detectedAt || 0).getTime()).filter(d => d > 0)
+        
+        const aEarliest = aDates.length > 0 ? Math.min(...aDates) : 0
+        const bEarliest = bDates.length > 0 ? Math.min(...bDates) : 0
+        
+        // Sort descending (newest discoveries first)
+        return bEarliest - aEarliest
+      })
+    } else {
+      // For other statuses: sort by last updated (most recently imported/updated first)
+      filteredProducts.sort((a, b) => {
+        const aDate = new Date(a.updatedAt).getTime()
+        const bDate = new Date(b.updatedAt).getTime()
+        return bDate - aDate // Most recent first
+      })
+    }
 
     return NextResponse.json({ success: true, products: filteredProducts })
   } catch (error) {
