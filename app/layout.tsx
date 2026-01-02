@@ -58,6 +58,52 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" data-scroll-behavior="smooth">
+      <head>
+        {/* Inline script to catch chunk errors before React loads */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                // Prevent infinite reload loops
+                if (sessionStorage.getItem('chunk-error-reload')) {
+                  sessionStorage.removeItem('chunk-error-reload');
+                }
+                
+                // Listen for script errors immediately
+                window.addEventListener('error', function(event) {
+                  if (event.filename && event.filename.includes('_next/static/chunks/')) {
+                    console.warn('Chunk loading error detected (inline), reloading page...');
+                    if (!sessionStorage.getItem('chunk-error-reload')) {
+                      sessionStorage.setItem('chunk-error-reload', 'true');
+                      setTimeout(function() {
+                        window.location.reload();
+                      }, 100);
+                    }
+                  }
+                }, true);
+                
+                // Also catch promise rejections
+                window.addEventListener('unhandledrejection', function(event) {
+                  var error = event.reason;
+                  var errorMessage = error && error.message ? error.message : String(error || '');
+                  if (errorMessage.includes('ChunkLoadError') || 
+                      errorMessage.includes('Failed to load chunk') ||
+                      errorMessage.includes('404')) {
+                    console.warn('Chunk loading error detected (promise), reloading page...');
+                    event.preventDefault();
+                    if (!sessionStorage.getItem('chunk-error-reload')) {
+                      sessionStorage.setItem('chunk-error-reload', 'true');
+                      setTimeout(function() {
+                        window.location.reload();
+                      }, 100);
+                    }
+                  }
+                });
+              })();
+            `,
+          }}
+        />
+      </head>
       <body
         className={`${playfairDisplay.variable} ${instrumentSans.variable} ${outfit.variable} ${atkinsonHyperlegible.variable} antialiased`}
       >

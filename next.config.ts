@@ -63,6 +63,7 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        // HTML pages - don't cache to prevent chunk mismatch issues
         source: '/:path*',
         headers: [
           {
@@ -92,6 +93,35 @@ const nextConfig: NextConfig = {
           {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=()'
+          },
+        ],
+      },
+      {
+        // HTML pages specifically - prevent aggressive caching
+        source: '/:path*.html',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate',
+          },
+        ],
+      },
+      {
+        // Root and blog pages - prevent caching to avoid chunk mismatches
+        source: '/',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate',
+          },
+        ],
+      },
+      {
+        source: '/blog',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate',
           },
         ],
       },
