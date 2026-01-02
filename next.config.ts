@@ -50,47 +50,14 @@ const nextConfig: NextConfig = {
     ppr: false, // Can enable when stable
   },
   
-  // Output configuration
-  output: 'standalone', // Smaller builds, faster deployments
+  // Note: output: 'standalone' removed - Vercel handles deployment automatically
+  // Standalone output is for Docker/self-hosted deployments, not Vercel
   
-  // Turbopack configuration (required when using webpack config)
+  // Turbopack configuration (Next.js 16 uses Turbopack by default)
   turbopack: {},
   
-  // Webpack optimizations (for production builds with --webpack flag)
-  webpack: (config, { isServer }) => {
-    if (!isServer) {
-      // Optimize client bundle
-      config.optimization = {
-        ...config.optimization,
-        moduleIds: 'deterministic',
-        runtimeChunk: 'single',
-        splitChunks: {
-          chunks: 'all',
-          cacheGroups: {
-            default: false,
-            vendors: false,
-            // Vendor chunk
-            vendor: {
-              name: 'vendor',
-              chunks: 'all',
-              test: /node_modules/,
-              priority: 20,
-            },
-            // Common chunk
-            common: {
-              name: 'common',
-              minChunks: 2,
-              chunks: 'all',
-              priority: 10,
-              reuseExistingChunk: true,
-              enforce: true,
-            },
-          },
-        },
-      }
-    }
-    return config
-  },
+  // Webpack optimizations (only used with --webpack flag, not with Turbopack)
+  // Removed webpack config as Turbopack handles optimization automatically
   
   // Headers for caching and security
   async headers() {

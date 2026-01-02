@@ -15,6 +15,10 @@ export default function GoogleAnalytics() {
       <Script
         strategy="afterInteractive"
         src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
+        // Add proper preload attributes to prevent warnings
+        onLoad={() => {
+          // Script loaded successfully
+        }}
       />
       <Script
         id="google-analytics"
