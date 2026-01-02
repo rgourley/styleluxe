@@ -3,6 +3,7 @@ import { Instrument_Sans, Atkinson_Hyperlegible, Outfit, Playfair_Display } from
 import "./globals.css";
 import { Providers } from '@/components/providers'
 import GoogleAnalytics from '@/components/GoogleAnalytics'
+import ChunkErrorHandler from '@/components/ChunkErrorHandler'
 // Validate environment variables on app startup
 import '@/lib/validate-env'
 
@@ -60,6 +61,7 @@ export default function RootLayout({
       <body
         className={`${playfairDisplay.variable} ${instrumentSans.variable} ${outfit.variable} ${atkinsonHyperlegible.variable} antialiased`}
       >
+        <ChunkErrorHandler />
         <GoogleAnalytics />
         <Providers>
           {children}
