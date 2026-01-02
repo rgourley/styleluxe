@@ -15,10 +15,8 @@ export async function GET(request: Request) {
     const where: any = {}
     if (status && status !== 'ALL') {
       where.status = status
-    } else {
-      // Default: only published posts
-      where.status = 'PUBLISHED'
     }
+    // If status is 'ALL' or null, don't filter by status (show all posts)
 
     const posts = await prisma.blogPost.findMany({
       where,

@@ -58,20 +58,23 @@ export async function PATCH(
       )
     }
 
-    // Build update data
-    const updateData: any = {}
-    if (body.title !== undefined) updateData.title = body.title
-    if (body.content !== undefined) updateData.content = body.content
-    if (body.excerpt !== undefined) updateData.excerpt = body.excerpt
-    if (body.featuredImage !== undefined) updateData.featuredImage = body.featuredImage
-    if (body.author !== undefined) updateData.author = body.author
-    if (body.status !== undefined) {
-      updateData.status = body.status
-      // Set publishedAt when status changes to PUBLISHED
-      if (body.status === 'PUBLISHED' && currentPost.status !== 'PUBLISHED') {
-        updateData.publishedAt = new Date()
-      }
-    }
+        // Build update data
+        const updateData: any = {}
+        if (body.title !== undefined) updateData.title = body.title
+        if (body.content !== undefined) updateData.content = body.content
+        if (body.excerpt !== undefined) updateData.excerpt = body.excerpt
+        if (body.featuredImage !== undefined) updateData.featuredImage = body.featuredImage
+        if (body.author !== undefined) updateData.author = body.author
+        if (body.status !== undefined) {
+          updateData.status = body.status
+          // Set publishedAt when status changes to PUBLISHED
+          if (body.status === 'PUBLISHED' && currentPost.status !== 'PUBLISHED') {
+            updateData.publishedAt = new Date()
+          } else if (body.status === 'DRAFT' && currentPost.status === 'PUBLISHED') {
+            // Don't clear publishedAt when unpublishing - keep the original publish date
+            // updateData.publishedAt = null
+          }
+        }
 
     // Handle slug change (generate unique slug if title changed)
     if (body.title !== undefined && body.title !== currentPost.title) {

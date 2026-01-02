@@ -74,6 +74,27 @@ export default function AdminBlogPage() {
     }
   }
 
+  const handleTogglePublish = async (slug: string, currentStatus: 'DRAFT' | 'PUBLISHED') => {
+    const newStatus = currentStatus === 'DRAFT' ? 'PUBLISHED' : 'DRAFT'
+    const action = newStatus === 'PUBLISHED' ? 'publish' : 'unpublish'
+
+    try {
+      const response = await fetch(`/api/blog/${slug}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      })
+      const data = await response.json()
+      if (data.success) {
+        fetchPosts()
+      } else {
+        alert(`Failed to ${action}: ${data.message}`)
+      }
+    } catch (error) {
+      alert(`Error ${action}ing post`)
+    }
+  }
+
   if (status === 'loading') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -192,7 +213,17 @@ export default function AdminBlogPage() {
                     </div>
 
                     {/* Actions */}
-                    <div className="mt-3 flex items-center gap-2">
+                    <div className="mt-3 flex items-center gap-2 flex-wrap">
+                      <button
+                        onClick={() => handleTogglePublish(post.slug, post.status)}
+                        className={`text-sm px-3 py-1 rounded font-medium ${
+                          post.status === 'DRAFT'
+                            ? 'bg-green-600 hover:bg-green-700 text-white'
+                            : 'bg-gray-600 hover:bg-gray-700 text-white'
+                        }`}
+                      >
+                        {post.status === 'DRAFT' ? 'Publish' : 'Unpublish'}
+                      </button>
                       {post.status === 'PUBLISHED' && (
                         <Link
                           href={`/blog/${post.slug}`}
