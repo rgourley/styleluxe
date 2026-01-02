@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/auth-utils'
+import { isR2Image } from '@/lib/image-storage'
 
 // Force dynamic rendering to prevent build-time data collection
 export const dynamic = 'force-dynamic'
@@ -102,13 +103,22 @@ export async function POST() {
         await prisma.product.delete({ where: { id: product.id } })
         matched++
       } else {
+        // Check if product already has an R2 image (don't overwrite)
+        const hasR2Image = isR2Image(product.imageUrl)
+        
+        // Only use Amazon image if product doesn't have an R2 image
+        // Never overwrite R2 images with Amazon URLs (even placeholders)
+        const imageUrl = hasR2Image 
+          ? product.imageUrl 
+          : (product.imageUrl || amazonResult.imageUrl)
+        
         // Update Reddit product with Amazon data
         await prisma.product.update({
           where: { id: product.id },
           data: {
             amazonUrl: amazonResult.amazonUrl,
             price: product.price || amazonResult.price,
-            imageUrl: product.imageUrl || amazonResult.imageUrl,
+            imageUrl: imageUrl,
             brand: product.brand || amazonResult.brand,
           },
         })

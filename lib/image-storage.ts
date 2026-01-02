@@ -56,3 +56,15 @@ export function extractASINFromUrl(amazonUrl: string): string | null {
   return match ? (match[1] || match[2] || match[3]) : null
 }
 
+/**
+ * Check if an image URL is an R2 image (should not be overwritten)
+ */
+export function isR2Image(imageUrl: string | null | undefined): boolean {
+  if (!imageUrl) return false
+  return (
+    imageUrl.includes('r2.dev') || 
+    imageUrl.includes('r2.cloudflarestorage.com') ||
+    imageUrl.includes('pub-') // R2 public URLs
+  )
+}
+
