@@ -265,8 +265,25 @@ model BlogPost {
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
 
+  versions      BlogPostVersion[]
+
   @@index([slug])
   @@index([status])
   @@index([publishedAt])
+  @@index([createdAt])
+}
+
+model BlogPostVersion {
+  id          String   @id @default(cuid())
+  blogPostId  String
+  content     String   @db.Text // Markdown content snapshot
+  title       String?  // Title at time of version
+  excerpt     String?  @db.Text
+  createdAt   DateTime @default(now())
+  createdBy   String?  // Optional: track who created this version
+
+  blogPost    BlogPost @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+
+  @@index([blogPostId])
   @@index([createdAt])
 }

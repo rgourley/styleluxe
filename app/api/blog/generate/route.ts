@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/auth-utils'
+import { requireAdmin, getSession } from '@/lib/auth-utils'
 import Anthropic from '@anthropic-ai/sdk'
 import { addAmazonAffiliateTag } from '@/lib/amazon-affiliate'
 
@@ -24,13 +24,38 @@ export async function POST(request: Request) {
   if (authError) return authError
 
   try {
-    const { topic, wordCount = 1000 } = await request.json()
+    const { topic, wordCount = 1000, blogPostId } = await request.json()
 
     if (!topic || !topic.trim()) {
       return NextResponse.json(
         { success: false, message: 'Topic is required' },
         { status: 400 }
       )
+    }
+
+    // If blogPostId is provided, save current version before generating
+    if (blogPostId) {
+      const { prisma } = await import('@/lib/prisma')
+      const session = await getSession()
+      const userEmail = session?.user?.email || 'Unknown'
+
+      const currentPost = await prisma.blogPost.findUnique({
+        where: { id: blogPostId },
+        select: { content: true, title: true, excerpt: true },
+      })
+
+      if (currentPost && currentPost.content) {
+        // Save current version before overwriting
+        await prisma.blogPostVersion.create({
+          data: {
+            blogPostId,
+            content: currentPost.content,
+            title: currentPost.title,
+            excerpt: currentPost.excerpt || null,
+            createdBy: userEmail,
+          },
+        })
+      }
     }
 
     // Query database for relevant products
@@ -144,7 +169,7 @@ Write a professional beauty industry article about "${topic}" for BeautyFinder's
 PRODUCT SELECTION AND FORMATTING:
 - Query the database for products relevant to "${topic}"
 - Prioritize products with: recent data, strong trends, or relevant to the article angle
-- Use 3-5 products naturally throughout the article in relevant sections
+- Use 3-8 products naturally throughout the article in relevant sections
 - Format products as: **[Product Name](URL)** - product name in bold, linked
 - Weave products into the narrative where they make contextual sense (e.g., when discussing specific trends, ingredients, categories)
 - Don't create a separate "recommended products" section - integrate them naturally
@@ -228,4 +253,3 @@ Write the article now. No preamble, just start with the content.`
     )
   }
 }
-

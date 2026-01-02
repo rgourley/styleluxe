@@ -26,6 +26,15 @@ interface BlogPost {
   updatedAt: string
 }
 
+interface BlogPostVersion {
+  id: string
+  content: string
+  title: string | null
+  excerpt: string | null
+  createdAt: string
+  createdBy: string | null
+}
+
 export default function EditBlogPostPage() {
   const params = useParams()
   const router = useRouter()
@@ -47,6 +56,9 @@ export default function EditBlogPostPage() {
   const [generatingPost, setGeneratingPost] = useState(false)
   const [topicInput, setTopicInput] = useState('')
   const [wordCount, setWordCount] = useState('1000')
+  const [showVersions, setShowVersions] = useState(false)
+  const [versions, setVersions] = useState<BlogPostVersion[]>([])
+  const [loadingVersions, setLoadingVersions] = useState(false)
 
   useEffect(() => {
     if (sessionStatus === 'unauthenticated') {
@@ -157,6 +169,11 @@ export default function EditBlogPostPage() {
       return
     }
 
+    // Warn if there's existing content
+    if (content.trim() && !confirm('This will overwrite the current content. A version will be saved. Continue?')) {
+      return
+    }
+
     setGeneratingPost(true)
     setMessage('Generating blog post with AI...')
 
@@ -167,6 +184,7 @@ export default function EditBlogPostPage() {
         body: JSON.stringify({
           topic: topicInput.trim(),
           wordCount: parseInt(wordCount) || 1000,
+          blogPostId: post?.id, // Pass ID to save version
         }),
       })
 
@@ -178,8 +196,12 @@ export default function EditBlogPostPage() {
         if (!title.trim()) {
           setTitle(topicInput.trim())
         }
-        setMessage('✅ Blog post generated successfully!')
+        setMessage('✅ Blog post generated successfully! Previous version saved.')
         setTimeout(() => setMessage(null), 3000)
+        // Refresh versions if showing
+        if (showVersions) {
+          fetchVersions()
+        }
       } else {
         setMessage(`❌ Failed to generate: ${data.message}`)
       }
@@ -187,6 +209,55 @@ export default function EditBlogPostPage() {
       setMessage(`❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setGeneratingPost(false)
+    }
+  }
+
+  const fetchVersions = async () => {
+    setLoadingVersions(true)
+    try {
+      const response = await fetch(`/api/blog/${slug}/versions`)
+      const data = await response.json()
+      if (data.success) {
+        setVersions(data.versions || [])
+      }
+    } catch (error) {
+      console.error('Error fetching versions:', error)
+    } finally {
+      setLoadingVersions(false)
+    }
+  }
+
+  const handleShowVersions = () => {
+    if (!showVersions) {
+      fetchVersions()
+    }
+    setShowVersions(!showVersions)
+  }
+
+  const handleRestoreVersion = async (versionId: string) => {
+    if (!confirm('Restore this version? This will overwrite the current content.')) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/blog/${slug}/versions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ versionId }),
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        // Reload the post to get updated content
+        await fetchPost()
+        setMessage('✅ Version restored successfully!')
+        setTimeout(() => setMessage(null), 3000)
+        setShowVersions(false)
+      } else {
+        setMessage(`❌ Failed to restore: ${data.message}`)
+      }
+    } catch (error) {
+      setMessage(`❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 
@@ -386,6 +457,54 @@ export default function EditBlogPostPage() {
               />
             </div>
           </div>
+
+          {/* Version History */}
+          {post && (
+            <div className="mb-6">
+              <button
+                onClick={handleShowVersions}
+                className="text-sm text-blue-600 hover:text-blue-800 underline"
+              >
+                {showVersions ? 'Hide' : 'Show'} Version History ({versions.length})
+              </button>
+              
+              {showVersions && (
+                <div className="mt-3 border border-gray-200 rounded-lg p-4 bg-gray-50 max-h-96 overflow-y-auto">
+                  {loadingVersions ? (
+                    <div className="text-sm text-gray-500">Loading versions...</div>
+                  ) : versions.length === 0 ? (
+                    <div className="text-sm text-gray-500">No previous versions saved.</div>
+                  ) : (
+                    <div className="space-y-3">
+                      {versions.map((version) => (
+                        <div key={version.id} className="border-b border-gray-200 pb-3 last:border-0">
+                          <div className="flex items-start justify-between mb-2">
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">
+                                {new Date(version.createdAt).toLocaleString()}
+                              </div>
+                              {version.createdBy && (
+                                <div className="text-xs text-gray-500">by {version.createdBy}</div>
+                              )}
+                            </div>
+                            <button
+                              onClick={() => handleRestoreVersion(version.id)}
+                              className="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded font-medium"
+                            >
+                              Restore
+                            </button>
+                          </div>
+                          <div className="text-xs text-gray-600 line-clamp-2">
+                            {version.content.substring(0, 200)}...
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Preview */}
           {content && (
