@@ -157,10 +157,10 @@ export async function GET(
 
     // If we have no scores, try to use current baseScore as fallback
     if (scores.length === 0 || scores.every(s => s === 0)) {
-      if (product?.baseScore !== null) {
+      if (product && product.baseScore !== null) {
         const currentScore = addVariance(product.baseScore, id, today)
         return NextResponse.json({ scores: [currentScore] })
-      } else if (product?.currentScore !== null) {
+      } else if (product && product.currentScore !== null) {
         const currentScore = addVariance(product.currentScore, id, today)
         return NextResponse.json({ scores: [currentScore] })
       }

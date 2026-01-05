@@ -66,15 +66,21 @@ async function checkViralProductsAndNotify() {
         continue
       }
 
-      // Calculate sales spike
-      const salesSpike = getSalesSpikePercent(product.trendSignals || [])
+      // Calculate sales spike percentage (numeric value)
+      const amazonSignals = (product.trendSignals || []).filter((s: any) => s.source === 'amazon_movers')
+      const salesSpikeSignal = amazonSignals.find((s: any) => 
+        s.signalType === 'sales_spike' || (s.metadata as any)?.salesJumpPercent
+      )
+      const salesSpikePercent = salesSpikeSignal 
+        ? (salesSpikeSignal.value || (salesSpikeSignal.metadata as any)?.salesJumpPercent || 0)
+        : 0
       
       // Check if it meets viral criteria
       const currentScore = product.currentScore ?? product.trendScore ?? 0
-      const isViral = currentScore >= 70 || salesSpike >= 500
+      const isViral = currentScore >= 70 || salesSpikePercent >= 500
 
       if (isViral) {
-        productsToNotify.push({ product, salesSpike })
+        productsToNotify.push({ product, salesSpike: salesSpikePercent })
       }
     }
 
@@ -103,12 +109,12 @@ async function checkViralProductsAndNotify() {
     let totalFailed = 0
 
     // Send notifications for each viral product
-    for (const { product, salesSpike } of productsToNotify) {
+    for (const { product, salesSpike: salesSpikePercent } of productsToNotify) {
       const productSlug = product.content?.slug || `product-${product.id}`
       
       console.log(`\n📧 Notifying about: ${product.name}`)
       console.log(`   Score: ${product.currentScore ?? product.trendScore ?? 0}`)
-      console.log(`   Sales Spike: ${salesSpike > 0 ? `+${salesSpike}%` : 'N/A'}`)
+      console.log(`   Sales Spike: ${salesSpikePercent > 0 ? `+${salesSpikePercent}%` : 'N/A'}`)
 
       // Send to all subscribers
       for (const subscriber of subscribers) {
@@ -120,7 +126,7 @@ async function checkViralProductsAndNotify() {
             price: product.price,
             imageUrl: product.imageUrl,
             trendScore: product.currentScore ?? product.trendScore ?? 0,
-            salesSpike: salesSpike > 0 ? salesSpike : undefined,
+            salesSpike: salesSpikePercent > 0 ? salesSpikePercent : undefined,
             amazonUrl: product.amazonUrl,
           })
 
