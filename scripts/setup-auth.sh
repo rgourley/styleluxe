@@ -37,3 +37,4 @@ echo "✅ Setup complete! See AUTH_SETUP.md for detailed instructions."
 
 
 
+

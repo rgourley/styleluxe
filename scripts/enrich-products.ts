@@ -9,6 +9,7 @@
  */
 
 import { prisma } from '../lib/prisma'
+import { isR2Image } from '../lib/image-storage'
 
 /**
  * Normalize product name for matching
@@ -252,10 +253,17 @@ async function enrichProducts() {
       }
       
       // Update Amazon product with Reddit data if missing
+      // NEVER overwrite R2 images
       const updates: any = {}
       if (!amazonProduct.brand && bestMatch.brand) updates.brand = bestMatch.brand
       if (!amazonProduct.price && bestMatch.price) updates.price = bestMatch.price
-      if (!amazonProduct.imageUrl && bestMatch.imageUrl) updates.imageUrl = bestMatch.imageUrl
+      // Only update image if Amazon product doesn't have one AND it's not an R2 image
+      if (!amazonProduct.imageUrl && bestMatch.imageUrl && !isR2Image(bestMatch.imageUrl)) {
+        updates.imageUrl = bestMatch.imageUrl
+      } else if (!amazonProduct.imageUrl && bestMatch.imageUrl) {
+        // If bestMatch has R2 image, use it
+        updates.imageUrl = bestMatch.imageUrl
+      }
       // Keep the better name (usually Amazon has more complete names)
       if (bestMatch.name && bestMatch.name.length > amazonProduct.name.length) {
         updates.name = bestMatch.name
@@ -382,9 +390,16 @@ async function enrichProducts() {
         })
 
         // Update primary with best data from duplicate
+        // NEVER overwrite R2 images
         const updates: any = {}
         if (!primary.amazonUrl && dup.amazonUrl) updates.amazonUrl = dup.amazonUrl
-        if (!primary.imageUrl && dup.imageUrl) updates.imageUrl = dup.imageUrl
+        // Only update image if primary doesn't have one, or if dup has R2 image and primary doesn't
+        if (!primary.imageUrl && dup.imageUrl) {
+          updates.imageUrl = dup.imageUrl
+        } else if (primary.imageUrl && !isR2Image(primary.imageUrl) && dup.imageUrl && isR2Image(dup.imageUrl)) {
+          // If primary has non-R2 image but dup has R2 image, prefer R2
+          updates.imageUrl = dup.imageUrl
+        }
         if (!primary.price && dup.price) updates.price = dup.price
         if (!primary.brand && dup.brand) updates.brand = dup.brand
         if (dup.trendScore > primary.trendScore) updates.trendScore = dup.trendScore

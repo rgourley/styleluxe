@@ -7,6 +7,7 @@
 
 import { prisma } from '../lib/prisma'
 import { searchAmazonProduct } from './search-amazon-product'
+import { isR2Image } from '../lib/image-storage'
 
 // Node.js 18+ has native fetch, but if running in older versions, this will work
 
@@ -709,6 +710,12 @@ async function processRedditData() {
             const redditScore = Math.min(50, redditSignalsForScore.length * 25)
             const totalScore = amazonScore + redditScore
             
+            // Check if Amazon product already has an R2 image (don't overwrite)
+            const hasR2Image = isR2Image(existingAmazon.imageUrl)
+            const imageUrl = hasR2Image 
+              ? existingAmazon.imageUrl 
+              : (existingAmazon.imageUrl || amazonResult.imageUrl)
+
             // Update Amazon product
             await prisma.product.update({
               where: { id: existingAmazon.id },
@@ -719,7 +726,7 @@ async function processRedditData() {
                 name: existingAmazon.name || amazonResult.name,
                 brand: existingAmazon.brand || amazonResult.brand,
                 price: existingAmazon.price || amazonResult.price,
-                imageUrl: existingAmazon.imageUrl || amazonResult.imageUrl,
+                imageUrl: imageUrl, // Never overwrite R2 images
               },
             })
             
@@ -730,13 +737,19 @@ async function processRedditData() {
             updated++
             continue
           } else {
+            // Check if product already has an R2 image (don't overwrite)
+            const hasR2Image = isR2Image(product.imageUrl)
+            const imageUrl = hasR2Image 
+              ? product.imageUrl 
+              : (product.imageUrl || amazonResult.imageUrl)
+
             // Update Reddit product with Amazon data
             await prisma.product.update({
               where: { id: product.id },
               data: {
                 amazonUrl: amazonResult.amazonUrl,
                 price: product.price || amazonResult.price,
-                imageUrl: product.imageUrl || amazonResult.imageUrl,
+                imageUrl: imageUrl, // Never overwrite R2 images
                 brand: product.brand || amazonResult.brand,
               },
             })

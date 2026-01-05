@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { requireAdmin } from '@/lib/auth-utils'
+import { isR2Image } from '@/lib/image-storage'
 
 // Force dynamic rendering to prevent build-time data collection
 export const dynamic = 'force-dynamic'
@@ -68,11 +69,7 @@ export async function POST(
     console.log(`    Price: ${productData.price || 'N/A'}`)
 
     // Check if product already has an R2 image (don't overwrite it)
-    const hasR2Image = product.imageUrl && (
-      product.imageUrl.includes('r2.dev') || 
-      product.imageUrl.includes('r2.cloudflarestorage.com') ||
-      product.imageUrl.includes('pub-') // R2 public URLs
-    )
+    const hasR2Image = isR2Image(product.imageUrl)
 
     // Store image in R2 if we have one and it's from Amazon
     // BUT only if product doesn't already have an R2 image

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/auth-utils'
+import { isR2Image } from '@/lib/image-storage'
 
 // Force dynamic rendering to prevent build-time data collection
 export const dynamic = 'force-dynamic'
@@ -164,11 +165,7 @@ export async function POST(request: Request) {
       }
 
       // Check if product already has an R2 image (don't overwrite it)
-      const hasR2Image = product.imageUrl && (
-        product.imageUrl.includes('r2.dev') || 
-        product.imageUrl.includes('r2.cloudflarestorage.com') ||
-        product.imageUrl.includes('pub-') // R2 public URLs
-      )
+      const hasR2Image = isR2Image(product.imageUrl)
 
       // Migrate image to R2 if it's an Amazon image, but only if product doesn't already have R2 image
       let imageUrl = product.imageUrl // Keep existing image by default

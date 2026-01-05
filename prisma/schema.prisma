@@ -287,3 +287,34 @@ model BlogPostVersion {
   @@index([blogPostId])
   @@index([createdAt])
 }
+
+model EmailSubscription {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  verified    Boolean  @default(false)
+  verifiedAt  DateTime?
+  unsubscribeToken String @unique @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  lastNotifiedAt DateTime? // Last time we sent a notification to this email
+  notificationCount Int @default(0) // Total notifications sent
+
+  @@index([email])
+  @@index([verified])
+  @@index([unsubscribeToken])
+}
+
+model ViralProductNotification {
+  id          String   @id @default(cuid())
+  productId   String
+  productName String
+  email       String
+  sentAt      DateTime @default(now())
+  score       Float // Trend score when notification was sent
+  opened      Boolean  @default(false)
+  clicked     Boolean  @default(false)
+
+  @@index([productId])
+  @@index([email])
+  @@index([sentAt])
+}

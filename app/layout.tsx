@@ -49,6 +49,14 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl), // Required for absolute image URLs on mobile iOS
   title: "BeautyFinder - Trending Beauty Products",
   description: "Discover the hottest trending beauty products on TikTok, Instagram, Reddit, and Amazon. Real data, honest reviews, no hype.",
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icon.svg', type: 'image/svg+xml' },
+    ],
+    shortcut: '/favicon.ico',
+    apple: '/icon.svg',
+  },
 };
 
 export default function RootLayout({
