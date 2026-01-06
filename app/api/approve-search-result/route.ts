@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/auth-utils'
-import { isR2Image } from '@/lib/image-storage'
+import { isR2Image, isAmazonPlaceholder } from '@/lib/image-storage'
 
 // Force dynamic rendering to prevent build-time data collection
 export const dynamic = 'force-dynamic'
@@ -168,25 +168,38 @@ export async function POST(request: Request) {
       const hasR2Image = isR2Image(product.imageUrl)
 
       // Migrate image to R2 if it's an Amazon image, but only if product doesn't already have R2 image
+      // AND the Amazon image is not a placeholder
       let imageUrl = product.imageUrl // Keep existing image by default
-      if (!hasR2Image && amazonData?.imageUrl && (amazonData.imageUrl.includes('amazon.com') || amazonData.imageUrl.includes('media-amazon'))) {
-        try {
-          const { storeAmazonImageInR2, extractASINFromUrl } = await import('@/lib/image-storage')
-          const asin = extractASINFromUrl(amazonData?.amazonUrl || product.amazonUrl || '')
-          const r2ImageUrl = await storeAmazonImageInR2(amazonData.imageUrl, product.id, asin || undefined)
-          if (r2ImageUrl) {
-            imageUrl = r2ImageUrl
-            console.log(`✅ Migrated image to R2 for product: ${product.name}`)
-          } else {
-            // If R2 migration failed, keep existing image (don't use Amazon placeholder)
-            console.log(`⚠️ Failed to migrate image to R2, keeping existing image`)
-          }
-        } catch (error) {
-          console.error('Error migrating image to R2:', error)
-          // Keep existing image if migration fails (don't overwrite with Amazon placeholder)
-        }
-      } else if (hasR2Image) {
+      
+      // Never replace R2 images
+      if (hasR2Image) {
         console.log(`ℹ️  Product already has R2 image, not overwriting: ${product.imageUrl?.substring(0, 50)}...`)
+      } else if (amazonData?.imageUrl) {
+        // Check if Amazon image is a placeholder (don't use placeholders)
+        if (isAmazonPlaceholder(amazonData.imageUrl)) {
+          console.log(`⚠️  Amazon image is a placeholder, keeping existing image: ${product.imageUrl || 'none'}`)
+          // Keep existing image, don't update
+        } else if (amazonData.imageUrl.includes('amazon.com') || amazonData.imageUrl.includes('media-amazon')) {
+          // Valid Amazon image - try to migrate to R2
+          try {
+            const { storeAmazonImageInR2, extractASINFromUrl } = await import('@/lib/image-storage')
+            const asin = extractASINFromUrl(amazonData?.amazonUrl || product.amazonUrl || '')
+            const r2ImageUrl = await storeAmazonImageInR2(amazonData.imageUrl, product.id, asin || undefined)
+            if (r2ImageUrl) {
+              imageUrl = r2ImageUrl
+              console.log(`✅ Migrated image to R2 for product: ${product.name}`)
+            } else {
+              // If R2 migration failed, keep existing image (don't use Amazon placeholder)
+              console.log(`⚠️ Failed to migrate image to R2, keeping existing image`)
+            }
+          } catch (error) {
+            console.error('Error migrating image to R2:', error)
+            // Keep existing image if migration fails (don't overwrite with Amazon placeholder)
+          }
+        } else {
+          // Not an Amazon image, keep existing
+          console.log(`ℹ️  Image is not from Amazon, keeping existing image`)
+        }
       }
 
       // Update product
@@ -319,8 +332,15 @@ export async function POST(request: Request) {
         productName = searchTerm
       }
 
-      // Migrate image to R2 if it's an Amazon image
+      // Migrate image to R2 if it's an Amazon image (and not a placeholder)
       let imageUrl = amazonData?.imageUrl
+      
+      // Don't use placeholder images
+      if (imageUrl && isAmazonPlaceholder(imageUrl)) {
+        console.log(`⚠️  Amazon image is a placeholder, not using it`)
+        imageUrl = null // Don't set placeholder image
+      }
+      
       // Create product first to get the ID, then migrate image
       const newProduct = await prisma.product.create({
         data: {
@@ -337,7 +357,8 @@ export async function POST(request: Request) {
       })
 
       // Migrate image to R2 after product creation (we need the product ID)
-      if (imageUrl && (imageUrl.includes('amazon.com') || imageUrl.includes('media-amazon'))) {
+      // Only if it's a valid Amazon image (not a placeholder)
+      if (imageUrl && !isAmazonPlaceholder(imageUrl) && (imageUrl.includes('amazon.com') || imageUrl.includes('media-amazon'))) {
         try {
           const { storeAmazonImageInR2, extractASINFromUrl } = await import('@/lib/image-storage')
           const asin = extractASINFromUrl(amazonData?.amazonUrl || '')

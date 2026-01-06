@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { requireAdmin } from '@/lib/auth-utils'
-import { isR2Image } from '@/lib/image-storage'
+import { isR2Image, isAmazonPlaceholder } from '@/lib/image-storage'
 
 // Force dynamic rendering to prevent build-time data collection
 export const dynamic = 'force-dynamic'
@@ -73,25 +73,41 @@ export async function POST(
 
     // Store image in R2 if we have one and it's from Amazon
     // BUT only if product doesn't already have an R2 image
+    // AND the scraped image is not a placeholder
     let finalImageUrl = product.imageUrl // Keep existing image by default
-    if (!hasR2Image && productData.imageUrl && (productData.imageUrl.includes('amazon.com') || productData.imageUrl.includes('media-amazon'))) {
-      try {
-        const { storeAmazonImageInR2, extractASINFromUrl } = await import('@/lib/image-storage')
-        const asin = productData.asin || extractASINFromUrl(product.amazonUrl || '')
-        const r2ImageUrl = await storeAmazonImageInR2(productData.imageUrl, product.id, asin || undefined)
-        if (r2ImageUrl) {
-          finalImageUrl = r2ImageUrl
-          console.log(`  ✓ Stored image in R2: ${r2ImageUrl}`)
-        } else {
-          console.log(`  ⚠️ Failed to store image in R2, keeping existing image`)
-          // Don't update imageUrl if R2 upload failed - keep existing
-        }
-      } catch (error) {
-        console.error('  ⚠️ Error storing image in R2:', error)
-        // Keep existing image if R2 upload fails
-      }
-    } else if (hasR2Image) {
+    
+    // Never replace R2 images
+    if (hasR2Image) {
       console.log(`  ℹ️  Product already has R2 image, not overwriting: ${product.imageUrl?.substring(0, 50)}...`)
+    } else if (productData.imageUrl) {
+      // Check if scraped image is a placeholder (don't use placeholders)
+      if (isAmazonPlaceholder(productData.imageUrl)) {
+        console.log(`  ⚠️  Scraped image is a placeholder, keeping existing image: ${product.imageUrl || 'none'}`)
+        // Keep existing image, don't update
+      } else if (productData.imageUrl.includes('amazon.com') || productData.imageUrl.includes('media-amazon')) {
+        // Valid Amazon image - try to store in R2
+        try {
+          const { storeAmazonImageInR2, extractASINFromUrl } = await import('@/lib/image-storage')
+          const asin = productData.asin || extractASINFromUrl(product.amazonUrl || '')
+          const r2ImageUrl = await storeAmazonImageInR2(productData.imageUrl, product.id, asin || undefined)
+          if (r2ImageUrl) {
+            finalImageUrl = r2ImageUrl
+            console.log(`  ✓ Stored image in R2: ${r2ImageUrl}`)
+          } else {
+            console.log(`  ⚠️ Failed to store image in R2, keeping existing image`)
+            // Don't update imageUrl if R2 upload failed - keep existing
+          }
+        } catch (error) {
+          console.error('  ⚠️ Error storing image in R2:', error)
+          // Keep existing image if R2 upload fails
+        }
+      } else {
+        // Not an Amazon image, don't update
+        console.log(`  ℹ️  Scraped image is not from Amazon, keeping existing image`)
+      }
+    } else {
+      // No image from scraper, keep existing
+      console.log(`  ℹ️  No image from scraper, keeping existing image`)
     }
 
     // Update product with latest price (only update image if we got a new R2 image)
@@ -99,9 +115,21 @@ export async function POST(
     if (productData.price) {
       updateData.price = productData.price
     }
-    // Only update imageUrl if we have a new R2 image (not if we're keeping the existing one)
-    if (finalImageUrl && finalImageUrl !== product.imageUrl && (finalImageUrl.includes('r2.dev') || finalImageUrl.includes('r2.cloudflarestorage.com'))) {
+    // Only update imageUrl if:
+    // 1. We have a new R2 image URL
+    // 2. It's different from the current one
+    // 3. It's actually an R2 URL (not an Amazon placeholder)
+    // 4. The current image is not already an R2 image (protect existing R2 images)
+    if (
+      finalImageUrl && 
+      finalImageUrl !== product.imageUrl && 
+      (finalImageUrl.includes('r2.dev') || finalImageUrl.includes('r2.cloudflarestorage.com')) &&
+      !isR2Image(product.imageUrl) // Only update if current image is NOT already R2
+    ) {
       updateData.imageUrl = finalImageUrl
+    } else if (isR2Image(product.imageUrl)) {
+      // Explicitly protect R2 images - never update them
+      console.log(`  🔒 Protecting R2 image, not updating`)
     }
     
     if (Object.keys(updateData).length > 0) {

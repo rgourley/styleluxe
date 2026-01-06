@@ -68,3 +68,34 @@ export function isR2Image(imageUrl: string | null | undefined): boolean {
   )
 }
 
+/**
+ * Check if an Amazon image URL is a placeholder or empty
+ * Amazon sometimes returns placeholder images that should not be used
+ */
+export function isAmazonPlaceholder(imageUrl: string | null | undefined): boolean {
+  if (!imageUrl) return true
+  
+  // Check for common Amazon placeholder patterns
+  const placeholderPatterns = [
+    /01jrA/i, // Common Amazon placeholder ID
+    /placeholder/i,
+    /no-image/i,
+    /default.*image/i,
+    /\.gif$/i, // Amazon often uses GIFs for placeholders
+    /images\/I\/[0-9A-Z]{1,3}\./i, // Very short image IDs are often placeholders
+  ]
+  
+  // Check if URL matches any placeholder pattern
+  if (placeholderPatterns.some(pattern => pattern.test(imageUrl))) {
+    return true
+  }
+  
+  // Check if image URL is too short (likely a placeholder)
+  const imageIdMatch = imageUrl.match(/images\/I\/([^\/]+)/i)
+  if (imageIdMatch && imageIdMatch[1].length < 10) {
+    return true
+  }
+  
+  return false
+}
+
