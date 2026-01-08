@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
 import { requireAdmin } from '@/lib/auth-utils'
+import { isR2Image } from '@/lib/image-storage'
 
 // Force dynamic rendering to prevent build-time data collection
 export const dynamic = 'force-dynamic'
@@ -73,6 +74,7 @@ export async function PATCH(
         name: true,
         brand: true,
         status: true,
+        imageUrl: true, // Need to check if it's an R2 image
         content: {
           select: { slug: true }
         }
@@ -92,9 +94,26 @@ export async function PATCH(
     if (body.brand !== undefined) updateData.brand = body.brand
     if (body.category !== undefined) updateData.category = body.category
     if (body.price !== undefined) updateData.price = body.price
-    if (body.imageUrl !== undefined) updateData.imageUrl = body.imageUrl
     if (body.amazonUrl !== undefined) updateData.amazonUrl = body.amazonUrl
     if (body.status !== undefined) updateData.status = body.status
+    
+    // Protect R2 images - never overwrite them
+    if (body.imageUrl !== undefined) {
+      const hasR2Image = currentProduct && isR2Image(currentProduct.imageUrl)
+      if (hasR2Image) {
+        // Product has R2 image - only allow updating if new value is also R2
+        if (isR2Image(body.imageUrl)) {
+          updateData.imageUrl = body.imageUrl
+        } else {
+          console.log(`⚠️  Attempted to overwrite R2 image, ignoring update`)
+          // Don't update imageUrl - keep existing R2 image
+        }
+      } else {
+        // No R2 image, allow update
+        updateData.imageUrl = body.imageUrl
+      }
+    }
+    
     // Preserve Amazon URL if not explicitly provided
     if (body.amazonUrl === undefined) {
       updateData.amazonUrl = currentProduct.amazonUrl

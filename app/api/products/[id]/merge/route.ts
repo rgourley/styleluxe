@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/auth-utils'
+import { isR2Image } from '@/lib/image-storage'
 
 // Force dynamic rendering to prevent build-time data collection
 export const dynamic = 'force-dynamic'
@@ -92,7 +93,14 @@ export async function POST(
     if (!target.amazonUrl && duplicate.amazonUrl) {
       updates.amazonUrl = duplicate.amazonUrl
     }
+    // Protect R2 images - never overwrite target's R2 image
     if (!target.imageUrl && duplicate.imageUrl) {
+      updates.imageUrl = duplicate.imageUrl
+    } else if (target.imageUrl && isR2Image(target.imageUrl)) {
+      // Target has R2 image - never overwrite it, even if duplicate has one
+      console.log(`⚠️  Target product has R2 image, preserving it during merge`)
+    } else if (target.imageUrl && !isR2Image(target.imageUrl) && duplicate.imageUrl && isR2Image(duplicate.imageUrl)) {
+      // Target has non-R2 image, duplicate has R2 image - prefer R2
       updates.imageUrl = duplicate.imageUrl
     }
     if (!target.price && duplicate.price) {
