@@ -257,13 +257,16 @@ async function enrichProducts() {
       const updates: any = {}
       if (!amazonProduct.brand && bestMatch.brand) updates.brand = bestMatch.brand
       if (!amazonProduct.price && bestMatch.price) updates.price = bestMatch.price
-      // Only update image if Amazon product doesn't have one AND it's not an R2 image
-      if (!amazonProduct.imageUrl && bestMatch.imageUrl && !isR2Image(bestMatch.imageUrl)) {
+      // Protect R2 images - never overwrite Amazon product's R2 image
+      const amazonHasR2Image = isR2Image(amazonProduct.imageUrl)
+      if (!amazonHasR2Image && !amazonProduct.imageUrl && bestMatch.imageUrl) {
+        // Amazon product has no image, use Reddit product's image
         updates.imageUrl = bestMatch.imageUrl
-      } else if (!amazonProduct.imageUrl && bestMatch.imageUrl) {
-        // If bestMatch has R2 image, use it
+      } else if (!amazonHasR2Image && amazonProduct.imageUrl && !isR2Image(amazonProduct.imageUrl) && bestMatch.imageUrl && isR2Image(bestMatch.imageUrl)) {
+        // Amazon has non-R2 image, Reddit has R2 image - prefer R2
         updates.imageUrl = bestMatch.imageUrl
       }
+      // If amazonProduct has R2 image, never overwrite it
       // Keep the better name (usually Amazon has more complete names)
       if (bestMatch.name && bestMatch.name.length > amazonProduct.name.length) {
         updates.name = bestMatch.name

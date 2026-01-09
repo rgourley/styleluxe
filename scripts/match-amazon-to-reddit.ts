@@ -7,6 +7,7 @@
  */
 
 import { prisma } from '../lib/prisma'
+import { isR2Image } from '../lib/image-storage'
 
 /**
  * Calculate name similarity between two product names
@@ -166,13 +167,19 @@ export async function matchAmazonToReddit() {
       }
       
       // Update Amazon product with Reddit data if missing
+      // Protect R2 images - never overwrite them
+      const hasR2Image = isR2Image(amazonProduct.imageUrl)
+      const imageUrl = hasR2Image 
+        ? amazonProduct.imageUrl // Keep R2 image
+        : (amazonProduct.imageUrl || bestMatch.imageUrl) // Use Reddit image only if no R2 image
+      
       await prisma.product.update({
         where: { id: amazonProduct.id },
         data: {
           name: amazonProduct.name, // Keep Amazon name (usually more complete)
           brand: amazonProduct.brand || bestMatch.brand,
           price: amazonProduct.price || bestMatch.price,
-          imageUrl: amazonProduct.imageUrl || bestMatch.imageUrl,
+          imageUrl: imageUrl, // Protected R2 images
         },
       })
       
