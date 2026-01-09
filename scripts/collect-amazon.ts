@@ -728,12 +728,19 @@ async function processAmazonData() {
         const shouldResetBaseScore = !existing.onMoversShakers || existing.baseScore === null || existing.baseScore < 50
         const newBaseScore = shouldResetBaseScore ? totalScore : Math.max(existing.baseScore || 0, totalScore)
         
+        // Protect R2 images - never overwrite them
+        const { isR2Image } = await import('../lib/image-storage')
+        const hasR2Image = isR2Image(existing.imageUrl)
+        const imageUrl = hasR2Image 
+          ? existing.imageUrl // Keep R2 image
+          : (product.imageUrl || existing.imageUrl) // Use new image only if no R2 image
+        
         await prisma.product.update({
           where: { id: existing.id },
           data: {
             trendScore: Math.max(existing.trendScore, totalScore),
             price: product.price || existing.price,
-            imageUrl: product.imageUrl || existing.imageUrl,
+            imageUrl: imageUrl, // Protected R2 images
             onMoversShakers: true, // Mark as currently on M&S
             lastSeenOnMoversShakers: new Date(), // Update last seen timestamp
           },
@@ -846,13 +853,20 @@ async function processAmazonData() {
           // Import setFirstDetected function
           const { setFirstDetected } = await import('../lib/trending-products')
           
+          // Protect R2 images - never overwrite them
+          const { isR2Image } = await import('../lib/image-storage')
+          const hasR2Image = isR2Image(redditMatch.imageUrl)
+          const imageUrl = hasR2Image 
+            ? redditMatch.imageUrl // Keep R2 image
+            : (product.imageUrl || redditMatch.imageUrl) // Use new image only if no R2 image
+          
           // Update existing Reddit product with Amazon data
           await prisma.product.update({
             where: { id: redditMatch.id },
             data: {
               amazonUrl: product.amazonUrl,
               price: product.price || redditMatch.price,
-              imageUrl: product.imageUrl || redditMatch.imageUrl,
+              imageUrl: imageUrl, // Protected R2 images
               brand: product.brand || redditMatch.brand,
               trendScore: Math.max(redditMatch.trendScore, totalScore),
             },
