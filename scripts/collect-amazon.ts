@@ -13,7 +13,7 @@
 import * as cheerio from 'cheerio'
 import { prisma } from '../lib/prisma'
 
-interface AmazonProduct {
+export interface AmazonProduct {
   name: string
   brand?: string
   price?: number
@@ -29,7 +29,7 @@ interface AmazonProduct {
  * 
  * Note: Amazon's HTML structure may change, so this may need updates
  */
-async function fetchAmazonMoversAndShakers(): Promise<AmazonProduct[]> {
+export async function fetchAmazonMoversAndShakers(): Promise<AmazonProduct[]> {
   // Define invalid patterns once at function scope
   const invalidPatterns = [
     /^green\s+up\s+arrow/i,

@@ -60,6 +60,30 @@ npm run collect:amazon
 - Using a headless browser for dynamic content
 - Using a scraping service
 
+### Semi-auto Movers & Shakers (`semi-auto-movers-shakers.ts`) ✅
+
+Adds **up to 2 products per day** from Movers & Shakers (Korean skincare preferred), with name cleanup and full content generation. Use this instead of fully manual add to avoid scraping limits.
+
+**How to start (no cron required):**
+```bash
+npm run semi-auto:movers-shakers
+```
+Run from project root when you want to add up to 2 products. Needs `DATABASE_URL` and `ANTHROPIC_API_KEY`.
+
+**Optional – run twice daily via cron:**  
+If you use Vercel, the cron is in `vercel.json` (10:00 and 22:00 UTC). Otherwise call the API twice per day:
+- `GET /api/cron/semi-auto-movers-shakers` with `Authorization: Bearer YOUR_CRON_SECRET` (set `CRON_SECRET` in env).
+
+**What it does:**
+1. Checks daily cap (max 2 products added per day by this script).
+2. Fetches Movers & Shakers, prefers Korean skincare, skips products already in DB (by ASIN).
+3. For each candidate: scrapes PDP → **resolves name first** (uses PDP title; if spammy, asks Claude for a short "Brand + Product" name).
+4. Picks best category from our list (Claude).
+5. Creates product, keeps Amazon star rating and review count, saves reviews.
+6. Generates product content with Claude.
+
+**Name handling:** Listing titles from Amazon are often keyword-stuffed. The script uses the product page (PDP) title first; if that’s still spammy (long, repeated keywords, "pack of 2", etc.), it calls Claude to return a shortened, brand + product-style name.
+
 ### Google Trends (`collect-google-trends.ts`) ✅
 
 Tracks trending beauty searches from Google Trends RSS feed.
