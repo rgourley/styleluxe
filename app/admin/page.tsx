@@ -73,6 +73,8 @@ function AdminDashboard() {
   const [loadingProducts, setLoadingProducts] = useState(false)
   const [filterStatus, setFilterStatus] = useState<'FLAGGED' | 'DRAFT' | 'PUBLISHED' | 'ALL'>('ALL')
   const [filterSource, setFilterSource] = useState<'COMBINED' | 'AMAZON_ONLY' | 'REDDIT_ONLY' | 'ALL'>('ALL')
+  const [productListSearch, setProductListSearch] = useState('')
+  const [appliedProductListSearch, setAppliedProductListSearch] = useState('')
   const [generatingProductId, setGeneratingProductId] = useState<string | null>(null)
   
   // Search state
@@ -176,12 +178,13 @@ function AdminDashboard() {
   }
 
   // Fetch products
-  const fetchProducts = async (status?: string, source?: string) => {
+  const fetchProducts = async (status?: string, source?: string, search?: string) => {
     setLoadingProducts(true)
     try {
       const params = new URLSearchParams()
       if (status && status !== 'ALL') params.set('status', status)
       if (source && source !== 'ALL') params.set('source', source)
+      if (search && search.trim()) params.set('search', search.trim())
       params.set('limit', '100')
       
       const url = `/api/products?${params.toString()}`
@@ -203,8 +206,8 @@ function AdminDashboard() {
   useEffect(() => {
     const status = filterStatus === 'ALL' ? undefined : filterStatus
     const source = filterSource === 'ALL' ? undefined : filterSource
-    fetchProducts(status, source)
-  }, [filterStatus, filterSource])
+    fetchProducts(status, source, appliedProductListSearch || undefined)
+  }, [filterStatus, filterSource, appliedProductListSearch])
 
   // Refresh products after collection
   const handleCollectionComplete = (source: string) => {
@@ -1520,6 +1523,34 @@ function AdminDashboard() {
             >
               {loadingProducts ? 'Loading...' : 'Refresh'}
             </button>
+          </div>
+
+          {/* Product list search (find by name/brand) */}
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <input
+              type="text"
+              value={productListSearch}
+              onChange={(e) => setProductListSearch(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); setAppliedProductListSearch(productListSearch); } }}
+              placeholder="Search products by name or brand..."
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent max-w-xs"
+            />
+            <button
+              type="button"
+              onClick={() => setAppliedProductListSearch(productListSearch)}
+              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium"
+            >
+              Search
+            </button>
+            {appliedProductListSearch && (
+              <button
+                type="button"
+                onClick={() => { setAppliedProductListSearch(''); setProductListSearch(''); }}
+                className="px-3 py-2 text-sm text-gray-500 hover:text-gray-700"
+              >
+                Clear
+              </button>
+            )}
           </div>
 
           {/* Source Filter Tabs */}
