@@ -18,7 +18,7 @@ import { generateAndSaveContent } from '../lib/generate-content'
 import { setFirstDetected } from '../lib/trending-products'
 import { isAmazonPlaceholder } from '../lib/image-storage'
 
-const MAX_PRODUCTS_PER_DAY = 2
+const MAX_PRODUCTS_PER_DAY = 6
 const DELAY_BETWEEN_SCRAPES_MS = 35_000 // ~35s between PDP scrapes to stay under limits
 
 const KOREAN_SKINCARE_KEYWORDS = [
@@ -79,7 +79,7 @@ export type SemiAutoResult = {
   message: string
 }
 
-/** Run the semi-auto pipeline (max 2/day). Call from CLI or cron API. */
+/** Run the semi-auto pipeline (max 6/day). Call from CLI or cron API. */
 export async function runSemiAutoMoversShakers(): Promise<SemiAutoResult> {
   const addedToday = await countSemiAutoAddedToday()
   if (addedToday >= MAX_PRODUCTS_PER_DAY) {
