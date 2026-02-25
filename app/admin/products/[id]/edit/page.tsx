@@ -50,6 +50,16 @@ export default function EditProductPage() {
   const router = useRouter()
   const productId = params.id as string
 
+  const buildGoogleTrendsExploreUrl = (query: string) => {
+    const trimmed = query.trim()
+    if (!trimmed) return ''
+    const params = new URLSearchParams()
+    params.set('q', trimmed)
+    // Keep it simple + globally applicable (worldwide).
+    params.set('hl', 'en')
+    return `https://trends.google.com/trends/explore?${params.toString()}`
+  }
+
   const [product, setProduct] = useState<Product | null>(null)
   const [content, setContent] = useState<ProductContent | null>(null)
   const [loading, setLoading] = useState(true)
@@ -92,6 +102,29 @@ export default function EditProductPage() {
   const hasEditedAmazonUrl = useRef(false)
   const hasEditedPrice = useRef(false)
   const hasEditedImageUrl = useRef(false)
+  const lastAutoTrendsQuery = useRef<string | null>(null)
+
+  // Auto-fill Google Trends URL from the (edited) product title.
+  // Manual edits always win: once the user touches the field we stop overwriting.
+  useEffect(() => {
+    if (loading) return
+    if (!product) return
+    if (hasEditedTrends.current) return
+
+    const query = (editedProductName || product.name || '').trim()
+    if (!query) return
+
+    const current = googleTrendsUrl.trim()
+    const canOverwrite =
+      !current ||
+      (lastAutoTrendsQuery.current &&
+        current === buildGoogleTrendsExploreUrl(lastAutoTrendsQuery.current))
+
+    if (!canOverwrite) return
+
+    setGoogleTrendsUrl(buildGoogleTrendsExploreUrl(query))
+    lastAutoTrendsQuery.current = query
+  }, [editedProductName, product, googleTrendsUrl, loading])
 
   // Load product and content
   useEffect(() => {
@@ -148,6 +181,7 @@ export default function EditProductPage() {
             const trendsData = data.product.content.googleTrendsData
             if (trendsData.url && !hasEditedTrends.current) {
               setGoogleTrendsUrl(trendsData.url)
+              lastAutoTrendsQuery.current = null
             }
           }
         } else {
